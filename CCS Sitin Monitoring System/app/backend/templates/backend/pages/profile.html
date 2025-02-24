@@ -1,0 +1,326 @@
+{% extends 'backend/base.html' %}
+{% load static %}
+
+{% block content %}
+<div id="profile-container" class="container mt-5">
+    <div class="row">
+        <!-- Left Column (Profile Picture & Upload) -->
+        <div class="col-lg-4 col-md-12 mb-4">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title">Profile Picture</h5>
+                    <hr>
+
+                    <!-- Modern Profile Picture Display -->
+                    <div class="profile-image-container">
+                        <img id="profile-preview" src="{% if registration.profilepicture.url %}{{ registration.profilepicture.url }}{% else %}{% static 'backend/images/default-avatar.jpg' %}{% endif %}" alt="Profile Picture"
+                            class="profile-img img-fluid rounded-circle border-black">
+                    </div>
+
+                    <!-- Modern File Upload UI -->
+                    <form class="mt-3" id="profile-picture-form" method="POST" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="file-upload-area" id="file-upload-area">
+                            <i class="fas fa-cloud-upload-alt upload-icon"></i>
+                            <p>Drag & Drop to Upload</p>
+                            <p>or</p>
+                            <label class="btn btn-outline-primary btn-sm">
+                                <input type="file" name="profile_picture" id="profile-picture-input" accept="image/*"
+                                    hidden>
+                                Choose File
+                            </label>
+                        </div>
+                        <button type="button" onclick="updatePicture()" class="btn btn-primary btn-sm mt-3"><i
+                                class="fas fa-upload"></i>
+                            Upload</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column (Profile Information & Edit Form) -->
+        <div class="col-lg-8 col-md-12 mb-4">
+            <div class="card">
+                <div class="card-body">
+
+                    <!-- Profile View Mode -->
+                    <div id="profile-view">
+                        <h5 class="card-title">Profile Information</h5>
+                        <hr>
+                        <p><i class="fas fa-id-card"></i> Id #: {% if registration.idno %}{{ registration.idno }}{% else %}N/A{% endif %}</p>
+                        <p><i class="fas fa-user"></i> Name: {% if registration.fullname %}{{ registration.fullname }}{% else %}N/A{% endif %}</p>
+                        <p><i class="fas fa-book"></i> Course: {% if registration.course %}{{ registration.course }}{% else %}N/A{% endif %}</p>
+                        <p><i class="fas fa-sort-numeric-up-alt"></i> Level: {% if registration.level %}{{ registration.level }}{% else %}N/A{% endif %}</p>
+                        <p><i class="fas fa-at"></i> Email: {% if registration.email %}{{ registration.email }}{% else %}N/A{% endif %}</p>
+                        <p><i class="fas fa-address-card"></i> Address: {% if registration.address %}{{ registration.address }}{% else %}N/A{% endif %}</p>
+                        <p><i class="fas fa-clock"></i> Session: {% if registration.session %}{{ registration.sessions }}{% else %}N/A{% endif %}</p>
+                        <hr>
+                        <p>Description:</p>
+                        <p>{% if registration.description %}{{ registration.profiledescription }}{% else %}N/A{% endif %}</p>
+
+                        <div class="mt-4 text-end">
+                            <button class="btn btn-primary" onclick="toggleEdit(true)"><i class="fas fa-edit"></i> Edit
+                                Profile</button>
+                        </div>
+                    </div>
+
+                    <!-- Profile Edit Mode (Initially Hidden) -->
+                    <div id="profile-edit" style="display: none;">
+                        <h5 class="card-title">Edit Profile</h5>
+                        <hr>
+                        <form id="">
+                            {% csrf_token %}
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <label>First Name</label>
+                                    <input id="fname" type="text" name="fname" value="{{ registration.fname }}"
+                                        class="form-control">
+                                </div>
+                                <div class="col-md-4">
+                                    <label>Middle Name</label>
+                                    <input id="mname" type="text" name="mname" value="{{ registration.mname }}"
+                                        class="form-control">
+                                </div>
+                                <div class="col-md-4">
+                                    <label>Last Name</label>
+                                    <input id="lname" type="text" name="lname" value="{{ registration.lname }}"
+                                        class="form-control">
+                                </div>
+                            </div>
+
+                            <div class="row mt-3">
+                                <div class="col-md-6">
+                                    <label>Email</label>
+                                    <input id="email" ype="email" name="email" value="{{ registration.email }}"
+                                        class="form-control">
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label>Course</label>
+                                    <select name="course" id="course" class="form-control">
+                                        <option value="" disabled>
+                                            Select Course</option>
+                                        {% for value, label in course_choices %}
+                                        <option value="{{ value }}" {% if registration.course == value %}selected{% endif%}>
+                                            {{ label }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="row mt-3">
+                                <div class="col-md-6">
+                                    <label>Level</label>
+                                    <select name="level" id="level" class="form-control">
+                                        <option value="" disabled>
+                                            Select Level</option>
+                                        {% for value, label in level_choices %}
+                                        <option value="{{ value }}" {% if registration.level == value %}selected{% endif %}>
+                                            {{ label }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label>Address</label>
+                                    <input id="address" type="text" name="address" value="{{ registration.address }}"
+                                        class="form-control">
+                                </div>
+                            </div>
+
+                            <div class="mt-3">
+                                <label>Profile Description</label>
+                                <textarea id="profiledescription" name="profiledescription" class="form-control"
+                                    rows="4"
+                                    placeholder="Tell us something about yourself...">{{ registration.profiledescription }}</textarea>
+                            </div>
+
+                            <div class="mt-4 text-end">
+                                <button type="submit" class="btn btn-success" onclick="updateProfile()"><i
+                                        class="fas fa-save"></i> Save
+                                    Changes</button>
+                                <button type="button" class="btn btn-secondary" onclick="toggleEdit()"><i
+                                        class="fas fa-times"></i> Cancel</button>
+                            </div>
+                        </form>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript Update Picture -->
+<script>
+    function updatePicture() {
+        let formData = new FormData();
+        let fileInput = document.getElementById('profile-picture-input');
+
+        if (fileInput.files.length === 0) {
+            console.log("Image not selected");
+            return;
+        }
+
+        formData.append('profilepicture', fileInput.files[0]);
+
+        fetch(`/profile/{{ registration.idno }}`, {
+            method: 'PATCH',
+            body: formData,
+            headers: {
+                "X-CSRFToken": "{{ csrf_token }}"
+            }
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.profilepicture) {
+                    console.log("Profile picture updated successfully.");
+                    location.reload();
+                } 
+                else if (data.errors) {
+                    for (let field in data.errors) {
+                        let errorDiv = document.createElement('div');
+                        errorDiv.addClassList = ('alert', 'alert-danger', 'mb-1', 'small');
+                        errorDiv.textContent = `${field.toUpperCase()}: ${data.errors[field]}`;
+                        document.getElementById('profile-container').insertAdjacentElement(errorDiv);
+                    }
+                }
+            })
+            .catch(error => {
+                console.log("Failed to update profile picture: ", error);
+            });
+    }
+</script>
+
+
+<!-- JavaScript Update Profile -->
+<script>
+    function updateProfile() {
+        let idno = "{{ registration.idno }}";
+        let url = `/profile/${idno}`;
+
+        let data = {
+            firstname: document.getElementById("fname").value,
+            lastname: document.getElementById("lname").value,
+            middlename: document.getElementById("mname").value,
+            email: document.getElementById("email").value,
+            course: document.getElementById("course").value,
+            level: document.getElementById("level").value,
+            address: document.getElementById("address").value,
+            profiledescription: document.getElementById("profiledescription").value
+        };
+
+        fetch(url, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify(data)
+        })
+            .then(response => {
+                if (response.ok) {
+                    return response.json();
+                }
+                throw new Error("Failed to update profile.");
+            })
+            .then(data => {
+                console.log("Profile updated successfully.");
+                location.reload();
+            })
+            .catch(error => {
+                console.log("Error updating profile: ", error);
+            });
+    }
+</script>
+
+
+<!-- JavaScript for Profile Picture Preview & Drag-Drop -->
+<script>
+    document.getElementById('profile-picture-input').addEventListener('change', function (event) {
+        const reader = new FileReader();
+        reader.onload = function () {
+            document.getElementById('profile-preview').src = reader.result;
+        };
+        reader.readAsDataURL(event.target.files[0]);
+    });
+
+    // Drag and Drop Feature
+    const dropArea = document.getElementById('file-upload-area');
+    dropArea.addEventListener('dragover', (event) => {
+        event.preventDefault();
+        dropArea.classList.add('drag-over');
+    });
+
+    dropArea.addEventListener('dragleave', () => {
+        dropArea.classList.remove('drag-over');
+    });
+
+    dropArea.addEventListener('drop', (event) => {
+        event.preventDefault();
+        dropArea.classList.remove('drag-over');
+
+        const fileInput = document.getElementById('profile-picture-input');
+        fileInput.files = event.dataTransfer.files;
+
+        const reader = new FileReader();
+        reader.onload = function () {
+            document.getElementById('profile-preview').src = reader.result;
+        };
+        reader.readAsDataURL(fileInput.files[0]);
+    });
+</script>
+
+
+<!-- JavaScript to Toggle Between View and Edit Mode -->
+<script>
+    function toggleEdit(editMode) {
+        document.getElementById('profile-view').style.display = editMode ? 'none' : 'block';
+        document.getElementById('profile-edit').style.display = editMode ? 'block' : 'none';
+    }
+</script>
+
+<!-- Modern Styling -->
+<style>
+    .profile-image-container {
+        width: 150px;
+        height: 150px;
+        margin: 0 auto;
+        border-radius: 50%;
+        overflow: hidden;
+        border: 1px solid #000;
+        /* Changed border to black */
+        box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .profile-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .file-upload-area {
+        border: 2px dashed #000;
+        /* Changed border to black */
+        padding: 20px;
+        text-align: center;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: background 0.3s ease-in-out;
+    }
+
+    .file-upload-area:hover,
+    .drag-over {
+        background: rgba(0, 0, 0, 0.1);
+    }
+
+    .upload-icon {
+        font-size: 30px;
+        color: #000;
+        /* Changed icon color to match */
+    }
+</style>
+
+{% endblock %}

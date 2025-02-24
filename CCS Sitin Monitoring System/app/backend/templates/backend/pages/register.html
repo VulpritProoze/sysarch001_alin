@@ -1,0 +1,26 @@
+{% extends 'backend/base.html' %}
+{% block content %}
+{% load crispy_forms_tags %}
+
+{% if error %}
+<div class="alert alert-warning" style="font-size: small;">{{ error }}</div>
+{% endif %}
+
+<div class="wrapper">
+    <div class="login-container m-5">
+        <h2 style="text-align: center;">CCS Sitin Monitoring System</h2>
+        <h5>Register</h5>
+        <form method="post">
+            {% csrf_token %}
+            {{ form|crispy }}
+            <button class="btn">Register</button>
+            <p class="text-center">
+                Go back to 
+                <a href="{% url 'login' %}">Login</a>
+                page.
+            </p>
+        </form>
+    </div>
+</div>
+
+{% endblock %}
