@@ -4,159 +4,103 @@
 
 {% block content %}
 <div class="container mt-5">
-    <h5>Announcements</h5>
+    {% csrf_token %}
+    <!-- Announcements Header -->
+    <div class="d-flex align-items-center mb-4">
+        <h4 class="m-0">Announcements</h4>
+    </div>
+    
     <hr>
+
     {% for announcement in announcements %}
-    <div id="announcement-body" class="card mb-4 rounded-box">
+    <div id="announcement-body" class="card mb-4 announcement-card shadow-sm">
         <div class="card-body">
-            <h6>{{ announcement.title }}</h6>
+            <h5 class="announcement-title">
+                <i class="fas fa-newspaper text-info"></i> {{ announcement.title }}
+            </h5>
             <hr>
+            
+            <!-- Display Announcement Image -->
+            {% if announcement.image %}
+            <div class="text-center">
+                <img src="{{ announcement.image.url }}" alt="Announcement Image" class="img-fluid rounded" style="max-height: 300px; object-fit: cover;">
+            </div>
+            <hr>
+            {% endif %}
+
             <p>{{ announcement.content }}</p>
-            <small class="text-muted">{{ announcement.updated_at }}</small>
+            <small class="text-muted">
+                <i class="fas fa-calendar-alt"></i> {{ announcement.date }}
+            </small>
             <hr>
 
-            <!-- Fetch and display only comments related to this announcement -->
+
+            <!-- Comments Section -->
             <div>
-                <p>Comments:</p>
-                <form id="comment-form-{{ announcement.id }}" data-announcement-id="{{ announcement.id }}">
-                    {% csrf_token %}
+                <h6><i class="fas fa-comments text-success"></i> Comments:</h6>
+
+                <!-- Comment Form -->
+                <form id="comment-form-{{ announcement.id }}">
                     <div class="form-group">
-                        <textarea class="form-control" rows="1" placeholder="Write a comment" style="resize: none;"
-                            oninput="this.style.height = ''; this.style.height = this.scrollHeight + 'px'"
-                            required></textarea>
-                        <button type="submit" class="btn p-1 btn-success float-right mt-1">Add comment</button>
+                        <textarea class="form-control comment-box" rows="1" placeholder="Write a comment..." style="resize: none; overflow-y: hidden;"
+                        oninput="this.style.height = ''; this.style.height = this.scrollHeight + 'px'"
+                        required></textarea>
+                        <button type="button"
+                            onclick="PostComment(this.parentElement.parentElement, '{{ announcement.id }}', '{{ csrf_token }}')"
+                            class="btn btn-sm btn-primary float-right mt-2">
+                            <i class="fas fa-paper-plane"></i> Add Comment
+                        </button>
                     </div>
                 </form>
 
+                <!-- Display Comments -->
                 {% with announcement.announcementcomment_set.all as related_comments %}
                 {% if related_comments %}
-                {% for comment in announcementcomments|get_item:announcement.id %}
-                <div class="comment-card">
-                    <div class="comment-header">
-                        <img src="{{ comment.user.registration.profilepicture.url }}" alt="Profile Picture"
-                            class="profile-pic">
-                        <div class="comment-user-info">
-                            <strong>{{ comment.user.username }}</strong>
-                            <span class="comment-date">{{ comment.date|date:"F j, Y, g:i a" }}</span>
+                    {% for comment in announcementcomments|get_item:announcement.id %}
+                    <div class="comment-card">
+                        <div class="comment-header">
+                            <img src="{{ comment.user.registration.profilepicture_sm.url }}" alt="Profile Picture"
+                                class="comment-pic">
+                            <div class="comment-user-info">
+                                <strong>{{ comment.user.username }}</strong>
+                                <span class="comment-date">{{ comment.date }}</span>
+                            </div>
+                        </div>
+                        <div class="comment-body">
+                            <p>{{ comment.comment }}</p>
                         </div>
                     </div>
-                    <div class="comment-body">
-                        <p>{{ comment.comment }}</p>
-                    </div>
-                </div>
-
-                {% endfor %}
-                <a href="#" class="small text-muted">Open this announcement to see more comments...</a>
+                    {% endfor %}
+                    <a href="{% url 'user-announcement' announcement.id %}" class="small text-muted">
+                        <i class="fas fa-arrow-right"></i> Open this announcement to see more comments...
+                    </a>
                 {% else %}
-                <p class="text-muted">There are no comments.</p>
+                <p class="text-muted"><i class="fas fa-info-circle"></i> No comments yet.</p>
                 {% endif %}
                 {% endwith %}
             </div>
         </div>
     </div>
     {% empty %}
-    <div class="card rounded-box">
-        <div class="card-body">
-            No announcements available.
-        </div>
+    <div class="card p-3 shadow-sm">
+        <h5 class="text-muted"><i class="fas fa-exclamation-circle"></i> No announcements available.</h5>
     </div>
     {% endfor %}
 </div>
-<!-- POST Announcement Comment -->
+
 <script>
+    const parent = document.getElementById('announcement-body');
+
     document.addEventListener('DOMContentLoaded', function () {
-        document.querySelectorAll('form[id^="comment-form"]').forEach(form => {
-            form.addEventListener('submit', async function (e) {
-                e.preventDefault();
-                const comment = this.getElementsByTagName('textarea')[0].value;
-                const userid = '{{ register.username.id }}';
-                const id = this.getAttribute('data-announcement-id');
+        const alertMessages = JSON.parse(localStorage.getItem('alertMessages'));
+        if (parent) {
+            RenderSuccessDiv(parent, alertMessages);
+        }
 
-                // Clear previous errors
-                document.querySelectorAll('.alert-danger').forEach(el => el.remove());
-
-                if (!comment) { console.log('Announcement comment is empty.') }
-
-                try {
-                    let response = await fetch('/announcements/comments/', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRFToken': '{{ csrf_token }}'
-                        },
-                        body: JSON.stringify({
-                            comment: comment,
-                            user: userid,
-                            announcement: id
-                        })
-                    });
-
-                    let data = await response.json();
-                    console.log("Full Response Data:", data);  // Debugging
-
-                    if (response.ok) {
-                        // Successfully added comment
-                        window.location.reload();
-                    } else if (data.errors) {
-                        // Display validation errors
-                        RenderErrorDiv(document.getElementById('announcement-body'), data.errors);
-                    } else {
-                        console.log("Unexpected response structure:", data);
-                    }
-                } catch (error) {
-                    console.log('Fetch error:', error);
-                }
-            });
-        });
+        if (alertMessages) {
+            localStorage.removeItem('alertMessages');
+        }
     });
-
 </script>
-
-<style>
-    .comment-card {
-        background: #f8f9fa;
-        border-radius: 10px;
-        padding: 12px;
-        margin: 10px 0;
-        display: flex;
-        flex-direction: column;
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-    }
-
-    .comment-header {
-        display: flex;
-        align-items: center;
-        margin-bottom: 8px;
-    }
-
-    .profile-pic {
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        object-fit: cover;
-        margin-right: 10px;
-    }
-
-    .comment-user-info {
-        display: flex;
-        flex-direction: column;
-    }
-
-    .comment-user-info strong {
-        font-size: 14px;
-        color: #333;
-    }
-
-    .comment-date {
-        font-size: 12px;
-        color: #888;
-    }
-
-    .comment-body p {
-        font-size: 14px;
-        margin: 0;
-        color: #444;
-    }
-</style>
 
 {% endblock %}

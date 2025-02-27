@@ -3,6 +3,7 @@
 
 {% block content %}
 <div id="profile-container" class="container mt-5">
+    {% csrf_token %}
     <div class="row">
         <!-- Left Column (Profile Picture & Upload) -->
         <div class="col-lg-4 col-md-12 mb-4">
@@ -13,14 +14,13 @@
 
                     <!-- Modern Profile Picture Display -->
                     <div class="profile-image-container">
-                        <img id="profile-preview" src="{% if registration.profilepicture.url %}{{ registration.profilepicture.url }}{% else %}{% static 'backend/images/default-avatar.jpg' %}{% endif %}" alt="Profile Picture"
-                            class="profile-img img-fluid rounded-circle border-black">
+                        <img id="profile-preview" src="{% if registration.profilepicture.url %}{{ registration.profilepicture.url }}{% else %}{% static 'backend/images/default-avatar.jpg' %}{% endif %}" 
+                             alt="Profile Picture" class="profile-img img-fluid rounded-circle shadow-lg border border-primary p-1">
                     </div>
 
                     <!-- Modern File Upload UI -->
                     <form class="mt-3" id="profile-picture-form" method="POST" enctype="multipart/form-data">
-                        {% csrf_token %}
-                        <div class="file-upload-area" id="file-upload-area">
+                        <div class="file-upload-area border-primary" id="file-upload-area">
                             <i class="fas fa-cloud-upload-alt upload-icon"></i>
                             <p>Drag & Drop to Upload</p>
                             <p>or</p>
@@ -47,16 +47,16 @@
                     <div id="profile-view">
                         <h5 class="card-title">Profile Information</h5>
                         <hr>
-                        <p><i class="fas fa-id-card"></i> Id #: {% if registration.idno %}{{ registration.idno }}{% else %}N/A{% endif %}</p>
-                        <p><i class="fas fa-user"></i> Name: {% if registration.fullname %}{{ registration.fullname }}{% else %}N/A{% endif %}</p>
-                        <p><i class="fas fa-book"></i> Course: {% if registration.course %}{{ registration.course }}{% else %}N/A{% endif %}</p>
-                        <p><i class="fas fa-sort-numeric-up-alt"></i> Level: {% if registration.level %}{{ registration.level }}{% else %}N/A{% endif %}</p>
-                        <p><i class="fas fa-at"></i> Email: {% if registration.email %}{{ registration.email }}{% else %}N/A{% endif %}</p>
-                        <p><i class="fas fa-address-card"></i> Address: {% if registration.address %}{{ registration.address }}{% else %}N/A{% endif %}</p>
-                        <p><i class="fas fa-clock"></i> Session: {% if registration.session %}{{ registration.sessions }}{% else %}N/A{% endif %}</p>
+                        <p id="profile-id"><i class="fas fa-id-card"></i> <span>Idno:</span> {% if registration.idno %}{{ registration.idno }}{% else %}N/A{% endif %}</p>
+                        <p id="profile-name"><i class="fas fa-user"></i> <span>Name:</span> {% if registration.fullname %}{{ registration.fullname }}{% else %}N/A{% endif %}</p>
+                        <p id="profile-course"><i class="fas fa-book"></i> <span>Course:</span> {% if registration.course %}{{ registration.course }}{% else %}N/A{% endif %}</p>
+                        <p id="profile-level"><i class="fas fa-sort-numeric-up-alt"></i> <span>Level:</span> {% if registration.level %}{{ registration.level }}{% else %}N/A{% endif %}</p>
+                        <p id="profile-email"><i class="fas fa-at"></i> <span>Email:</span> {% if registration.email %}{{ registration.email }}{% else %}N/A{% endif %}</p>
+                        <p id="profile-address"><i class="fas fa-address-card"></i> <span>Address:</span> {% if registration.address %}{{ registration.address }}{% else %}N/A{% endif %}</p>
+                        <p id="profile-session"><i class="fas fa-clock"></i> <span>Session:</span> {% if registration.session %}{{ registration.sessions }}{% else %}N/A{% endif %}</p>
                         <hr>
                         <p>Description:</p>
-                        <p>{% if registration.description %}{{ registration.profiledescription }}{% else %}N/A{% endif %}</p>
+                        <p id="profile-description">{% if registration.profiledescription %}{{ registration.profiledescription }}{% else %}N/A{% endif %}</p>
 
                         <div class="mt-4 text-end">
                             <button class="btn btn-primary" onclick="toggleEdit(true)"><i class="fas fa-edit"></i> Edit
@@ -68,8 +68,7 @@
                     <div id="profile-edit" style="display: none;">
                         <h5 class="card-title">Edit Profile</h5>
                         <hr>
-                        <form id="">
-                            {% csrf_token %}
+                        <form>
                             <div class="row">
                                 <div class="col-md-4">
                                     <label>First Name</label>
@@ -91,7 +90,7 @@
                             <div class="row mt-3">
                                 <div class="col-md-6">
                                     <label>Email</label>
-                                    <input id="email" ype="email" name="email" value="{{ registration.email }}"
+                                    <input id="email" type="email" name="email" value="{{ registration.email }}"
                                         class="form-control">
                                 </div>
 
@@ -133,14 +132,13 @@
                             <div class="mt-3">
                                 <label>Profile Description</label>
                                 <textarea id="profiledescription" name="profiledescription" class="form-control"
-                                    rows="4"
+                                    rows="4" style="resize: none;"
                                     placeholder="Tell us something about yourself...">{{ registration.profiledescription }}</textarea>
                             </div>
 
                             <div class="mt-4 text-end">
-                                <button type="submit" class="btn btn-success" onclick="updateProfile()"><i
-                                        class="fas fa-save"></i> Save
-                                    Changes</button>
+                                <button type="button" class="btn btn-success" onclick="updateProfile()"><i
+                                        class="fas fa-save"></i> Save Changes</button>
                                 <button type="button" class="btn btn-secondary" onclick="toggleEdit()"><i
                                         class="fas fa-times"></i> Cancel</button>
                             </div>
@@ -173,24 +171,31 @@
                 "X-CSRFToken": "{{ csrf_token }}"
             }
         })
-            .then(response => response.json())
-            .then(data => {
-                if (data.profilepicture) {
-                    console.log("Profile picture updated successfully.");
-                    location.reload();
+            .then(response => {
+                return response.json().then(data => ({
+                    status: response.status,
+                    body: data
+                }));
+            })
+            .then(({ status, body }) => {
+                if (status >= 200 && status < 300) {
+                    RenderSuccessDiv(document.getElementById('profile-container'), body);
                 } 
-                else if (data.errors) {
-                    for (let field in data.errors) {
-                        let errorDiv = document.createElement('div');
-                        errorDiv.addClassList = ('alert', 'alert-danger', 'mb-1', 'small');
-                        errorDiv.textContent = `${field.toUpperCase()}: ${data.errors[field]}`;
-                        document.getElementById('profile-container').insertAdjacentElement(errorDiv);
-                    }
+                else {
+                    RenderErrorDiv(document.getElementById('profile-container'), body);
                 }
             })
             .catch(error => {
                 console.log("Failed to update profile picture: ", error);
             });
+    }
+</script>
+
+<!-- JavaScript to Toggle Between View and Edit Mode -->
+<script>
+    function toggleEdit(editMode) {
+        document.getElementById('profile-view').style.display = editMode ? 'none' : 'block';
+        document.getElementById('profile-edit').style.display = editMode ? 'block' : 'none';
     }
 </script>
 
@@ -200,6 +205,13 @@
     function updateProfile() {
         let idno = "{{ registration.idno }}";
         let url = `/profile/${idno}`;
+
+        let name_el = document.querySelector("#profile-name");
+        let email_el = document.querySelector("#profile-email");
+        let course_el = document.querySelector("#profile-course");
+        let level_el = document.querySelector("#profile-level");
+        let add_el = document.querySelector("#profile-address");
+        let desc_el = document.querySelector("#profile-description");
 
         let data = {
             firstname: document.getElementById("fname").value,
@@ -212,6 +224,7 @@
             profiledescription: document.getElementById("profiledescription").value
         };
 
+
         fetch(url, {
             method: 'PATCH',
             headers: {
@@ -221,17 +234,27 @@
             body: JSON.stringify(data)
         })
             .then(response => {
-                if (response.ok) {
-                    return response.json();
-                }
-                throw new Error("Failed to update profile.");
+                return response.json().then(data => ({
+                    status: response.status,
+                    body: data
+                }));
             })
-            .then(data => {
-                console.log("Profile updated successfully.");
-                location.reload();
+            .then(({ status, body }) => {
+                if(status >= 200 && status < 300) {
+                    RenderSuccessDiv(document.querySelector('#profile-container'), body);
+                    name_el.innerHTML = `<i class="fas fa-user"></i> Name: ${data.lastname}, ${data.firstname} ${data.middlename}`;
+                    email_el.innerHTML = `<i class="fas fa-at"></i> Email: ${data.email}`;
+                    course_el.innerHTML = `<i class="fas fa-book"></i> Course: ${data.course}`;
+                    level_el.innerHTML = `<i class="fas fa-sort-numeric-up-alt"></i> Level: ${data.level}`;
+                    add_el.innerHTML = `<i class="fas fa-address-card"></i> Address: ${data.address}`;
+                    desc_el.textContent = `${data.profiledescription}`;
+                    toggleEdit();
+                } else {
+                    RenderErrorDiv(document.querySelector('#profile-container'), body);
+                }
             })
             .catch(error => {
-                console.log("Error updating profile: ", error);
+                console.log("error: ", error);
             });
     }
 </script>
@@ -273,15 +296,6 @@
     });
 </script>
 
-
-<!-- JavaScript to Toggle Between View and Edit Mode -->
-<script>
-    function toggleEdit(editMode) {
-        document.getElementById('profile-view').style.display = editMode ? 'none' : 'block';
-        document.getElementById('profile-edit').style.display = editMode ? 'block' : 'none';
-    }
-</script>
-
 <!-- Modern Styling -->
 <style>
     .profile-image-container {
@@ -290,7 +304,7 @@
         margin: 0 auto;
         border-radius: 50%;
         overflow: hidden;
-        border: 1px solid #000;
+        border-width: 0px;
         /* Changed border to black */
         box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
     }
@@ -302,7 +316,8 @@
     }
 
     .file-upload-area {
-        border: 2px dashed #000;
+        border-width: 2px;
+        border-style: dashed;
         /* Changed border to black */
         padding: 20px;
         text-align: center;

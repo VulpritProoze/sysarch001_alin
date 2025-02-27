@@ -11,7 +11,10 @@ class Registration(models.Model):
     email = models.EmailField(max_length=80, null=True, blank=True)
     address = models.CharField(max_length=255, null=True, blank=True)
     sessions = models.IntegerField(default=30, null=True, blank=True)
-    profilepicture = models.ImageField(upload_to="profiles/", default="profiles/default.jpg", blank=True, null=True)
+    profilepicture_og = models.ImageField(upload_to="profiles/", default="profiles/default.jpg", blank=True, null=True)
+    profilepicture_lg = models.ImageField(upload_to="profiles/", default="profiles/default_lg.jpg", blank=True, null=True)
+    profilepicture_md = models.ImageField(upload_to="profiles/", default="profiles/default_md.jpg", blank=True, null=True)
+    profilepicture_sm = models.ImageField(upload_to="profiles/", default="profiles/default_sm.jpg", blank=True, null=True)
     profiledescription = models.TextField(blank=True, null=True)
     username = models.OneToOneField(User, on_delete=models.CASCADE)
 
@@ -21,6 +24,7 @@ class Registration(models.Model):
 class Announcement(models.Model):
     title = models.CharField(max_length=255, blank=True, null=True)
     content = models.TextField(blank=True, null=True)
+    image = models.ImageField(upload_to="announcements/", default="announcements/announcement.jpg", blank=True, null=True)
     date = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     superuser = models.ForeignKey(User, on_delete=models.CASCADE, limit_choices_to={'is_superuser': True})

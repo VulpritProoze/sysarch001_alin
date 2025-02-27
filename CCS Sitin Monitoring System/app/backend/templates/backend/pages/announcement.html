@@ -1,0 +1,165 @@
+{% extends 'backend/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-5">
+    {% csrf_token %}
+    <h5>Announcements</h5>
+    <hr>
+    <button class="btn btn-secondary mb-3" onclick="window.location.href = '{% url "user-announcements" %}'">
+        ← Back to Announcements
+    </button>
+
+    <div id="announcement-body" class="card mt-4 rounded-box">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+                <h6><i class="fas fa-newspaper text-info"></i> {{ announcement.title }}</h6>
+            </div>
+            <hr>
+
+            <!-- Display Announcement Image -->
+            {% if announcement.image %}
+            <div class="text-center">
+                <img src="{{ announcement.image.url }}" alt="Announcement Image" class="img-fluid rounded" style="max-height: 300px; object-fit: cover;">
+            </div>
+            <hr>
+            {% endif %}
+            
+            <p>{{ announcement.content }}</p>
+            <small class="text-muted">Created: {{ announcement.date }}</small>
+            <hr>
+            <p><i class="fas fa-comments text-success"></i> Comments:</p>
+            <form id="comment-form">
+                <div class="form-group">
+                    <textarea class="form-control" placeholder="Write a comment..."
+                        oninput="this.style.height = ''; this.style.height = this.scrollHeight + 'px'" rows="1"
+                        style="resize: none;" required></textarea>
+                    <button type="button"
+                        onclick="PostComment(this.parentElement.parentElement, '{{ announcement.id }}','{{ csrf_token }}')"
+                        class="btn p-1 mt-1 btn-success float-right"><i class="fas fa-paper-plane"></i> Add comment</button>
+                </div>
+            </form>
+            {% for comment in announcementcomments %}
+            <div class="comment-card w-full">
+                <div class="comment-header d-flex align-items-center">
+                    <img src="{{ comment.user.registration.profilepicture_sm.url }}" alt="comment profile pic"
+                        class="comment-pic">
+
+                    <div class="d-flex justify-content-between w-100">
+                        <div class="comment-user-info flex-grow-1">
+                            <strong>{{ comment.user.username }}</strong>
+                            <span class="comment-date">{{ comment.date }}</span>
+                        </div>
+
+                        <!-- Dropdown (Gear Icon) -->
+                        <div class="dropdown ms-auto">
+                            <button class="btn btn-light btn-sm" type="button" id="dropdownMenuButton"
+                                data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <i class="fas fa-cog"></i> <!-- FontAwesome gear icon -->
+                            </button>
+                            <div id="comment-dropdown" class="dropdown-menu dropdown-menu-end rounded-box"
+                                aria-labelledby="dropdownMenuButton">
+                                {% if request.user.id == comment.user.id %}
+                                <button class="dropdown-item small link"
+                                    onclick="toggleEditForm('{{ comment.id }}')">Edit</button>
+                                <button class="dropdown-item text-danger small link"
+                                    onclick="DeleteComment('{{ announcement.id }}', '{{ comment.id }}', '{{ csrf_token }}')">Delete</button>
+                                {% endif %}
+                                <button class="dropdown-item text-danger small link">Report</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Original Comment Display -->
+                <div id="comment-text-{{ comment.id }}" class="comment-body">
+                    <p>{{ comment.comment }}</p>
+                </div>
+
+                <!-- Hidden Edit Form -->
+                <form id="edit-form-{{ comment.id }}" class="edit-comment-form" style="display: none;">
+                    <div class="form-group">
+                        <textarea name="comment" class="form-control" placeholder="Write a comment..."
+                            oninput="this.style.height = ''; this.style.height = this.scrollHeight + 'px'" rows="1"
+                            style="resize: none;" required>{{ comment.comment }}</textarea>
+                    </div>
+                    <div class="mt-2">
+                        <button type="button"
+                            onclick="EditComment(this.parentElement.parentElement, '{{ announcement.id }}', '{{ comment.id }}', '{{ csrf_token }}', toggleEditForm)"
+                            class="btn btn-primary btn-sm">Save</button>
+                        <button type="button" class="btn btn-secondary btn-sm"
+                            onclick="toggleEditForm('{{ comment.id }}')">Cancel</button>
+                    </div>
+                </form>
+            </div>
+
+            {% endfor %}
+            <!-- Pagination Controls -->
+            <div class="pagination mt-3 d-flex flex-column justify-content-center">
+                <nav aria-label="Comment pagination">
+                    <ul class="pagination justify-content-center">
+                        {% if announcementcomments.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1">First</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link"
+                                href="?page={{ announcementcomments.previous_page_number }}">Previous</a>
+                        </li>
+                        {% endif %}
+
+                        <li class="page-item disabled">
+                            <span class="page-link">Page {{ announcementcomments.number }} of {{ announcementcomments.paginator.num_pages }}</span>
+                        </li>
+
+                        {% if announcementcomments.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ announcementcomments.next_page_number }}">Next</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ announcementcomments.paginator.num_pages }}">Last</a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const parent = document.getElementById('announcement-body');
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const alertMessages = JSON.parse(localStorage.getItem('alertMessages'));
+        if (parent) {
+            RenderSuccessDiv(parent, alertMessages);
+        }
+
+        if (alertMessages) {
+            localStorage.removeItem('alertMessages');
+        }
+    });
+
+    function toggleEditForm(commentId) {
+        let commentText = document.getElementById(`comment-text-${commentId}`);
+        let editForm = document.getElementById(`edit-form-${commentId}`);
+
+        if (editForm.style.display === "none") {
+            editForm.style.display = "block";
+            commentText.style.display = "none";
+        } else {
+            editForm.style.display = "none";
+            commentText.style.display = "block";
+        }
+    }
+</script>
+
+<style>
+    #comment-dropdown .dropdown-item:active {
+        background-color: transparent;
+        color: black;
+    }
+</style>
+
+{% endblock %}
