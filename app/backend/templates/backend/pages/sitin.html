@@ -1,0 +1,198 @@
+{% extends 'backend/base.html' %}
+
+{% block title %}
+    Sit-in | CCS Sit-in Monitoring System
+{% endblock title %}
+
+{% block content %}
+<div class="container mt-5">
+    <h4 class="mb-4">Sit-in Requests</h4>
+    <hr>
+
+    <div class="row">
+        <!-- Sit-in Request Form -->
+        <div class="col-lg-4 col-md-12 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h6 class="m-0"><i class="fas fa-edit"></i> Request a Sit-in</h6>
+                    <hr>
+                    <form method="POST">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="purpose" class="form-label">Purpose</label>
+                            <select class="form-control" id="purpose" name="purpose">
+                                <option selected disabled>Choose...</option>
+                                {% for value, label in purpose_choices %}
+                                <option value="{{ value }}">{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="programming_language" class="form-label">Programming Language</label>
+                            <select class="form-control" id="programming_language" name="programming_language">
+                                <option selected disabled>Choose...</option>
+                                {% for value, label in language_choices %}
+                                <option value="{{ value }}">{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="lab_room" class="form-label">Lab Room</label>
+                            <select class="form-control" id="lab_room" name="lab_room">
+                                <option selected disabled>Which lab room do you want to sit in?</option>
+                                {% for value, label in room_choices %}
+                                <option value="{{ value }}">{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="sitin_details" class="form-label">Additional Details</label>
+                            <textarea class="form-control" name="sitin_details" rows="4" style="resize: none;" placeholder="Add sit-in details here like maybe you want a purring cat while coding? (˵ •̀ ᴗ - ˵ )" required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-success w-100"><i class="fas fa-paper-plane"></i> Submit Request</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sit-in Requests Table -->
+        <div class="col-lg-8 col-md-12 mb-4">
+            <div class="card shadow-lg border-0">
+                <div class="card-body">
+                    <h6 class="fw-bold mb-3"><i class="fas fa-list-ul"></i> Pending Sit-in Requests</h6>
+                    <hr>
+                    <div class="table-responsive d-flex flex-column">
+                        <table class="table table-hover align-middle">
+                            <thead class="bg-primary text-white">
+                                <tr>
+                                    <th>#</th>
+                                    <th>Purpose</th>
+                                    <th>Language</th>
+                                    <th>Room</th>
+                                    <th>Date</th>
+                                    <th>Status</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody class="table-light">
+                                {% if sitins %}
+                                {% for sitin in sitins %}
+                                <tr>
+                                    <td>{{ forloop.counter }}</td>
+                                    <td><span class="badge bg-info text-white">{{ sitin.purpose }}</span></td>
+                                    <td>{{ sitin.programming_language }}</td>
+                                    <td>Lab {{ sitin.lab_room }}</td>
+                                    <td>{{ sitin.date }}</td>
+                                    <td><span class="badge bg-warning text-dark">{{ sitin.status }}</span></td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-danger rounded-circle">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-secondary rounded-circle rounded-circle-info" data-text="{{ sitin.sitin_details }}">
+                                            <i class="fas fa-info-circle"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                                {% else %}
+                                <tr>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                        {% if sitins %}
+                        {% else %}
+                        <div class="small text-center">Woah! you have no pending sit-ins, apparently... ｡°(°.◜ᯅ◝°)°｡</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Tooltip Container -->
+    <div id="info-tooltip" class="info-tooltip"></div>
+</div>
+
+<style>
+    .btn-outline-danger:hover {
+        background-color: #dc3545;
+        color: white;
+    }
+    .btn-outline-secondary:hover {
+        background-color: #6c757d; /* Bootstrap secondary color */
+        color: white;
+    }    
+
+    .table-hover tbody tr:hover {
+        background-color: #f8f9fa;
+    }
+    .rounded-circle {
+        transition: 0.3s ease;
+    }
+    .rounded-circle:hover {
+        background-color: #dc3545;
+        color: white;
+    }
+    .rounded-circle-info {
+        transition: 0.3s ease;
+    }
+    
+    .rounded-circle-info:hover {
+        background-color: #6c757d; /* Bootstrap secondary color */
+        color: white;
+    }
+    table {
+        font-size: small;
+    }
+    .info-tooltip {
+        position: absolute;
+        background-color: rgba(0, 0, 0, 0.8);
+        color: white;
+        padding: 5px 10px;
+        font-size: 12px;
+        border-radius: 5px;
+        white-space: nowrap;
+        display: none; /* Hidden by default */
+        z-index: 1000;
+        pointer-events: none; /* Ensures it doesn't interfere with mouse events */
+    }
+    
+</style>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const tooltip = document.getElementById("info-tooltip");
+
+    document.querySelectorAll(".rounded-circle-info").forEach(button => {
+        button.addEventListener("mouseenter", (e) => {
+            const text = button.getAttribute("data-text") || "No details available"; // Fallback if empty
+            tooltip.innerHTML = "Detail:<br>" + formatText(text, 65);
+            tooltip.style.display = "block";
+        });
+
+        button.addEventListener("mousemove", (e) => {
+            tooltip.style.left = (e.pageX - tooltip.offsetWidth - 10) + "px"; // Move to the left
+            tooltip.style.top = e.pageY - 30 + "px"; // Offset above cursor
+        });
+
+        button.addEventListener("mouseleave", () => {
+            tooltip.style.display = "none";
+        });
+    });
+});
+
+function formatText(text, limit) {
+    return text.match(new RegExp(`.{1,${limit}}`, 'g')).join("<br>");
+}
+</script>
+    
+    
+
+{% endblock %}

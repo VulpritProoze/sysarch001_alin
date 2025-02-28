@@ -16,6 +16,7 @@ urlpatterns = [
     path('announcements/<int:announcement_id>/comments/', AnnouncementCommentCreateView.as_view(), name='user-announcementcomment-create'),
     path('announcements/<int:announcement_id>/comments/<int:pk>', AnnouncementCommentUpdateDeleteView.as_view(), name="user-announcementcomment-updatedelete"),
     path('reservation/', views.reservation, name='user-reservation'),
+    path('sitin/', views.sitin, name='user-sitin'),
     path('sitin_history/', views.sitin_history, name='user-sitin_history'),
     path('sessions/', views.sessions, name='user-sessions'),
 ]

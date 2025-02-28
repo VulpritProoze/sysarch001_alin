@@ -1,4 +1,11 @@
-{% extends 'backend/base.html' %} {% load static %} {% block content %}
+{% extends 'backend/base.html' %} 
+{% load static %} 
+
+{% block title %}
+    Home | CCS Sitin Monitoring System
+{% endblock title %}
+
+{% block content %}
 <div class="container mt-5">
     <div class="row">
         <!-- Left Column -->
@@ -37,7 +44,7 @@
                                         <i class="fas fa-address-card"></i> Address: {% if registration.address %}{{ registration.address }}{% else%}N/A{% endif %}
                                     </p>
                                     <p>
-                                        <i class="fas fa-clock"></i> Session: {% if registration.session %}{{ registration.sessions }}{% else%}N/A{% endif %}
+                                        <i class="fas fa-clock"></i> Session: {% if registration.sessions %}{{ registration.sessions }}{% else%}N/A{% endif %}
                                     </p>
                                 </div>
                             </div>

@@ -1,6 +1,10 @@
 {% extends 'backend/base.html' %}
 {% load static %}
 
+{% block title %}
+    Profile | CCS Sitin Monitoring System
+{% endblock title %}
+
 {% block content %}
 <div id="profile-container" class="container mt-5">
     {% csrf_token %}
@@ -53,7 +57,7 @@
                         <p id="profile-level"><i class="fas fa-sort-numeric-up-alt"></i> <span>Level:</span> {% if registration.level %}{{ registration.level }}{% else %}N/A{% endif %}</p>
                         <p id="profile-email"><i class="fas fa-at"></i> <span>Email:</span> {% if registration.email %}{{ registration.email }}{% else %}N/A{% endif %}</p>
                         <p id="profile-address"><i class="fas fa-address-card"></i> <span>Address:</span> {% if registration.address %}{{ registration.address }}{% else %}N/A{% endif %}</p>
-                        <p id="profile-session"><i class="fas fa-clock"></i> <span>Session:</span> {% if registration.session %}{{ registration.sessions }}{% else %}N/A{% endif %}</p>
+                        <p id="profile-session"><i class="fas fa-clock"></i> <span>Session:</span> {% if registration.sessions %}{{ registration.sessions }}{% else %}N/A{% endif %}</p>
                         <hr>
                         <p>Description:</p>
                         <p id="profile-description">{% if registration.profiledescription %}{{ registration.profiledescription }}{% else %}N/A{% endif %}</p>
@@ -97,7 +101,7 @@
                                 <div class="col-md-6">
                                     <label>Course</label>
                                     <select name="course" id="course" class="form-control">
-                                        <option value="" disabled>
+                                        <option selected disabled>
                                             Select Course</option>
                                         {% for value, label in course_choices %}
                                         <option value="{{ value }}" {% if registration.course == value %}selected{% endif%}>
@@ -112,7 +116,7 @@
                                 <div class="col-md-6">
                                     <label>Level</label>
                                     <select name="level" id="level" class="form-control">
-                                        <option value="" disabled>
+                                        <option selected disabled>
                                             Select Level</option>
                                         {% for value, label in level_choices %}
                                         <option value="{{ value }}" {% if registration.level == value %}selected{% endif %}>

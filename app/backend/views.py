@@ -9,9 +9,9 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework.exceptions import ValidationError
 from .serializers import RegistrationSerializer, AnnouncementCommentSerializer
-from .models import Registration, Announcement, AnnouncementComment
+from .models import Registration, Announcement, AnnouncementComment, Sitin
 from .forms import RegistrationForm
-from .choices import COURSE_CHOICES, LEVEL_CHOICES
+from .choices import COURSE_CHOICES, LEVEL_CHOICES, PROGRAMMING_LANGUAGE_CHOICES, SITIN_PURPOSE_CHOICES, LAB_ROOM_CHOICES
 # Pillow Image Compression
 from PIL import Image
 from io import BytesIO
@@ -111,8 +111,6 @@ def home(request):
 
 @login_required
 def profile(request):
-    registration = {}
-
     if request.user.is_authenticated:
         try:
             reg = Registration.objects.get(username=request.user)
@@ -185,18 +183,23 @@ class ProfileUpdateView(generics.RetrieveUpdateAPIView):
 @login_required
 def announcements(request):    
     if request.user.is_authenticated:
-        announcements = Announcement.objects.all()
+        announcements = Announcement.objects.all().order_by('-updated_at')
         announcementcomments = {}
         
         for announcement in announcements:
             comment = list(AnnouncementComment.objects.filter(announcement=announcement).order_by('-updated_at')[:5])
             announcementcomments[announcement.id] = comment
+            
+        # Pagination (uses Paginator)
+        paginator = Paginator(announcements, 3)
+        page_number = request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
         
         try:
             register = Registration.objects.get(username=request.user)
         except Registration.DoesNotExist:
             register = request.user
-        return render(request, 'backend/pages/announcements.html', context={'announcements': announcements, 'announcementcomments': announcementcomments, 'register': register} )
+        return render(request, 'backend/pages/announcements.html', context={'announcements': page_obj, 'announcementcomments': announcementcomments, 'register': register} )
     return redirect('/')
 
 @login_required 
@@ -275,6 +278,21 @@ class AnnouncementCommentUpdateDeleteView(generics.RetrieveUpdateDestroyAPIView)
 def reservation(request):
     if request.user.is_authenticated:
         return render(request, 'backend/pages/reservation.html')
+    return redirect('/')
+
+@login_required
+def sitin(request):
+    if request.user.is_authenticated:
+        try:    
+            sitin = Sitin.objects.filter(user=request.user, status="pending")
+        except Sitin.DoesNotExist:
+            sitin = {}
+        return render(request, 'backend/pages/sitin.html', 
+        context={ 
+            'purpose_choices': SITIN_PURPOSE_CHOICES, 
+            'language_choices': PROGRAMMING_LANGUAGE_CHOICES, 
+            'room_choices': LAB_ROOM_CHOICES, 
+            'sitins': sitin})
     return redirect('/')
 
 @login_required

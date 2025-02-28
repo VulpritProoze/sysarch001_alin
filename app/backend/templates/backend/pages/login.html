@@ -1,8 +1,12 @@
 {% extends 'backend/base.html' %}
-{% block content %}
 {% load crispy_forms_tags %}
 {% load static %}
 
+{% block title %}
+Log-in to CCS Sitin Monitoring System!
+{% endblock title %}
+
+{% block content %}
 <div id="login-wrapper" class="wrapper">
     <div class="login-container m-5 card">
         <div class="card-body">
@@ -14,7 +18,7 @@
             <form method="post">
                 {% csrf_token %}
                 {{ form|crispy }}
-                <button class="btn">Log-in</button>
+                <button class="btn btn-success">Log-in</button>
                 <p class="text-center">
                     New user?
                     <a href="{% url 'register' %}">Register</a>

@@ -1,10 +1,14 @@
 {% extends 'backend/base.html' %}
 {% load static %}
 
+{% block title %}
+    {{ announcement.title }} | CCS Sitin Monitoring System
+{% endblock title %}
+
 {% block content %}
 <div class="container mt-5">
     {% csrf_token %}
-    <h5>Announcements</h5>
+    <h4>Announcements</h4>
     <hr>
     <button class="btn btn-secondary mb-3" onclick="window.location.href = '{% url "user-announcements" %}'">
         ← Back to Announcements
@@ -42,6 +46,8 @@
                         class="btn p-1 mt-1 btn-success float-right"><i class="fas fa-paper-plane"></i> Add comment</button>
                 </div>
             </form>
+        {% with announcement.announcement_set.all as related_comments %}
+        {% if related_comments %}
             {% for comment in announcementcomments %}
             <div class="comment-card w-full">
                 <div class="comment-header d-flex align-items-center">
@@ -95,8 +101,12 @@
                     </div>
                 </form>
             </div>
-
             {% endfor %}
+        {% else %}
+            <p class="text-muted"><i class="fas fa-info-circle"></i> No comments yet.</p>
+        {% endif %}
+        {% endwith %}
+
             <!-- Pagination Controls -->
             <div class="pagination mt-3 d-flex flex-column justify-content-center">
                 <nav aria-label="Comment pagination">
@@ -181,4 +191,4 @@
 
 </style>
 
-{% endblock %}
+{% endblock content %}
