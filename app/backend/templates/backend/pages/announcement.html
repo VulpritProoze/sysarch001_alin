@@ -28,6 +28,9 @@
             <p>{{ announcement.content }}</p>
             <small class="text-muted">Created: {{ announcement.date }}</small>
             <hr>
+            <div id="loading-spinner" class="custom-spinner" style="display: none;" role="status">
+                <span class="sr-only">Loading...</span>
+            </div>
             <p><i class="fas fa-comments text-success"></i> Comments:</p>
             <form id="comment-form">
                 <div class="form-group">
@@ -156,10 +159,26 @@
 </script>
 
 <style>
-    #comment-dropdown .dropdown-item:active {
-        background-color: transparent;
-        color: black;
-    }
+#comment-dropdown .dropdown-item:active {
+    background-color: transparent;
+    color: black;
+}
+
+    /* Custom spinner using CSS */
+.custom-spinner {
+  border: 4px solid #f3f3f3; /* Light grey */
+  border-top: 4px solid #3498db; /* Blue color */
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
 </style>
 
 {% endblock %}

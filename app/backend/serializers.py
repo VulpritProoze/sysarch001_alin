@@ -20,9 +20,10 @@ class AnnouncementCommentSerializer(serializers.ModelSerializer):
         
     def validate(self, data):
         request = self.context.get('request')
+        instance = self.instance    # User passed from front-end
 
-        if self.instance:
-            if self.instance.user != request.user:
-                raise serializers.ValidationError("Only the user related to this comment can update/delete this.")
-        
-        return data    
+        if instance:
+            if instance.user != request.user:
+                raise serializers.ValidationError({"Comment": "Only the user related to this comment can update this."})
+            
+        return data

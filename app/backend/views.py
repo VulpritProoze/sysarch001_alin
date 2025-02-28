@@ -245,7 +245,6 @@ class AnnouncementCommentUpdateDeleteView(generics.RetrieveUpdateDestroyAPIView)
         announcement_id = self.kwargs.get('announcement_id')
         comment_id = self.kwargs.get('pk')
         obj = AnnouncementComment.objects.filter(announcement=announcement_id, id=comment_id)
-        # print(AnnouncementComment.objects.filter(announcement=announcement_id, id=94))
         return obj
     
     def perform_update(self, serializer):
@@ -260,15 +259,15 @@ class AnnouncementCommentUpdateDeleteView(generics.RetrieveUpdateDestroyAPIView)
         self.perform_update(serializer)
         return Response({'Comment': 'Updated successfully.'}, status=status.HTTP_200_OK)
     
+    def perform_destroy(self, instance):
+        logged_user = self.request.user
+        destroying_user = instance.user  # user stored within queryset
+        if logged_user != destroying_user:
+            raise ValidationError({'Not Allowed': 'Only the logged user can delete this comment!'})
+        instance.delete()
+
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
-        logged_user = self.request.user
-        destroying_user = instance.user
-        announcement_id = self.kwargs.get('announcement_id')
-        if logged_user != destroying_user:  # Moved validation here cuz super().destroy(...) is destroying object before validation
-            return Response({'Not Allowed': 'Only the logged user can delete this comment!'}, status=status.HTTP_403_FORBIDDEN)
-        if not AnnouncementComment.objects.filter(announcement=announcement_id, user=destroying_user).exists():
-            return Response({'Comment': 'This comment does not exist.'}, status=status.HTTP_404_NOT_FOUND)
         self.perform_destroy(instance)
         return Response({'Deleted': 'Comment successfully deleted.'}, status=status.HTTP_200_OK)
 

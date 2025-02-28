@@ -85,6 +85,10 @@ async function EditComment(form, announcement_id, comment_id, csrf_token, toggle
             return;
         }
 
+        // Show the loading spinner when the request starts
+        let loadingSpinner = document.getElementById('loading-spinner');
+        loadingSpinner.style.display = 'inline-block';  // Show the spinner
+
         try {
             let response = await fetch(`/announcements/${announcement_id}/comments/${comment_id}`, {
                 method: 'PATCH',
@@ -100,6 +104,9 @@ async function EditComment(form, announcement_id, comment_id, csrf_token, toggle
             let data = await response.json();
             console.log(comment);
 
+            // Hide the loading spinner after receiving the response
+            loadingSpinner.style.display = 'none';
+
             if (response.ok) {
                 // setAlertMessageInLocalStorage(data);
                 displayCommentTag.textContent = comment;
@@ -109,6 +116,8 @@ async function EditComment(form, announcement_id, comment_id, csrf_token, toggle
                 RenderErrorDiv(document.getElementById('announcement-body'), data);
             }
         } catch (error) {
+            // Hide the loading spinner in case of an error
+            loadingSpinner.style.display = 'none';
             console.log("comment update: ", error);
         }
     }
