@@ -18,7 +18,7 @@
 
                     <!-- Modern Profile Picture Display -->
                     <div class="profile-image-container">
-                        <img id="profile-preview" src="{% if registration.profilepicture.url %}{{ registration.profilepicture.url }}{% else %}{% static 'backend/images/default-avatar.jpg' %}{% endif %}" 
+                        <img id="profile-preview" src="{% if registration.profilepicture_md.url %}{{ registration.profilepicture_md.url }}{% else %}{% static 'backend/images/default-avatar.jpg' %}{% endif %}" 
                              alt="Profile Picture" class="profile-img img-fluid rounded-circle shadow-lg border border-primary p-1">
                     </div>
 
@@ -49,10 +49,24 @@
 
                     <!-- Profile View Mode -->
                     <div id="profile-view">
-                        <h5 class="card-title">Profile Information</h5>
+                        <div class="d-flex justify-content-between">
+                            <h5 class="card-title">Profile Information</h5>
+                            <div id="loading-spinner" class="custom-spinner" style="display: none;" role="status">
+                                <span class="sr-only">Loading...</span>
+                            </div>
+                        </div>
                         <hr>
                         <p id="profile-id"><i class="fas fa-id-card"></i> <span>Idno:</span> {% if registration.idno %}{{ registration.idno }}{% else %}N/A{% endif %}</p>
-                        <p id="profile-name"><i class="fas fa-user"></i> <span>Name:</span> {% if registration.fullname %}{{ registration.fullname }}{% else %}N/A{% endif %}</p>
+                        <p id="profile-name">
+                            <i class="fas fa-user"></i> Name: 
+                            {% if registration.lastname or registration.firstname or registration.middlename %}
+                                {{ registration.lastname|default:'' }}{% if registration.lastname and registration.firstname %}, {% endif %}
+                                {{ registration.firstname|default:'' }} 
+                                {{ registration.middlename|default:'' }}
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </p>
                         <p id="profile-course"><i class="fas fa-book"></i> <span>Course:</span> {% if registration.course %}{{ registration.course }}{% else %}N/A{% endif %}</p>
                         <p id="profile-level"><i class="fas fa-sort-numeric-up-alt"></i> <span>Level:</span> {% if registration.level %}{{ registration.level }}{% else %}N/A{% endif %}</p>
                         <p id="profile-email"><i class="fas fa-at"></i> <span>Email:</span> {% if registration.email %}{{ registration.email }}{% else %}N/A{% endif %}</p>
@@ -76,17 +90,17 @@
                             <div class="row">
                                 <div class="col-md-4">
                                     <label>First Name</label>
-                                    <input id="fname" type="text" name="fname" value="{{ registration.fname }}"
+                                    <input id="fname" type="text" name="fname" value="{{ registration.firstname }}"
                                         class="form-control">
                                 </div>
                                 <div class="col-md-4">
                                     <label>Middle Name</label>
-                                    <input id="mname" type="text" name="mname" value="{{ registration.mname }}"
+                                    <input id="mname" type="text" name="mname" value="{{ registration.middlename }}"
                                         class="form-control">
                                 </div>
                                 <div class="col-md-4">
                                     <label>Last Name</label>
-                                    <input id="lname" type="text" name="lname" value="{{ registration.lname }}"
+                                    <input id="lname" type="text" name="lname" value="{{ registration.lastname }}"
                                         class="form-control">
                                 </div>
                             </div>
@@ -184,13 +198,16 @@
             .then(({ status, body }) => {
                 if (status >= 200 && status < 300) {
                     RenderSuccessDiv(document.getElementById('profile-container'), body);
+                    window.location.href = '#';
                 } 
                 else {
                     RenderErrorDiv(document.getElementById('profile-container'), body);
+                    window.location.href = '#';
                 }
             })
             .catch(error => {
                 console.log("Failed to update profile picture: ", error);
+                window.location.href = '#';
             });
     }
 </script>
@@ -208,7 +225,7 @@
 <script>
     function updateProfile() {
         let idno = "{{ registration.idno }}";
-        let url = `/profile/${idno}`;
+        let url = `/profile/${idno}/`;
 
         let name_el = document.querySelector("#profile-name");
         let email_el = document.querySelector("#profile-email");
@@ -228,6 +245,8 @@
             profiledescription: document.getElementById("profiledescription").value
         };
 
+        let spinner = document.querySelector("#loading-spinner");
+        spinner.style.display = 'inline-block';
 
         fetch(url, {
             method: 'PATCH',
@@ -252,13 +271,20 @@
                     level_el.innerHTML = `<i class="fas fa-sort-numeric-up-alt"></i> Level: ${data.level}`;
                     add_el.innerHTML = `<i class="fas fa-address-card"></i> Address: ${data.address}`;
                     desc_el.textContent = `${data.profiledescription}`;
+                    spinner.style.display = 'none';
                     toggleEdit();
+                    window.location.href = '#';
                 } else {
                     RenderErrorDiv(document.querySelector('#profile-container'), body);
+                    spinner.style.display = 'none';
+                    window.location.href = '#';
                 }
             })
             .catch(error => {
                 console.log("error: ", error);
+                RenderErrorDiv(document.querySelector('#profile-container'), error);
+                spinner.style.display = 'none';
+                window.location.href = '#';
             });
     }
 </script>

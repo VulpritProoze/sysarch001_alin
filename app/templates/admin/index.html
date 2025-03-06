@@ -1,0 +1,16 @@
+{% extends "admin/index.html" %}
+{% block content %}
+<h1>Statistics Dashboard</h1>
+
+<div style="display: flex; gap: 20px;">
+    <div style="padding: 20px; border: 1px solid black;">
+        <h3>Total Users: {{ total_users }}</h3>
+    </div>
+    <div style="padding: 20px; border: 1px solid black;">
+        <h3>Total Announcements: {{ total_announcements }}</h3>
+    </div>
+</div>
+<br>
+
+{{ block.super }}
+{% endblock %}

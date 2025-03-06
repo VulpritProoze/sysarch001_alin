@@ -4,11 +4,13 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from rest_framework import generics, status
+from rest_framework.views import APIView
+from rest_framework.renderers import JSONRenderer, TemplateHTMLRenderer
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework.exceptions import ValidationError
-from .serializers import RegistrationSerializer, AnnouncementCommentSerializer
+from .serializers import RegistrationSerializer, AnnouncementCommentSerializer, SitinSerializer
 from .models import Registration, Announcement, AnnouncementComment, Sitin
 from .forms import RegistrationForm
 from .choices import COURSE_CHOICES, LEVEL_CHOICES, PROGRAMMING_LANGUAGE_CHOICES, SITIN_PURPOSE_CHOICES, LAB_ROOM_CHOICES
@@ -70,80 +72,18 @@ def register_view(request):
 
 @login_required
 def home(request):
-    username = request.user.username if request.user.is_authenticated else 'Guest'
-    registration = {}
-    announcements = Announcement.objects.all().order_by('-date')[:5]
-
     if request.user.is_authenticated:
-        try:
-            reg = Registration.objects.get(username=request.user)
-            registration = {
-                'idno': reg.idno,
-                'fullname': ", ".join(filter(None, [reg.lastname, " ".join(filter(None, [reg.firstname, reg.middlename]))])),
-                'fname': reg.firstname,
-                'lname': reg.lastname,
-                'mname': reg.middlename,
-                'course': reg.course,
-                'level': reg.level,
-                'email': reg.email,
-                'address': reg.address,
-                'sessions': reg.sessions,
-                'profilepicture': reg.profilepicture_md,
-            }
-        except Registration.DoesNotExist:
-            registration = {
-                'idno': '',
-                'fullname': '',
-                'fname': '',
-                'lname': '',
-                'mname': '',
-                'course': '',
-                'level': '',
-                'email': '',
-                'address': '',
-                'sessions': '',
-                'profilepicture': 'profiles/default_lg.jpg',
-            }
-
-    if not request.user.is_authenticated:
-        return redirect('/')
-    return render(request, 'backend/pages/home.html', context={ 'username': username, 'registration': registration, 'announcements': announcements })
+        reg = Registration.objects.get(username=request.user)
+        announcements = Announcement.objects.all().order_by('-date')[:5]
+        print(reg.lastname)
+        return render(request, 'backend/pages/home.html', context={ 'registration': reg, 'announcements': announcements })
+    return redirect('/')
 
 @login_required
 def profile(request):
     if request.user.is_authenticated:
-        try:
-            reg = Registration.objects.get(username=request.user)
-            registration = {
-                'idno': reg.idno,
-                'fullname': ", ".join(filter(None, [reg.lastname, " ".join(filter(None, [reg.firstname, reg.middlename]))])),
-                'fname': reg.firstname,
-                'lname': reg.lastname,
-                'mname': reg.middlename,
-                'course': reg.course,
-                'level': reg.level,
-                'email': reg.email,
-                'address': reg.address,
-                'sessions': reg.sessions,
-                'profilepicture': reg.profilepicture_md,    # I wanna use the medium photo
-                'profiledescription': reg.profiledescription,
-            }
-        except Registration.DoesNotExist:
-            registration = {
-                'idno': '',
-                'fullname': '',
-                'fname': '',
-                'lname': '',
-                'mname': '',
-                'course': '',
-                'level': '',
-                'email': '',
-                'address': '',
-                'sessions': '',
-                'profilepicture': 'profiles/default_md.jpg',
-                'profiledescription': '',
-            }
-        return render(request, 'backend/pages/profile.html', context={ 'registration': registration, 'course_choices': COURSE_CHOICES, 'level_choices': LEVEL_CHOICES })
+        reg = Registration.objects.get(username=request.user)
+        return render(request, 'backend/pages/profile.html', context={ 'registration': reg, 'course_choices': COURSE_CHOICES, 'level_choices': LEVEL_CHOICES })
     return redirect('/')
 
 class ProfileUpdateView(generics.RetrieveUpdateAPIView):
@@ -223,14 +163,13 @@ class AnnouncementCommentCreateView(generics.ListCreateAPIView):
 
     def get_queryset(self):
         announcement_id = self.kwargs.get('announcement_id')
+        announcementcomment_id = self.kwargs.get('pk')
         user = self.request.user
-        return AnnouncementComment.objects.filter(announcement=announcement_id, user=user)
+        return AnnouncementComment.objects.filter(announcement=announcement_id, announcementcomment=announcementcomment_id, user=user)
 
     def perform_create(self, serializer):
-        if self.request.data.get('comment') == '':
-            raise ValidationError({'Comment': 'Empty comments are not allowed.'})
         announcement_id = self.kwargs.get('announcement_id')
-        announcement = get_object_or_404(Announcement, id=announcement_id)
+        announcement = Announcement.objects.get(id=announcement_id)
         serializer.save(user=self.request.user, announcement=announcement)
         
     def create(self, request, *args, **kwargs):
@@ -249,11 +188,6 @@ class AnnouncementCommentUpdateDeleteView(generics.RetrieveUpdateDestroyAPIView)
         comment_id = self.kwargs.get('pk')
         obj = AnnouncementComment.objects.filter(announcement=announcement_id, id=comment_id)
         return obj
-    
-    def perform_update(self, serializer):
-        if self.request.data.get('comment') == '':
-            raise ValidationError({'Comment': 'Empty comments are not allowed.'})
-        serializer.save(user=self.request.user)
 
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -261,13 +195,6 @@ class AnnouncementCommentUpdateDeleteView(generics.RetrieveUpdateDestroyAPIView)
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
         return Response({'Comment': 'Updated successfully.'}, status=status.HTTP_200_OK)
-    
-    def perform_destroy(self, instance):
-        logged_user = self.request.user
-        destroying_user = instance.user  # user stored within queryset
-        if logged_user != destroying_user:
-            raise ValidationError({'Not Allowed': 'Only the logged user can delete this comment!'})
-        instance.delete()
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -280,21 +207,47 @@ def reservation(request):
         return render(request, 'backend/pages/reservation.html')
     return redirect('/')
 
-@login_required
-def sitin(request):
-    if request.user.is_authenticated:
-        try:    
-            sitin = Sitin.objects.filter(user=request.user, status="pending")
-        except Sitin.DoesNotExist:
-            sitin = {}
-        return render(request, 'backend/pages/sitin.html', 
-        context={ 
-            'purpose_choices': SITIN_PURPOSE_CHOICES, 
-            'language_choices': PROGRAMMING_LANGUAGE_CHOICES, 
+class SitinHybridView(APIView):
+    permission_classes = [IsAuthenticated]
+    renderer_classes = [TemplateHTMLRenderer, JSONRenderer]
+    template_name = 'backend/pages/sitin.html'
+    
+    def get(self, request, *args, **kwargs):
+        sitins = Sitin.objects.filter(user=request.user, status="pending").order_by('-date')
+        context = {
+            'purpose_choices': SITIN_PURPOSE_CHOICES,
+            'language_choices': PROGRAMMING_LANGUAGE_CHOICES,
             'room_choices': LAB_ROOM_CHOICES, 
-            'sitins': sitin})
-    return redirect('/')
+            'sitins': sitins
+        }
+        if request.accepted_renderer.format == 'html':
+            return Response(context, template_name=self.template_name)
+        serializer = SitinSerializer(sitins, many=True)
+        print(serializer.data)
+        return Response(serializer.data)
 
+    def post(self, request, *args, **kwargs):
+        request.accepted_renderer = JSONRenderer()
+        request.accepted_media_type = "application/json"    # For some reason, this worked
+        
+        serializer = SitinSerializer(data=request.data)
+        if serializer.is_valid():
+            # print(serializer.validated_data)
+            serializer.save(user=request.user, status="pending")
+            return Response({'Sitin': 'Successfully submitted sit-in request'}, status=status.HTTP_201_CREATED)
+        print(serializer.errors)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+class SitinDeleteView(generics.RetrieveDestroyAPIView):
+    queryset = Sitin.objects.all()
+    serializer_class = SitinSerializer
+    permission_classes = [IsAuthenticated]
+    
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        return Response({'Sitin Request': 'Sitin request deleted successfully.'}, status=status.HTTP_200_OK)
+    
 @login_required
 def sitin_history(request):
     if request.user.is_authenticated:

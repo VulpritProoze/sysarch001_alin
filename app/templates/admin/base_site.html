@@ -1,0 +1,12 @@
+{% extends 'admin/base.html' %}
+{% load static %}
+
+{% block title %}
+CCS Sitin Admin Panel
+{% endblock %}
+
+{% block extrahead %}
+<link rel="shortcut icon" href="{% static 'backend/favicon/favicon.ico' %}" />
+{{ block.super }}
+
+{% endblock %}

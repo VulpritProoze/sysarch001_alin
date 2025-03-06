@@ -47,20 +47,20 @@ PROGRAMMING_LANGUAGE_CHOICES = [
 ]
 
 SITIN_PURPOSE_CHOICES = [
-    ("class", "Attending a Class"),
-    ("project", "Working on a Project"),
-    ("exam", "Taking an Exam"),
-    ("research", "Conducting Research"),
-    ("training", "Skill Training / Workshop"),
-    ("software_testing", "Software Testing"),
-    ("network_configuration", "Network Configuration"),
-    ("data_analysis", "Data Analysis"),
-    ("web_development", "Web Development"),
-    ("game_development", "Game Development"),
-    ("ai_ml", "Artificial Intelligence / Machine Learning"),
-    ("database_management", "Database Management"),
-    ("cybersecurity", "Cybersecurity Practice"),
-    ("assignment", "Completing an Assignment"),
+    ("Attending a Class", "Attending a Class"),
+    ("Working on a Project", "Working on a Project"),
+    ("Taking an Exam", "Taking an Exam"),
+    ("Conducting Research", "Conducting Research"),
+    ("Skill Training / Workshop", "Skill Training / Workshop"),
+    ("Software Testing", "Software Testing"),
+    ("Network Configuration", "Network Configuration"),
+    ("Data Analysis", "Data Analysis"),
+    ("Web Development", "Web Development"),
+    ("Game Development", "Game Development"),
+    ("Artificial Intelligence / Machine Learning", "Artificial Intelligence / Machine Learning"),
+    ("Database Management", "Database Management"),
+    ("Cybersecurity Practice", "Cybersecurity Practice"),
+    ("Completing an Assignment", "Completing an Assignment"),
 ]
 
 LAB_ROOM_CHOICES = [
@@ -72,4 +72,10 @@ LAB_ROOM_CHOICES = [
     ('530', 'Room 530'),
     ('544', 'Room 544'),
     ('546', 'Room 546'),
+]
+
+SITIN_STATUS_CHOICES = [
+    ('pending', 'Pending'),
+    ('approved', 'Approved'),
+    ('rejected', 'Rejected'),
 ]

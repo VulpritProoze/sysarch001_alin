@@ -19,17 +19,25 @@
                                 Student Information</h5>
                             <hr />
                             <div class="row">
-                                <div class="col-md-6 col-12 mb-2">
-                                    <img width="100%"
-                                        src="{% if registration.profilepicture and registration.profilepicture.url %}{{ registration.profilepicture.url }}{% else %}{% static 'backend/images/default-avatar.jpg' %}{% endif %}"
-                                        alt="profile picture" class="img-fluid rounded" />
+                                <div class="col-md-6 col-12 mb-2 d-flex justify-content-center">
+                                    <img
+                                        src="{% if registration.profilepicture_md and registration.profilepicture_md.url %}{{ registration.profilepicture_md.url }}{% else %}{% static 'backend/images/default-avatar.jpg' %}{% endif %}"
+                                        alt="profile picture" class="img-fluid rounded" 
+                                        style="max-height: 400px;"/>
                                 </div>
                                 <div class="col-md-6 col-12">
                                     <p>
                                         <i class="fas fa-id-card"></i> Id #: {% if registration.idno%}{{ registration.idno }}{% else %}N/A{% endif %}
                                     </p>
                                     <p>
-                                        <i class="fas fa-user"></i> Name: {% if registration.fullname %}{{ registration.fullname }}{% else%}N/A{% endif %}
+                                        <i class="fas fa-user"></i> Name: 
+                                        {% if registration.lastname or registration.firstname or registration.middlename %}
+                                            {{ registration.lastname|default:'' }}{% if registration.lastname and registration.firstname %}, {% endif %}
+                                            {{ registration.firstname|default:'' }} 
+                                            {{ registration.middlename|default:'' }}
+                                        {% else %}
+                                            N/A
+                                        {% endif %}
                                     </p>
                                     <p>
                                         <i class="fas fa-book"></i> Course: {% if registration.course %}{{ registration.course }}{% else%}N/A{% endif %}

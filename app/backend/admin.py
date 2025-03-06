@@ -1,8 +1,21 @@
 from django.contrib import admin
 from django.contrib.auth.models import User
-from django.db import models
-from django.forms import Textarea
+from django.template.response import TemplateResponse
 from .models import Registration, Announcement, AnnouncementComment, Sitin
+from .choices import SITIN_STATUS_CHOICES
+
+admin.site.site_header = "CCS Sitin Admin"
+admin.site.index_title = "Welcome to CCS Sitin Admin Panel"
+
+def custom_admin_view(request):
+    context = admin.site.each_context(request)  # Get default admin context
+    context.update({
+        'total_users': User.objects.count(),
+        'total_announcements': Announcement.objects.count(),
+    })
+    return TemplateResponse(request, "admin/index.html", context)
+
+admin.site.index_template = "admin/index.html"
 
 @admin.register(Registration)
 class RegistrationAdmin(admin.ModelAdmin):
@@ -67,6 +80,10 @@ class SitinAdmin(admin.ModelAdmin):
         return None
     get_fullname.short_description = 'Fullname'
     
+    def formfield_for_choice_field(self, db_field, request, **kwargs):
+        if db_field.name == "status":
+            kwargs["choices"] = SITIN_STATUS_CHOICES
+        return super().formfield_for_choice_field(db_field, request, **kwargs)
     
 # admin
 # ganymede14337

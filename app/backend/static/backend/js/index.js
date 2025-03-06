@@ -28,6 +28,18 @@ function RenderSuccessDiv(parentElement, data) {
     });
 }
 
+document.addEventListener('DOMContentLoaded', function () {
+    const alertMessages = JSON.parse(localStorage.getItem('alertMessages'));
+    // Define 'parent' as container to append success message in any html script.
+    if (parent) {
+        RenderSuccessDiv(parent, alertMessages);
+    }
+
+    if (alertMessages) {
+        localStorage.removeItem('alertMessages');
+    }
+});
+
 // POST Comment on Announcement
 // Ang form murag di naman needed
 async function PostComment(form, announcement_id, csrf_token) {
@@ -43,7 +55,7 @@ async function PostComment(form, announcement_id, csrf_token) {
         }
 
         try {
-            let response = await fetch(`/announcements/${announcement_id}/comments/`, {
+            let response = await fetch(`/announcements/${id}/comments/`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -53,7 +65,7 @@ async function PostComment(form, announcement_id, csrf_token) {
                     comment: comment,
                 })
             });
-
+            
             let data = await response.json();
 
             if (response.ok) {
@@ -64,7 +76,9 @@ async function PostComment(form, announcement_id, csrf_token) {
                 RenderErrorDiv(document.getElementById('announcement-body'), data);
             }
         } catch (error) {
-            console.log('Fetch error:', error);
+            RenderErrorDiv(document.getElementById('announcement-body'), {'Error': 'Failed to connect to the server. Please try again.'});
+        } finally {
+            window.location.href = "#";
         }
     }
 }
@@ -85,12 +99,8 @@ async function EditComment(form, announcement_id, comment_id, csrf_token, toggle
             return;
         }
 
-        // Show the loading spinner when the request starts
-        let loadingSpinner = document.getElementById('loading-spinner');
-        loadingSpinner.style.display = 'inline-block';  // Show the spinner
-
         try {
-            let response = await fetch(`/announcements/${announcement_id}/comments/${comment_id}`, {
+            let response = await fetch(`/announcements/${announcement_id}/comments/${comment_id}/`, {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
@@ -102,10 +112,6 @@ async function EditComment(form, announcement_id, comment_id, csrf_token, toggle
             });
 
             let data = await response.json();
-            console.log(comment);
-
-            // Hide the loading spinner after receiving the response
-            loadingSpinner.style.display = 'none';
 
             if (response.ok) {
                 // setAlertMessageInLocalStorage(data);
@@ -116,22 +122,21 @@ async function EditComment(form, announcement_id, comment_id, csrf_token, toggle
                 RenderErrorDiv(document.getElementById('announcement-body'), data);
             }
         } catch (error) {
-            // Hide the loading spinner in case of an error
-            loadingSpinner.style.display = 'none';
-            console.log("comment update: ", error);
+            RenderErrorDiv(document.getElementById('announcement-body'), {'Error': 'Failed to connect to the server. Please try again.'});
+        } finally {
+            window.location.href = "#";
         }
     }
 }
 
 async function DeleteComment(announcement_id, comment_id, csrf_token) {
     try {
-        let res = await fetch(`/announcements/${announcement_id}/comments/${comment_id}`, {
+        let res = await fetch(`/announcements/${announcement_id}/comments/${comment_id}/`, {
             method: 'DELETE',
             headers: {
                 'X-CSRFToken': csrf_token
             }
         });
-
         let data = await res.json();
 
         if(res.ok) {
@@ -142,5 +147,8 @@ async function DeleteComment(announcement_id, comment_id, csrf_token) {
         }
     } catch(error) {
         console.log('error: ', error);
+        RenderErrorDiv(document.getElementById('announcement-body'), {'Error': 'Failed to connect to the server. Please try again.'});
+    } finally {
+        window.location.href = "#";
     }
 }
