@@ -78,4 +78,5 @@ SITIN_STATUS_CHOICES = [
     ('pending', 'Pending'),
     ('approved', 'Approved'),
     ('rejected', 'Rejected'),
+    ('finished', 'Finished'),
 ]

@@ -1,16 +1,224 @@
 {% extends "admin/index.html" %}
 {% block content %}
-<h1>Statistics Dashboard</h1>
 
-<div style="display: flex; gap: 20px;">
-    <div style="padding: 20px; border: 1px solid black;">
-        <h3>Total Users: {{ total_users }}</h3>
+<!-- Custom Styles -->
+<style>
+    * {
+        box-sizing: border-box !important;
+        padding: 0;
+    }
+
+    /* General Layout */
+    body {
+        font-family: Arial, sans-serif;  /* Custom font */
+        background-color: #f4f4f9;  /* Light background for the page */
+        color: #212529;  /* Dark gray text for the body */
+        margin: 0;
+        padding: 0;
+    }
+    
+    .container {
+        margin: 30px auto;  /* Center container and add space from top */
+        padding: 20px;
+    }
+
+    #content {
+        width: 100% !important;
+        margin: 0;
+        display: flex;
+        flex-direction: column; /* Change to column direction for flex */
+        gap: 20px; /* Optional: to provide space between items */
+        margin-bottom: 20px; /* Optional: space below the container */
+    }
+
+    .container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 100%;
+    }
+
+    #content-main, #content-related {
+        width: 100%; /* Ensure they are taking full width in the column */
+        margin: 0;
+    }
+
+
+    /* Header Styles */
+    h2 {
+        color: #343a40;
+        text-align: center;
+        font-size: 2.5em;
+        margin-bottom: 10px;
+    }
+
+    h3 {
+        color: #343a40;
+        font-size: 1.8em;
+        margin-bottom: 15px;
+    }
+
+    .card-title {
+        color: #343a40;
+        font-size: 1.5em;
+    }
+
+    .text-center {
+        text-align: center;
+    }
+
+    /* List Group */
+    .list-group {
+        list-style-type: none;
+        padding: 0;
+    }
+
+    .list-group-item {
+        background-color: #fff;
+        margin: 8px 0;
+        padding: 12px;
+        border-radius: 4px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        transition: background-color 0.3s ease;
+    }
+
+    .list-group-item:hover {
+        background-color: #f8f9fa;
+    }
+
+    /* Card Layout */
+    .card {
+        background-color: #fff;
+        border-radius: 8px;
+        box-shadow: 0 1px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    .dashboard-card {
+        width: 800px; /* Default width for larger screens */
+        margin: 0 auto; /* Center the card horizontally */
+    }
+
+    /* Medium Screens (Tablets) */
+    @media (max-width: 992px) {
+        .dashboard-card {
+            width: 400px; /* Set width to 80% for medium screens */
+        }
+    }
+
+    /* Small Screens (Mobile Devices) */
+    @media (max-width: 576px) {
+        .dashboard-card {
+            width: 200px; /* Set width to 95% for small screens */
+        }
+    }
+
+    .card-body {
+        padding: 20px;
+    }
+
+    /* Pie Chart Container */
+    .chart-container {
+        width: 100%;
+        text-align: center;
+        margin-top: 20px;
+    }
+
+    /* Spacing for the Rows */
+    .row {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+    }
+
+    .col-md-6 {
+        width: 48%;
+        margin-bottom: 20px;
+    }
+
+    /* Styling the Pie Chart */
+    canvas {
+        max-width: 100%;
+        height: auto;
+    }
+
+    /* Custom Buttons (optional) */
+    .btn {
+        background-color: #007bff;
+        color: white;
+        padding: 10px 20px;
+        border-radius: 4px;
+        text-align: center;
+        cursor: pointer;
+    }
+
+    .btn:hover {
+        background-color: #0056b3;
+    }
+</style>
+
+<div class="container">
+    <h2>Welcome to the CCS Sitin Administration Panel</h2>
+    <p class="text-center">Here is the latest overview of your admin dashboard:</p>
+
+    <!-- Dashboard Stats - Pie Chart -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card dashboard-card">
+                <div class="card-body">
+                    <h5 class="card-title">Dashboard Stats Overview</h5>
+                    <div class="chart-container">
+                        <canvas id="combinedStatsChart" height="300"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-    <div style="padding: 20px; border: 1px solid black;">
-        <h3>Total Announcements: {{ total_announcements }}</h3>
-    </div>
-</div>
-<br>
+
+<!-- Chart.js Library -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    // Pie Chart for Combined Stats
+    var ctx = document.getElementById('combinedStatsChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: ['Total Users', 'Total Announcements', 'Total Comments', 'Total Sitins'],
+            datasets: [{
+                label: 'Dashboard Stats Breakdown',
+                data: [{{ total_users }}, {{ total_announcements }}, {{ total_comments }}, {{ total_sitins }}],
+                backgroundColor: [
+                    '#007bff', // Blue
+                    '#28a745', // Green
+                    '#ffc107', // Yellow
+                    '#dc3545'  // Red
+                ],
+                borderColor: [
+                    '#0056b3', // Dark Blue Border
+                    '#218838', // Dark Green Border
+                    '#e0a800', // Dark Yellow Border
+                    '#c82333'  // Dark Red Border
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'top',
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(tooltipItem) {
+                            return tooltipItem.label + ': ' + tooltipItem.raw; // Display the actual value in tooltips
+                        }
+                    }
+                }
+            }
+        }
+    });
+</script>
 
 {{ block.super }}
 {% endblock %}
