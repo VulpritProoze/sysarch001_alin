@@ -9,7 +9,7 @@ from rest_framework.renderers import JSONRenderer, TemplateHTMLRenderer
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
-from rest_framework.exceptions import ValidationError
+# from rest_framework.exceptions import ValidationError
 from .serializers import RegistrationSerializer, AnnouncementCommentSerializer, SitinSerializer
 from .models import Registration, Announcement, AnnouncementComment, Sitin
 from .forms import RegistrationForm
@@ -34,16 +34,7 @@ class CustomLoginView(LoginView):
 
 class CustomLogoutView(LogoutView):
     template_name = 'backend/pages/logout.html'
-
     def dispatch(self, request, *args, **kwargs):
-        if request.user.is_authenticated:
-            try:
-                registration = Registration.objects.get(username=request.user)
-                if registration.sessions > 0:
-                    registration.sessions -= 1
-                    registration.save()
-            except Registration.DoesNotExist:
-                return redirect('login')
         return super().dispatch(request, *args, **kwargs)
 
 def register_view(request):

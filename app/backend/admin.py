@@ -5,7 +5,6 @@ from django.utils.translation import gettext_lazy as _
 from django.db.models import Count
 from django.db import models
 from .models import Registration, Announcement, AnnouncementComment, Sitin
-from .choices import SITIN_STATUS_CHOICES
 
 class CustomAdminSite(AdminSite):
     def index(self, request, extra_context=None):
@@ -113,8 +112,8 @@ class FinishedSitinFilter(admin.SimpleListFilter):
             return queryset.filter(status="Finished")
         return queryset
 
-class ApprovedSitinFilter(admin.SimpleListFilter):
-    title = _("Approved Sit-ins")
+class CurrentSitinFilter(admin.SimpleListFilter):
+    title = _("Current Sit-ins")
     parameter_name = "approved"
 
     def lookups(self, request, model_admin):
@@ -245,6 +244,7 @@ class FinishedSitinsAdmin(BaseSitinAdmin):
     def has_add_permission(self, request):
         return False
 
+# Proxy models
 class SitinRequests(Sitin):
     class Meta:
         proxy = True
@@ -254,8 +254,8 @@ class SitinRequests(Sitin):
 class CurrentSitins(Sitin):
     class Meta:
         proxy = True
-        verbose_name = "Approved Sit-in"
-        verbose_name_plural = "Approved Sit-ins"
+        verbose_name = "Current Sit-in"
+        verbose_name_plural = "Current Sit-ins"
 
 class FinishedSitins(Sitin):
     class Meta:
