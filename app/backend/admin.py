@@ -130,6 +130,8 @@ class BaseSitinAdmin(admin.ModelAdmin):
     search_fields = ("user__registration__idno", "user__username", "user__registration__firstname", 
                      "user__registration__middlename", "user__registration__lastname")
     list_filter = ("programming_language", "purpose", "lab_room", "status", "date")
+    list_editable = ('status',)
+    
 
     def get_user_idno(self, obj):
         return obj.user.registration.idno if hasattr(obj.user, "registration") else None
