@@ -1,0 +1,58 @@
+{% extends "admin/change_list.html" %}
+
+{% block content %}
+    <button class="sticky filter-toggle-btn" id="toggle-filter-sidebar" aria-label="Toggle filters">☰ Toggle Filters</button>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const filterPanel = document.getElementById("changelist-filter"); // Sidebar filter
+            const toggleButton = document.getElementById("toggle-filter-sidebar");
+            
+            if (filterPanel && toggleButton) {
+                toggleButton.addEventListener("click", function () {
+                    const isHidden = filterPanel.style.display === "none" || filterPanel.style.display === "";
+                    filterPanel.style.display = isHidden ? "block" : "none";
+                    
+                    // Save state in localStorage (like Django admin nav toggle)
+                    localStorage.setItem("filterSidebarHidden", !isHidden);
+                });
+
+                // Restore state from localStorage
+                if (localStorage.getItem("filterSidebarHidden") === "true") {
+                    filterPanel.style.display = "none";
+                }
+            }
+        });
+    </script>
+
+    {{ block.super }}
+
+    <style>
+        .filter-toggle-btn {
+            float: right;
+            margin: 10px 0;
+            right: 210px;
+            width: 140px;
+            height: 32px;
+            font-size: 14px;
+            background-color: #205067; /* Your specified color */
+            color: var(--button-fg);
+            border: none;
+            border-radius: 2.5px;
+            cursor: pointer;
+            text-align: center;
+            font-family: var(--font-family-primary);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease-in-out;
+        }
+
+        .filter-toggle-btn:hover {
+            background-color: var(--secondary); /* Slightly lighter */
+        }
+
+        .filter-toggle-btn:active {
+            background-color: var(--default-button-hover-bg); /* Click effect */
+        }
+    </style>
+
+{% endblock %}

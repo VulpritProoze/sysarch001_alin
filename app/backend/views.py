@@ -2,7 +2,9 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.views import LoginView, LogoutView
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.utils import timezone
 from django.core.paginator import Paginator
+from django.http import JsonResponse
 from rest_framework import generics, status
 from rest_framework.views import APIView
 from rest_framework.renderers import JSONRenderer, TemplateHTMLRenderer
@@ -250,6 +252,37 @@ def sessions(request):
     if request.user.is_authenticated:
         return render(request, 'backend/pages/sessions.html')
     return redirect('/')
+
+# Custom admin views
+def approve_sitin(request):
+    if request.method == "POST":
+        sitin_id = request.POST.get("sitin_id")
+        try:
+            sitin = Sitin.objects.get(id=sitin_id)
+            sitin.status = "approved"
+            sitin.save()
+            return JsonResponse({"success": True})
+        except Sitin.DoesNotExist:
+            return JsonResponse({"success": False, "error": "Sitin not found"})
+    return JsonResponse({"success": False, "error": "Invalid request method"})
+
+def logout_sitin(request):
+    if request.method == "POST":
+        sitin_id = request.POST.get("sitin_id")
+        try:
+            sitin = Sitin.objects.get(id=sitin_id)
+            sitin.status = "finished"  # Ensure this field exists in your model
+            sitin.logout_date = timezone.now()
+            if hasattr(sitin.user, "registration"):
+                registration = sitin.user.registration
+                if registration.sessions > 0:
+                    registration.sessions -= 1
+                    registration.save(update_fields=["sessions"])
+            sitin.save()
+            return JsonResponse({"success": True, "message": "Student logged out successfully."})
+        except Sitin.DoesNotExist:
+            return JsonResponse({"success": False, "message": "Sit-in record not found."}, status=404)
+    return JsonResponse({"success": False, "message": "Invalid request."}, status=400)
 
 def error_404_view(request, exception):
     return render(request, 'backend/pages/404.html')

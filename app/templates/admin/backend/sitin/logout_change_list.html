@@ -1,0 +1,306 @@
+<!-- your_app/templates/admin/your_app/sitin/change_list.html -->
+{% extends "admin/change_list.html" %}
+{% load i18n admin_urls static admin_list %}
+
+{{ block.super }}
+{% block content %}
+
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+
+<style>
+    .table-container {
+        overflow-x: auto; /* Enable horizontal scrolling */
+        width: 100%; /* Ensure the container takes full width */
+        margin-bottom: 20px; /* Add some spacing between tables */
+    };
+
+    .table-container table {
+        width: 100%; /* Ensure the table takes full width */
+        border-collapse: collapse; /* Remove spacing between cells */
+    }
+    
+    .table-container th, .table-container td {
+        padding: 8px !important; /* Add padding to cells */
+        text-align: left; /* Align text to the left */
+        white-space: nowrap; /* Prevent text from wrapping */
+    }
+
+    .modal * {
+        font-size: small;
+    }
+
+    h1 {
+        font-size: 2em;
+        font-weight: normal;
+        margin: 0.67em 0;
+    }
+    
+    h2 {
+        font-size: 1.5em;
+        font-weight: normal;
+        margin: 0.83em 0;
+    }
+    
+    h3 {
+        font-size: 1.17em;
+        font-weight: normal;
+        margin: 1em 0;
+    }
+    
+    h4 {
+        font-size: 1em;
+        font-weight: normal;
+        margin: 1.33em 0;
+    }
+    
+    h5 {
+        font-size: 0.83em;
+        font-weight: normal;
+        margin: 1.67em 0;
+    }
+    
+    h6 {
+        font-size: 0.67em;
+        font-weight: normal;
+        margin: 2.33em 0;
+    }
+
+    input::placeholder, 
+    textarea::placeholder {
+        font-size: small !important; /* Adjust size as needed */
+        opacity: 0.7; /* Keeps it readable but subtle */
+    }
+
+    .btn {
+        font-size: small !important;
+    }
+
+    /* override bootstrap modification on captions */
+    table caption {
+        display: table-caption;
+        caption-side: top;
+    }
+    
+
+
+</style>
+
+<!-- Bootstrap Confirmation Modal -->
+<div class="modal fade" id="confirmLogoutModal" tabindex="-1" aria-labelledby="showConfirmLogoutModal" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="confirmLogoutLabel">Confirm Log-out</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>                
+            </div>
+            <div class="modal-body">
+                Are you sure you want to log-out this student?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmLogoutBtn">Log-out</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+  <div id="content-main">
+    <div class="module{% if cl.has_filters %} filtered{% endif %}" id="changelist">
+      <div class="changelist-form-container">
+        {% block search %}{% search_form cl %}{% endblock %}
+        {% block date_hierarchy %}{% if cl.date_hierarchy %}{% date_hierarchy cl %}{% endif %}{% endblock %}
+
+            <!-- Table for All Sit-ins -->
+            <h3>Current Sit-ins</h3>
+            <div class="results table-container">
+                <table id="result_list_all">
+                    <thead>
+                        <tr>
+                            <th>Student ID</th>
+                            <th>Fullname</th>
+                            <th>Purpose</th>
+                            <th>Lab Room</th>
+                            <!-- <th>Status</th> -->
+                            <th>Log-out Student?</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for sitin in cl.result_list %}
+                            <tr class="{% cycle 'row1' 'row2' %}">
+                                <td>{{ sitin.user.registration.idno }}</td>
+                                <td>{{ sitin.user.registration.firstname }} {{ sitin.user.registration.lastname }}</td>
+                                <td>{{ sitin.purpose }}</td>
+                                <td>{{ sitin.lab_room }}</td>
+                                <!-- <td>{{ sitin.status }}</td> -->
+                                <td>
+                                    <button class="btn btn-danger btn-sm shadow-sm animate-btn" onclick="showConfirmLogoutModal('{{ sitin.id }}')">
+                                        <i class="fas fa-door-open"></i> Log-out
+                                    </button>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>    
+            </div>
+
+            {% block pagination %}{% pagination cl %}{% endblock %}
+
+      {% block filters %}
+        {% if cl.has_filters %}
+          <nav id="changelist-filter" aria-labelledby="changelist-filter-header">
+            <h2 id="changelist-filter-header">{% translate 'Filter' %}</h2>
+            {% if cl.is_facets_optional or cl.has_active_filters %}<div id="changelist-filter-extra-actions">
+              {% if cl.is_facets_optional %}<h3>
+                {% if cl.add_facets %}<a href="{{ cl.remove_facet_link }}" class="hidelink">{% translate "Hide counts" %}</a>
+                {% else %}<a href="{{ cl.add_facet_link }}" class="viewlink">{% translate "Show counts" %}</a>{% endif %}
+              </h3>{% endif %}
+              {% if cl.has_active_filters %}<h3>
+                <a href="{{ cl.clear_all_filters_qs }}">&#10006; {% translate "Clear all filters" %}</a>
+              </h3>{% endif %}
+            </div>{% endif %}
+            {% for spec in cl.filter_specs %}{% admin_list_filter cl spec %}{% endfor %}
+          </nav>
+        {% endif %}
+      {% endblock %}
+    </div>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+  <style>
+    .container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); /* Flexible columns */
+      gap: 20px; /* Space between charts */
+      justify-content: center; /* Center align items */
+      padding: 20px;
+    }
+
+     h4 {
+      text-align: center;
+     }
+
+    .chart-container {
+        width: 400px;  /* Default size */
+        max-width: 100%;
+        margin: 5px auto;  /* Center align */
+    }
+
+    @media (max-width: 992px) {
+        .chart-container {
+            width: 200px; /* Set width to 80% for medium screens */
+        }
+    }
+
+    /* Small Screens (Mobile Devices) */
+    @media (max-width: 576px) {
+        .chart-container {
+            width: 150px; /* Set width to 95% for small screens */
+        }
+    }
+  </style>
+
+  <script>
+    sitin_id = null;
+
+    function showConfirmLogoutModal(id) {
+        sitin_id = id;
+        let modal = new bootstrap.Modal(document.getElementById('confirmLogoutModal'));
+        modal.show();
+    }
+
+    document.getElementById("confirmLogoutBtn").addEventListener("click", function () {
+        LogoutStudent();
+    });
+
+    async function LogoutStudent() {
+        console.log('called')
+        if (sitin_id) {
+            const data = new URLSearchParams();
+            data.append("sitin_id", sitin_id);
+            data.append("csrfmiddlewaretoken", "{{ csrf_token }}");
+
+            const url = "{% url 'admin-logout-sitin' %}";
+            const header = {
+                'method': 'POST',
+                'headers': {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                'body': data
+            };
+
+            try {
+                const response = await fetch(url, header);
+                const data = await response.json();
+
+                if (response.ok) {
+                    localStorage.setItem('alertMessages', JSON.stringify({ "Sit-in": "Student has been successfully logged-out." }));
+                    window.location.href = '#';
+                    window.location.reload();
+                } else {
+                    console.log('idk what went wrong bruh');
+                    console.log(data);
+                    RenderErrorDiv(parent, {"Sitin": "Failed to log-out student."})
+                }
+
+            } catch (error) {
+                console.log('error', error);
+                RenderErrorDiv(parent,{"Sitin": "Cannot connect to the server. Please try again."})
+            }
+        }
+    }
+
+    const parent = document.querySelector("#main");
+
+    function RenderSuccessDiv(parentElement, data) {    
+        for (let field in data) {
+            let successDiv = document.createElement('div');
+            let text = document.createElement('span');
+            successDiv.classList.add('custom-alerts','alert', 'alert-success', 'mb-1', 'small', 'fade-in');
+            text.textContent = `${field.toUpperCase()}: ${data[field]}`;
+            successDiv.appendChild(text);
+            parentElement.insertAdjacentElement("beforebegin", successDiv);
+        }
+    
+        document.querySelectorAll('.custom-alerts').forEach(el => {
+            setTimeout(() => el.remove(), 10000);
+        });
+    }
+
+    function RenderErrorDiv(parentElement, data) {    
+        for (let field in data) {
+            let errorDiv = document.createElement('div');
+            let text = document.createElement('span');
+            errorDiv.classList.add('custom-alerts', 'alert', 'alert-danger', 'mb-1', 'small', 'fade-in');
+            text.textContent = `${field.toUpperCase()}: ${data[field]}`;
+            errorDiv.appendChild(text);
+            parentElement.insertAdjacentElement("beforebegin", errorDiv);
+        }
+    
+        document.querySelectorAll('.custom-alerts').forEach(el => {
+            setTimeout(() => el.remove(), 10000);
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const alertMessages = JSON.parse(localStorage.getItem('alertMessages'));
+        // Define 'parent' as container to append success message in any html script.
+        if (parent) {
+            RenderSuccessDiv(parent, alertMessages);
+        }
+    
+        if (alertMessages) {
+            localStorage.removeItem('alertMessages');
+        }
+    });
+
+  </script>
+{% endblock %}
+
+{{ block.super}}

@@ -20,7 +20,7 @@ class Registration(models.Model):
     username = models.OneToOneField(User, on_delete=models.CASCADE)
 
     def __str__(self):
-        return f"{self.idno}, {self.username}, {self.firstname} {self.lastname}"
+        return f"{self.idno}, {self.firstname} {self.lastname}"
 
 class Announcement(models.Model):
     title = models.CharField(max_length=255, blank=True, null=True)
@@ -31,7 +31,7 @@ class Announcement(models.Model):
     superuser = models.ForeignKey(User, on_delete=models.CASCADE, limit_choices_to={'is_superuser': True})
 
     def __str__(self):
-        return f"{self.title}, {self.superuser.username}"
+        return f"{self.title}, by {self.superuser.username}"
     
 class AnnouncementComment(models.Model):
     comment = models.TextField(blank=True, null=True)
@@ -41,7 +41,7 @@ class AnnouncementComment(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     def __str__(self):
-        return f"{self.comment}, {self.user.username}"
+        return f"{self.comment}, by {self.user.username}"
     
 class Sitin(models.Model):
     purpose = models.CharField(max_length=255, choices=SITIN_PURPOSE_CHOICES, blank=True, null=True)
@@ -50,10 +50,11 @@ class Sitin(models.Model):
     sitin_details = models.TextField(blank=True, null=True)
     status = models.CharField(max_length=50, choices=SITIN_STATUS_CHOICES, blank=True, null=True) # pending, approved, denied
     date = models.DateTimeField(auto_now_add=True)
+    logout_date = models.DateTimeField(null=True, blank=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     
     def __str__(self):
-        return f"{self.user.username}, {self.lab_room}, {self.status}"
+        return f"By {self.user.username}, at {self.lab_room}, status: {self.status}"
 
 
 
