@@ -54,7 +54,8 @@
             <p>{{ announcement.content }}</p>
             <small class="text-muted">Created: {{ announcement.date }}</small>
             <hr>
-            <p><i class="fas fa-comments text-success"></i> Comments:</p>
+            <p>
+                <i class="fas fa-comments text-primary"></i> Comments:</p>
             <form id="comment-form">
                 <div class="form-group">
                     <textarea class="form-control" placeholder="Write a comment..."
@@ -62,7 +63,7 @@
                         style="resize: none;" required></textarea>
                     <button type="button"
                         onclick="PostComment(this.parentElement.parentElement, '{{ announcement.id }}','{{ csrf_token }}')"
-                        class="btn p-1 mt-1 btn-success float-right"><i class="fas fa-paper-plane"></i> Add comment</button>
+                        class="btn p-1 mt-1 btn-primary float-right"><i class="fas fa-paper-plane"></i> Add comment</button>
                 </div>
             </form>
         {% if announcementcomments %}

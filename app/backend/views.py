@@ -20,7 +20,10 @@ from .choices import COURSE_CHOICES, LEVEL_CHOICES, PROGRAMMING_LANGUAGE_CHOICES
 from PIL import Image
 from io import BytesIO
 from django.core.files.base import ContentFile
-
+# Excel File Exporting
+from django.http import HttpResponse
+from .report_styles import create_excel_report
+import os
 
 class CustomLoginView(LoginView):
     template_name = 'backend/pages/login.html'
@@ -260,6 +263,7 @@ def approve_sitin(request):
         try:
             sitin = Sitin.objects.get(id=sitin_id)
             sitin.status = "approved"
+            sitin.sitin_date = timezone.now()
             sitin.save()
             return JsonResponse({"success": True})
         except Sitin.DoesNotExist:
@@ -283,6 +287,29 @@ def logout_sitin(request):
         except Sitin.DoesNotExist:
             return JsonResponse({"success": False, "message": "Sit-in record not found."}, status=404)
     return JsonResponse({"success": False, "message": "Invalid request."}, status=400)
+
+def export_all_sitins(request):
+    """
+    Export all finished sit-ins to an Excel file.
+    """
+    # Fetch all finished sit-ins
+    queryset = Sitin.objects.filter(status="finished")
+
+    # Create the Excel report
+    title = "Sit-in History Report"
+    description = "This report contains details of all finished sit-ins."
+    wb = create_excel_report(queryset, title, description)
+    save_directory = request.GET.get('directory', '') 
+    print(save_directory)
+
+    # Create an in-memory response
+    response = HttpResponse(content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    response["Content-Disposition"] = 'attachment; filename="sit_in_history.xlsx"'
+
+    # Save the workbook directly to the response (NO FILESYSTEM SAVE NEEDED)
+    wb.save(response)
+
+    return response
 
 def error_404_view(request, exception):
     return render(request, 'backend/pages/404.html')

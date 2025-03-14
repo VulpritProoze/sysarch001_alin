@@ -10,8 +10,8 @@ from django.utils.timezone import now
 from django.urls import path
 from django.shortcuts import render
 from django.db.models import Count
-from django.db import models
-from django.http import HttpResponseRedirect
+from django.http import HttpResponse
+from openpyxl import Workbook
 from . import views
 from .models import Registration, Announcement, AnnouncementComment, Sitin
 
@@ -21,6 +21,7 @@ class CustomAdminSite(AdminSite):
         custom_urls = [
             path('approve-sitin/', views.approve_sitin, name='admin-approve-sitin'),
             path('logout-sitin/', views.logout_sitin, name='admin-logout-sitin'),
+            path("export_all_sitins/", views.export_all_sitins, name="admin-export_all_sitins"),
         ]
         return custom_urls + urls
     
@@ -194,7 +195,7 @@ class ExtendedAnnouncementAdmin(AnnouncementAdmin):
 admin_site.register(Announcement, ExtendedAnnouncementAdmin)
 
 class BaseSitinAdmin(admin.ModelAdmin):
-    list_display = ("get_user_idno", "get_fullname", "purpose", "lab_room", "status", "user__registration__sessions", "date")
+    list_display = ("get_user_idno", "get_fullname", "purpose", "lab_room", "status", "user__registration__sessions", "get_formatted_date", "get_formatted_logout_date")
     search_fields = ("user__registration__idno", "user__username", "user__registration__firstname", 
                      "user__registration__middlename", "user__registration__lastname")
     list_filter = ("programming_language", "purpose", "lab_room", "status", "date")
@@ -211,9 +212,27 @@ class BaseSitinAdmin(admin.ModelAdmin):
             return f"{reg.firstname} {reg.middlename} {reg.lastname}"
         return None
     get_fullname.short_description = "Fullname"
+
+    def get_formatted_date(self, obj):
+        return obj.date  # You can format the date here if needed
+
+    get_formatted_date.short_description = "Request Date"  # Change the display name here
+    get_formatted_date.admin_order_field = "date"  # Ensure the field is sortable by date
+
+    def get_formatted_logout_date(self, obj):
+        return obj.logout_date  # You can format the date here if needed
+
+    get_formatted_logout_date.short_description = "Time-out"  # Change the display name here
+    get_formatted_logout_date.admin_order_field = "logout_date"  # Ensure the field is sortable by date
+
+    def get_formatted_sitin_date(self, obj):
+        return obj.sitin_date  # You can format the date here if needed
+
+    get_formatted_sitin_date.short_description = "Time-in"  # Change the display name here
+    get_formatted_sitin_date.admin_order_field = "sitin_date"  # Ensure the field is sortable by date
     
 class ExtraSitinsAdmin(BaseSitinAdmin):
-    list_display = ("get_user_idno", "get_fullname", "purpose", "lab_room", "status", "user__registration__sessions", 'date', "logout_date")
+    list_display = ("get_user_idno", "get_fullname", "purpose", "lab_room", "status", "user__registration__sessions", 'get_formatted_date', "get_formatted_sitin_date", "logout_date")
     list_editable = ('status',)
     
     class Meta:
@@ -295,7 +314,8 @@ class CurrentSitinsAdmin(BaseSitinAdmin):
     #     super().save_model(request, obj, form, change)
     
 class FinishedSitinsAdmin(BaseSitinAdmin):    
-    list_display = ("get_user_idno", "get_fullname", "purpose", "lab_room", "status", "user__registration__sessions", "logout_date")
+    list_display = ("get_user_idno", "get_fullname", "purpose", "lab_room", "status", "user__registration__sessions", "get_formatted_logout_date")
+    change_list_template = "admin/backend/sitin/timedout_change_list.html"
 
     def get_model_perms(self, request):
         return {"view": True}  # Hide "Add" and "Delete" buttons
@@ -308,6 +328,46 @@ class FinishedSitinsAdmin(BaseSitinAdmin):
         self.model._meta.verbose_name = "View Sit-in History"
         self.model._meta.verbose_name_plural = "View Sit-in History"
         return qs
+    
+    # Custom action to export selected records to Excel
+    def export_to_excel(self, request, queryset):
+        # Create a new workbook and add a worksheet
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "Sit-in History"
+
+        # Add headers
+        headers = [
+            "Student ID",
+            "Full Name",
+            "Purpose",
+            "Lab Room",
+            "Status",
+            "Sessions",
+            "Logout Date",
+        ]
+        ws.append(headers)
+
+        # Add data rows
+        for sitin in queryset:
+            ws.append([
+                sitin.get_user_idno(),
+                sitin.get_fullname(),
+                sitin.purpose,
+                sitin.lab_room,
+                sitin.status,
+                sitin.user.registration.sessions if hasattr(sitin.user, "registration") else "",
+                sitin.get_formatted_logout_date(),
+            ])
+
+        # Create a response with the Excel file
+        response = HttpResponse(content_type="application/ms-excel")
+        response["Content-Disposition"] = 'attachment; filename="sit_in_history.xlsx"'
+        wb.save(response)
+
+        return response
+
+    export_to_excel.short_description = "Export selected records to Excel"
 
 # Proxy models
 class ExtraSitins(Sitin):

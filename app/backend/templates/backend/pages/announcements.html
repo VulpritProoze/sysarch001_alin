@@ -7,6 +7,36 @@
 {% endblock title %}
 
 {% block content %}
+
+<style>
+.fade-wrapper {
+    position: relative;
+    overflow: hidden; /* Ensure the fading effect doesn't overflow */
+}
+
+.fade-wrapper::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 80px; /* Increase the height for a stronger fade */
+    background: linear-gradient(to bottom, rgba(255, 255, 255, 0), rgba(255, 255, 255, 1) 90%);
+    pointer-events: none; /* Ensure the overlay doesn't block interactions */
+}
+
+.fade-wrapper::before {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 1px; /* Thickness of the border */
+    background: linear-gradient(to right, rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.1) 50%, rgba(0, 0, 0, 0));
+    pointer-events: none; /* Ensure the overlay doesn't block interactions */
+}
+</style>
+
 <div class="container mt-5">
     {% csrf_token %}
     <!-- Announcements Header -->
@@ -41,7 +71,7 @@
 
             <!-- Comments Section -->
             <div>
-                <h6><i class="fas fa-comments text-success"></i> Comments:</h6>
+                <h6><i class="fas fa-comments text-primary"></i> Comments:</h6>
 
                 <!-- Comment Form -->
                 <form id="comment-form-{{ announcement.id }}">
@@ -61,19 +91,25 @@
                 {% with announcement.announcementcomment_set.all as related_comments %}
                 {% if related_comments %}
                     {% for comment in announcementcomments|get_item:announcement.id %}
-                    <div class="comment-card">
-                        <div class="comment-header">
-                            <img src="{{ comment.user.registration.profilepicture_sm.url }}" alt="Profile Picture"
-                                class="comment-pic">
-                            <div class="comment-user-info">
-                                <strong>{{ comment.user.username }}</strong>
-                                <span class="comment-date">{{ comment.date }}</span>
+                    {% if forloop.last %}
+                    <div class="fade-wrapper">
+                    {% endif %}
+                        <div class="comment-card">
+                            <div class="comment-header">
+                                <img src="{{ comment.user.registration.profilepicture_sm.url }}" alt="Profile Picture"
+                                    class="comment-pic">
+                                <div class="comment-user-info">
+                                    <strong>{{ comment.user.username }}</strong>
+                                    <span class="comment-date">{{ comment.date }}</span>
+                                </div>
+                            </div>
+                            <div class="comment-body">
+                                <p>{{ comment.comment }}</p>
                             </div>
                         </div>
-                        <div class="comment-body">
-                            <p>{{ comment.comment }}</p>
-                        </div>
+                    {% if forloop.last %}
                     </div>
+                    {% endif %}
                     {% endfor %}
                     <a href="{% url 'user-announcement' announcement.id %}" class="small text-muted">
                         <i class="fas fa-arrow-right"></i> Open this announcement to see more comments...

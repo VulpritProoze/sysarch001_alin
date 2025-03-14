@@ -50,6 +50,7 @@ class Sitin(models.Model):
     sitin_details = models.TextField(blank=True, null=True)
     status = models.CharField(max_length=50, choices=SITIN_STATUS_CHOICES, blank=True, null=True) # pending, approved, denied
     date = models.DateTimeField(auto_now_add=True)
+    sitin_date = models.DateTimeField(null=True, blank=True)
     logout_date = models.DateTimeField(null=True, blank=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     

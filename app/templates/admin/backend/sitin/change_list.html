@@ -81,8 +81,10 @@
         display: table-caption;
         caption-side: top;
     }
-    
 
+    :root {
+    --secondary: #417690;
+    }
 
 </style>
 
@@ -125,6 +127,7 @@
                             <th>Lab Room</th>
                             <!-- <th>Status</th> -->
                             <th>Approve Sitin?</th>
+                            <th>Request Date</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -145,6 +148,7 @@
                                         already {{ sitin.status }}
                                     {% endif %}
                                 </td>
+                                <td>{{ sitin.date }}</td>
                             </tr>
                         {% endfor %}
                     </tbody>
@@ -167,7 +171,7 @@
                             <th>Purpose</th>
                             <th>Lab Room</th>
                             <th>Status</th>
-                            <th>Date</th>
+                            <th>Request Date</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -197,7 +201,7 @@
                             <th>Purpose</th>
                             <th>Lab Room</th>
                             <th>Status</th>
-                            <th>Date</th>
+                            <th>Time-in</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -208,7 +212,7 @@
                                 <td>{{ sitin.purpose }}</td>
                                 <td>{{ sitin.lab_room }}</td>
                                 <td>{{ sitin.status }}</td>
-                                <td>{{ sitin.date }}</td>
+                                <td>{{ sitin.sitin_date }}</td>
                             </tr>
                         {% endfor %}
                     </tbody>
@@ -217,7 +221,7 @@
 
             <br>
             <!-- Table for Finished Sit-ins -->
-            <h3>Finished Sit-ins</h3>
+            <h3>Timed-out Sit-ins</h3>
             <div class="table-container">
                 <table id="result_list_finished">
                     <thead>
@@ -228,7 +232,7 @@
                             <th>Purpose</th>
                             <th>Lab Room</th>
                             <th>Status</th>
-                            <th>Date</th>
+                            <th>Time-out</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -240,7 +244,7 @@
                                 <td>{{ sitin.purpose }}</td>
                                 <td>{{ sitin.lab_room }}</td>
                                 <td>{{ sitin.status }}</td>
-                                <td>{{ sitin.date }}</td>
+                                <td>{{ sitin.logout_date }}</td>
                             </tr>
                         {% endfor %}
                     </tbody>
