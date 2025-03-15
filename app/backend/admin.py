@@ -232,8 +232,9 @@ class BaseSitinAdmin(admin.ModelAdmin):
     get_formatted_sitin_date.admin_order_field = "sitin_date"  # Ensure the field is sortable by date
     
 class ExtraSitinsAdmin(BaseSitinAdmin):
-    list_display = ("get_user_idno", "get_fullname", "purpose", "lab_room", "status", "user__registration__sessions", 'get_formatted_date', "get_formatted_sitin_date", "logout_date")
+    list_display = ("get_user_idno", "get_fullname", "purpose", "lab_room", "status", "user__registration__sessions", 'get_formatted_date', "get_formatted_sitin_date", "get_formatted_logout_date")
     list_editable = ('status',)
+    change_list_template = "admin/custom_change_list.html"
     
     class Meta:
         verbose_name = "All Sitin"
@@ -246,7 +247,8 @@ class ExtraSitinsAdmin(BaseSitinAdmin):
         return qs
 
 class CustomSitinsAdmin(BaseSitinAdmin):
-    change_list_template = 'admin/backend/sitin/change_list.html'
+    change_list_template = 'admin/backend/sitin/searchsitins_change_list.html'
+    # change_list_template = 'admin/custom_change_list.html'
 
     def get_model_perms(self, request):
         return {"view": True}  # Hide "Add" and "Delete" buttons
@@ -328,46 +330,6 @@ class FinishedSitinsAdmin(BaseSitinAdmin):
         self.model._meta.verbose_name = "View Sit-in History"
         self.model._meta.verbose_name_plural = "View Sit-in History"
         return qs
-    
-    # Custom action to export selected records to Excel
-    def export_to_excel(self, request, queryset):
-        # Create a new workbook and add a worksheet
-        wb = Workbook()
-        ws = wb.active
-        ws.title = "Sit-in History"
-
-        # Add headers
-        headers = [
-            "Student ID",
-            "Full Name",
-            "Purpose",
-            "Lab Room",
-            "Status",
-            "Sessions",
-            "Logout Date",
-        ]
-        ws.append(headers)
-
-        # Add data rows
-        for sitin in queryset:
-            ws.append([
-                sitin.get_user_idno(),
-                sitin.get_fullname(),
-                sitin.purpose,
-                sitin.lab_room,
-                sitin.status,
-                sitin.user.registration.sessions if hasattr(sitin.user, "registration") else "",
-                sitin.get_formatted_logout_date(),
-            ])
-
-        # Create a response with the Excel file
-        response = HttpResponse(content_type="application/ms-excel")
-        response["Content-Disposition"] = 'attachment; filename="sit_in_history.xlsx"'
-        wb.save(response)
-
-        return response
-
-    export_to_excel.short_description = "Export selected records to Excel"
 
 # Proxy models
 class ExtraSitins(Sitin):
