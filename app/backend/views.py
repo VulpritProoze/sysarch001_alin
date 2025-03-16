@@ -22,8 +22,7 @@ from io import BytesIO
 from django.core.files.base import ContentFile
 # Excel File Exporting
 from django.http import HttpResponse
-from .report_styles import create_excel_report
-import os
+from .report_styles import create_excel_report, create_csv_report, create_pdf_report
 
 class CustomLoginView(LoginView):
     template_name = 'backend/pages/login.html'
@@ -288,28 +287,49 @@ def logout_sitin(request):
             return JsonResponse({"success": False, "message": "Sit-in record not found."}, status=404)
     return JsonResponse({"success": False, "message": "Invalid request."}, status=400)
 
-def export_all_sitins(request):
+def export_sitins(request, lab_room, file_type):
     """
     Export all finished sit-ins to an Excel file.
     """
     # Fetch all finished sit-ins
-    queryset = Sitin.objects.filter(status="finished")
+    if request.method == 'GET':
+        queryset = Sitin.objects.filter(status="finished", lab_room=lab_room)
+        if queryset.exists():
+            if lab_room in [choice[0] for choice in LAB_ROOM_CHOICES] or file_type in ['xlsx', 'csv', 'pdf']:
+                # Create the Excel report
+                title = "Sit-in History Report"
+                description = f"This report contains details of all finished sit-ins in Lab room {lab_room}"
+                if file_type == 'xlsx':
+                    # Create an in-memory response.
+                    wb = create_excel_report(queryset, title, description)
+                    print('1')
+                    response = HttpResponse(content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+                    response["Content-Disposition"] = f'attachment; filename="sit_in_history-{lab_room}.xlsx"'
+                    # Save the workbook directly to the response (NO FILESYSTEM SAVE NEEDED)
+                    wb.save(response)
+                    return response
+                elif file_type == 'csv':
+                    csv_data = create_csv_report(queryset, title, description)
+                    response = HttpResponse(csv_data, content_type="text/csv")
+                    response["Content-Disposition"] = f'attachment; filename="sit_in_history-{lab_room}.csv"'
+                    return response
+                elif file_type == 'pdf':
+                    pdf_data = create_pdf_report(queryset, title, description)
+                    response = HttpResponse(pdf_data, content_type="application/pdf")
+                    response["Content-Disposition"] = f'attachment; filename="sit_in_history-{lab_room}.pdf'
+                    return response
+                    
+            return JsonResponse({"error": "There are no such lab rooms and/or file types"}, status=404)
+        return JsonResponse({"error": "Sit-in not found"}, status=404)
+    return JsonResponse({"error": "Bad Request"}, status=400)
 
-    # Create the Excel report
-    title = "Sit-in History Report"
-    description = "This report contains details of all finished sit-ins."
-    wb = create_excel_report(queryset, title, description)
-    save_directory = request.GET.get('directory', '') 
-    print(save_directory)
-
-    # Create an in-memory response
-    response = HttpResponse(content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-    response["Content-Disposition"] = 'attachment; filename="sit_in_history.xlsx"'
-
-    # Save the workbook directly to the response (NO FILESYSTEM SAVE NEEDED)
-    wb.save(response)
-
-    return response
+def export_sitins_xlsx(lab_room):
+    pass
+def export_sitins_csv(lab_room):
+    pass
+def export_sitins_pdf(lab_room):
+    pass
+    
 
 def error_404_view(request, exception):
     return render(request, 'backend/pages/404.html')

@@ -1,25 +1,33 @@
 {% extends "admin/change_list.html" %}
 
+<!-- For some reason, object-tools have actually been moved into content-main -->
+<!-- The documentation is wrong, then? o_0 -->
+
 {% block object-tools-items %}
 {{ block.super }}
 <li>
-    <a href="#" class="btn btn-primary">
-        <button class="sticky filter-toggle-btn btn btn-primary" id="toggle-filter-sidebar" aria-label="Toggle filters">☰ Toggle Filters</button>
+    <a href="#">
+        <span class="filter-toggle-btn" id="toggle-filter-sidebar" aria-label="Toggle filters">☰ TOGGLE FILTERS</span>
     </a>
     <script>
         document.addEventListener("DOMContentLoaded", function () {
             const filterPanel = document.getElementById("changelist-filter"); // Sidebar filter
             const toggleButton = document.getElementById("toggle-filter-sidebar");
-            
+    
             if (filterPanel && toggleButton) {
-                toggleButton.addEventListener("click", function () {
-                    const isHidden = filterPanel.style.display === "none" || filterPanel.style.display === "";
+                // Ensure display is explicitly set to 'block' if it's not already set
+                if (filterPanel.style.display === "") {
+                    filterPanel.style.display = "block";
+                }
+    
+                toggleButton.parentElement.addEventListener("click", function () {
+                    const isHidden = filterPanel.style.display === "none";
                     filterPanel.style.display = isHidden ? "block" : "none";
-                    
+    
                     // Save state in localStorage (like Django admin nav toggle)
-                    localStorage.setItem("filterSidebarHidden", !isHidden);
+                    localStorage.setItem("filterSidebarHidden", isHidden);
                 });
-
+    
                 // Restore state from localStorage
                 if (localStorage.getItem("filterSidebarHidden") === "true") {
                     filterPanel.style.display = "none";
@@ -27,6 +35,7 @@
             }
         });
     </script>
+    
 
     <style>
         .filter-toggle-btn {
@@ -36,6 +45,15 @@
             background-color: transparent;
             border-width: 0;
             color: white;
+        }
+        a {
+            border-width: 0;
+        }
+
+        button {
+            font-family: var(--font-family-primary);
+            font-size: 11px;
+            cursor: pointer;
         }
     </style>
 </li>

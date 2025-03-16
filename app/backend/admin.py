@@ -14,6 +14,7 @@ from django.http import HttpResponse
 from openpyxl import Workbook
 from . import views
 from .models import Registration, Announcement, AnnouncementComment, Sitin
+from .choices import LAB_ROOM_CHOICES
 
 class CustomAdminSite(AdminSite):
     def get_urls(self):
@@ -21,9 +22,17 @@ class CustomAdminSite(AdminSite):
         custom_urls = [
             path('approve-sitin/', views.approve_sitin, name='admin-approve-sitin'),
             path('logout-sitin/', views.logout_sitin, name='admin-logout-sitin'),
-            path("export_all_sitins/", views.export_all_sitins, name="admin-export_all_sitins"),
+            path("backend/finishedsitins/export_all_sitins/", self.admin_view(self.export_all_sitins), name="admin-export_all_sitins"),
+            path("backend/finishedsitins/export_all_sitins/<str:lab_room>/<str:file_type>/", views.export_sitins, name="admin-export_sitins_by_type"),
         ]
         return custom_urls + urls
+    
+    def export_all_sitins(self, request):
+        context = self.each_context(request)
+        context['app_list'] = self.get_app_list(request)
+        context['lab_room_choices'] = LAB_ROOM_CHOICES
+        context['title'] = 'Export Sitins'
+        return render(request, "admin/backend/sitin/reports_change_list.html", context)
     
     def get_app_list(self, request):
         # app_list = super().get_app_list(request)
@@ -199,6 +208,7 @@ class BaseSitinAdmin(admin.ModelAdmin):
     search_fields = ("user__registration__idno", "user__username", "user__registration__firstname", 
                      "user__registration__middlename", "user__registration__lastname")
     list_filter = ("programming_language", "purpose", "lab_room", "status", "date")
+    change_list_template = 'admin/custom_change_list.html'
     
     def get_user_idno(self, obj):
         return obj.user.registration.idno if hasattr(obj.user, "registration") else None
@@ -234,7 +244,6 @@ class BaseSitinAdmin(admin.ModelAdmin):
 class ExtraSitinsAdmin(BaseSitinAdmin):
     list_display = ("get_user_idno", "get_fullname", "purpose", "lab_room", "status", "user__registration__sessions", 'get_formatted_date', "get_formatted_sitin_date", "get_formatted_logout_date")
     list_editable = ('status',)
-    change_list_template = "admin/custom_change_list.html"
     
     class Meta:
         verbose_name = "All Sitin"

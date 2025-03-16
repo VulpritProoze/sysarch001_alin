@@ -2,10 +2,20 @@
 
 {% block object-tools-items %}
     <li>
-        <a id="download-report" href="{% url 'custom_admin:admin-export_all_sitins' %}" 
-           class="btn btn-primary" download="sit_in_history.xlsx">
+        <a href="{% url 'custom_admin:admin-export_all_sitins' %}" >
             Generate Reports
         </a>
     </li>
     {{ block.super }}
 {% endblock %}
+
+
+
+<!-- 
+
+<a id="download-report" href="{% url 'custom_admin:admin-export_all_sitins' %}" 
+           class="btn btn-primary" download="sit_in_history.xlsx">
+            Generate Reports
+        </a>
+        
+        -->

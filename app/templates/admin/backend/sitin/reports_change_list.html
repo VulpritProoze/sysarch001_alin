@@ -1,0 +1,177 @@
+{% extends 'admin/custom_change_list.html' %}
+{% load i18n admin_urls static admin_list %}
+
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}">{% translate 'Home' %} </a>&rsaquo;
+    <a href="/admin/backend/">Backend </a>&rsaquo;
+    <a href="/admin/backend/finishedsitins">View Sit-in History </a>&rsaquo;
+    Export Sitins
+</div>
+{% endblock %}
+
+{% block content %}
+<style>
+    label,
+    select,
+    option,
+    .button {
+        font-size: small !important;
+        font-family: var(--font-family-primary);
+    }
+
+    .button {
+        transition: background 0.3s ease;
+        padding: 5px !important;
+    }
+
+    .button:hover {
+        opacity: 0.85;
+    }
+
+    /* Button colors */
+    .btn-excel {
+        background: #28a745;
+        color: white;
+    }
+
+    .btn-csv {
+        background: #ffcc00;
+        color: black;
+    }
+
+    .btn-pdf {
+        background: #dc3545;
+        color: white;
+    }
+
+    .btn-print {
+        background: #007bff;
+        color: white;
+    }
+
+    /* Icons styling */
+    .fa {
+        font-size: 16px;
+    }
+
+    /* Custom spinner using CSS */
+    .custom-spinner {
+        border: 6px solid #f3f3f3;
+        /* Light grey */
+        border-top: 6px solid #3498db;
+        /* Blue color */
+        border-left: 6px solid #3498db;
+        /* Blue color */
+        border-radius: 50%;
+        width: 23px;
+        height: 23px;
+        animation: spin 1s linear infinite;
+        margin-bottom: 5px;
+    }
+
+    @keyframes spin {
+        0% {
+            transform: rotate(0deg);
+        }
+
+        100% {
+            transform: rotate(360deg);
+        }
+    }
+</style>
+
+<div id="content-main">
+    <form id="exportForm">
+        {% csrf_token %}
+        <div class="form-row mb-2">
+            <label for="lab-room" class="required mr-2">Select Lab Room: </label>
+            <select name="lab-room" id="lab-room" class="vSelect">
+                {% for choice in lab_room_choices %}
+                <option value="{{ choice.0 }}">{{ choice.1 }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div id="loading-spinner" class="custom-spinner" style="display: none;" role="status">
+            <span class="sr-only">Loading...</span>
+        </div>
+
+        <div class="submit-row">
+            <button type="button" class="button btn-excel" onclick="exportReport('xlsx')"><i
+                    class="fas fa-file-excel"></i> Export to Excel</button>
+            <button type="button" class="button btn-csv" onclick="exportReport('csv')"><i class="fas fa-file-csv"></i>
+                Export to CSV</button>
+            <button type="button" class="button btn-pdf" onclick="exportReport('pdf')"><i class="fas fa-file-pdf"></i>
+                Export to PDF</button>
+            <button type="button" class="button btn-print" onclick="exportReport('pdf', true)"><i class="fas fa-print"></i> Print</button>
+        </div>
+    </form>
+</div>
+
+<script>
+    async function exportReport(type, isPrint) {
+        const labroom = document.getElementById('lab-room').value;
+        if (labroom && type) {
+            const url = `/admin/backend/finishedsitins/export_all_sitins/${labroom}/${type}/`;
+            const request = {
+                'method': 'GET',
+            }
+            const spinner = document.getElementById('loading-spinner');
+            try {
+                const res = await fetch(url, request);
+                spinner.style.display = 'block';
+                if (res.ok) {
+                    const blob = await res.blob();  // Handle file response
+                    if (isPrint) {
+                        printDocument(fileURL=URL.createObjectURL(blob));
+                        return;
+                    }
+                    let link = document.createElement('a');
+                    link.href = URL.createObjectURL(blob);
+                    link.download = `sitin_history-${labroom}.${type}`;  // Set proper file extension
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                } else {
+                    console.log('not ok');
+                    const error = await res.json();
+                    RenderErrorDiv(document.getElementById('content'), { "Export Sitin": error.error });
+                }
+            } catch (error) {
+                console.log('error: ', error);
+                RenderErrorDiv(document.getElementById('content'), { "Export Sitin": "Failed to connect to the server." });
+            } finally {
+                spinner.style.display = 'none';
+            }
+        }
+    }
+
+    function printDocument(fileURL) {
+        const newTab = window.open(fileURL, '_blank');
+        if (newTab) {
+            newTab.onload = () => newTab.print();
+        } else {
+            alert("Please allow pop-ups for this site to print the document.");
+        }
+    }
+
+    function RenderErrorDiv(parentElement, data) {
+        for (let field in data) {
+            let errorDiv = document.createElement('div');
+            let text = document.createElement('span');
+            errorDiv.classList.add('custom-alerts', 'alert', 'alert-danger', 'mb-1', 'small', 'fade-in');
+            text.textContent = `${field.toUpperCase()}: ${data[field]}`;
+            errorDiv.appendChild(text);
+            parentElement.insertAdjacentElement("beforebegin", errorDiv);
+        }
+
+        document.querySelectorAll('.custom-alerts').forEach(el => {
+            setTimeout(() => el.remove(), 10000);
+        });
+    }
+
+</script>
+
+{% endblock %}
