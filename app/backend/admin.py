@@ -42,21 +42,23 @@ class CustomAdminSite(AdminSite):
         #         desired_order = ['Sitin', 'SitinRequests', 'CurrentSitins', 'FinishedSitins']
         #         app['models'].sort(key=lambda x: desired_order.index(x['object_name']) if x['object_name'] in desired_order else len(desired_order))
         # return app_list
-        BASE_ADMIN_URL = '/admin'
         original_app_list = super().get_app_list(request)
         custom_apps = {
             "Authentication and Authorization": {
                 "app_label": "auth",
+                # "app_url": "admin/auth/",
                 "name": "Authentication and Authorization",
                 "models": []
             },
             "General Management": {
                 "app_label": "backend",
+                # "app_url": "admin/backend/",
                 "name": "General Management",
                 "models": []
             },
             "Sit-in Management": {
                 "app_label": "custom_sitins",
+                # "app_url": "#",
                 "name": "Sit-in Management",
                 "models" : []
             },
@@ -222,6 +224,7 @@ class BaseSitinAdmin(admin.ModelAdmin):
             return f"{reg.firstname} {reg.middlename} {reg.lastname}"
         return None
     get_fullname.short_description = "Fullname"
+    get_fullname.admin_order_field = 'user__registration__lastname'
 
     def get_formatted_date(self, obj):
         return obj.date  # You can format the date here if needed
