@@ -24,8 +24,32 @@ class CustomAdminSite(AdminSite):
             path('logout-sitin/', views.logout_sitin, name='admin-logout-sitin'),
             path("backend/finishedsitins/export_all_sitins/", self.admin_view(self.export_all_sitins), name="admin-export_all_sitins"),
             path("backend/finishedsitins/export_all_sitins/<str:lab_room>/<str:file_type>/", views.export_sitins, name="admin-export_sitins_by_type"),
+            path('auth/', self.admin_view(self.auth_view), name="admin-auth_index"),
+            path('backend/', self.admin_view(self.backend_view), name="admin-backend_index"),
+            path('sitin/', self.admin_view(self.sitin_view), name="admin-sitin_index")
         ]
         return custom_urls + urls
+
+    def auth_view(self, request):
+        context = {
+            'app_label': 'auth',
+            'is_nav_sidebar_enabled': True    
+        }
+        return render(request, "admin/auth/auth_index.html", context)
+    
+    def backend_view(self, request):
+        context = {
+            'app_label': 'backend',
+            'is_nav_sidebar_enabled': True    
+        }
+        return render(request, "admin/backend/backend_index.html", context)
+
+    def sitin_view(self, request):
+        context = {
+            'app_label': 'sitin',
+            'is_nav_sidebar_enabled': True    
+        }
+        return render(request, "admin/sitin/sitin_index.html", context)
     
     def export_all_sitins(self, request):
         context = self.each_context(request)
@@ -46,19 +70,19 @@ class CustomAdminSite(AdminSite):
         custom_apps = {
             "Authentication and Authorization": {
                 "app_label": "auth",
-                # "app_url": "admin/auth/",
+                "app_url": "/admin/auth/",
                 "name": "Authentication and Authorization",
                 "models": []
             },
             "General Management": {
                 "app_label": "backend",
-                # "app_url": "admin/backend/",
+                "app_url": "/admin/backend/",
                 "name": "General Management",
                 "models": []
             },
             "Sit-in Management": {
                 "app_label": "custom_sitins",
-                # "app_url": "#",
+                "app_url": "/admin/sitin/",
                 "name": "Sit-in Management",
                 "models" : []
             },

@@ -1,0 +1,20 @@
+{% extends "admin/index.html" %}
+{% load i18n %}
+
+{% block bodyclass %}{{ block.super }} app-{{ app_label }}{% endblock %}
+
+{% block nav-breadcrumbs %}
+  <nav aria-label="{% translate 'Breadcrumbs' %}">
+    <div class="breadcrumbs">
+      <a href="{% url 'admin:index' %}">{% translate 'Home' %}</a>
+      &rsaquo; Sit-in Management
+    </div>
+  </nav>
+{% endblock %}
+
+{% block content %}
+  <h1>{% translate "Sit-in Requests" %}</h1>
+  <p>{% translate "Manage and approve sit-in requests here." %}</p>
+{% endblock %}
+
+{% block sidebar %}{% endblock %}
