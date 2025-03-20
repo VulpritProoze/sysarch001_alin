@@ -1,3 +1,8 @@
-/venv/
-/.vscode/
-/app/staticfiles/
+venv/
+.vscode/
+
+app/staticfiles/
+app/app/__pycache__/
+app/backend/__pycache__/
+app/backend/migrations/__pycache__/
+app/backend/templatetags/__pycache__/
