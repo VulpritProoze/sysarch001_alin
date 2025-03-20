@@ -6,17 +6,16 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.admin import AdminSite
 from django.forms import BaseInlineFormSet
 from django.utils.translation import gettext_lazy as _
-from django.utils.timezone import now
 from django.urls import path
 from django.shortcuts import render
 from django.db.models import Count
-from django.http import HttpResponse
-from openpyxl import Workbook
 from . import views
 from .models import Registration, Announcement, AnnouncementComment, Sitin
 from .choices import LAB_ROOM_CHOICES
 
 class CustomAdminSite(AdminSite):
+    index_template = 'admin/custom_index.html'
+    
     def get_urls(self):
         urls = super().get_urls()
         custom_urls = [
@@ -26,29 +25,49 @@ class CustomAdminSite(AdminSite):
             path("backend/finishedsitins/export_all_sitins/<str:lab_room>/<str:file_type>/", views.export_sitins, name="admin-export_sitins_by_type"),
             path('auth/', self.admin_view(self.auth_view), name="admin-auth_index"),
             path('backend/', self.admin_view(self.backend_view), name="admin-backend_index"),
-            path('sitin/', self.admin_view(self.sitin_view), name="admin-sitin_index")
+            path('sitin/', self.admin_view(self.sitin_view), name="admin-sitin_index"),
+            # custom ahh urls for app_list models
+            path('sitin/currentsitins/', self.admin_view(CurrentSitinsAdmin(CurrentSitins, self).changelist_view), name='current_sitins_changelist'),
+            path('sitin/finishedsitins/', self.admin_view(FinishedSitinsAdmin(FinishedSitins, self).changelist_view), name='finished_sitins_changelist'),
+            path('sitin/extrasitins/', self.admin_view(ExtraSitinsAdmin(ExtraSitins, self).changelist_view), name='extra_sitins_changelist'),
+            path('sitin/sitins/', self.admin_view(CustomSitinsAdmin(Sitin, self).changelist_view), name='sitins_changelist'),
         ]
         return custom_urls + urls
 
     def auth_view(self, request):
-        context = {
-            'app_label': 'auth',
-            'is_nav_sidebar_enabled': True    
-        }
+        context = self.each_context(request)
+        auth_app = [app for app in self.get_app_list(request) if app['app_label'] == 'auth']
+        context.update({
+            'app_label': 'auth',   
+            'title': 'Authorization Management',
+            'app_list': auth_app,
+        })
         return render(request, "admin/auth/auth_index.html", context)
     
     def backend_view(self, request):
-        context = {
-            'app_label': 'backend',
-            'is_nav_sidebar_enabled': True    
-        }
+        context = self.each_context(request)
+        backend_app = [app for app in self.get_app_list(request) if app['app_label'] == 'backend']
+        context.update({
+            'app_label': 'backend',   
+            'title': 'General Management',
+            'app_list': backend_app,
+        })
         return render(request, "admin/backend/backend_index.html", context)
 
     def sitin_view(self, request):
-        context = {
-            'app_label': 'sitin',
-            'is_nav_sidebar_enabled': True    
-        }
+        context = self.each_context(request)
+        sitin_app = [app for app in self.get_app_list(request) if app['app_label'] == 'custom_sitins']
+        programming_language_stats = Sitin.objects.values("programming_language").annotate(count=Count("programming_language"))
+        purpose_stats = Sitin.objects.values("purpose").annotate(count=Count("purpose"))
+        lab_room_stats = Sitin.objects.values("lab_room").annotate(count=Count("lab_room"))
+        context.update({
+            'app_label': 'custom_sitins',
+            'title': 'Sitin Management',
+            'app_list': sitin_app,
+        })
+        context["programming_language_stats"] = programming_language_stats
+        context["purpose_stats"] = purpose_stats
+        context["lab_room_stats"] = lab_room_stats
         return render(request, "admin/sitin/sitin_index.html", context)
     
     def export_all_sitins(self, request):
@@ -59,13 +78,6 @@ class CustomAdminSite(AdminSite):
         return render(request, "admin/backend/sitin/reports_change_list.html", context)
     
     def get_app_list(self, request):
-        # app_list = super().get_app_list(request)
-        # for app in app_list:
-        #     if app['app_label'] == 'backend':  # Replace with your app name
-        #         # Custom order of models
-        #         desired_order = ['Sitin', 'SitinRequests', 'CurrentSitins', 'FinishedSitins']
-        #         app['models'].sort(key=lambda x: desired_order.index(x['object_name']) if x['object_name'] in desired_order else len(desired_order))
-        # return app_list
         original_app_list = super().get_app_list(request)
         custom_apps = {
             "Authentication and Authorization": {
@@ -103,6 +115,15 @@ class CustomAdminSite(AdminSite):
                 elif model_name in general_models:
                     custom_apps["General Management"]["models"].append(model)
                 elif model_name in sitin_models:
+                    # have to add this cuz i had to customize urls
+                    if model_name == "Sitin":
+                        model["admin_url"] = "/admin/sitin/sitins/"
+                    elif model_name == "CurrentSitins":
+                        model["admin_url"] = "/admin/sitin/currentsitins/"
+                    elif model_name == "FinishedSitins":
+                        model["admin_url"] = "/admin/sitin/finishedsitins/"
+                    elif model_name == "ExtraSitins":
+                        model["admin_url"] = "/admin/sitin/extrasitins/"
                     custom_apps["Sit-in Management"]["models"].append(model)
         desired_order = ['Sitin', 'SitinRequests', 'CurrentSitins', 'FinishedSitins', "ExtraSitins"]
         custom_apps["Sit-in Management"]['models'].sort(key=lambda x: desired_order.index(x['object_name']) if x['object_name'] in desired_order else len(desired_order))
@@ -216,13 +237,6 @@ class AnnouncementCommentInline(admin.TabularInline):
     fields = ('user', 'comment', 'date', 'updated_at')
     readonly_fields = ('date', 'updated_at',)
     extra = 0
-    # formset = AnnouncementCommentFormSet
-    
-    # Save user
-    # def get_formset(self, request, obj=None, **kwargs):
-    #     formset = super().get_formset(request, obj, **kwargs)
-    #     formset.request = request  # Pass request to the formset
-    #     return formset
 
 class ExtendedAnnouncementAdmin(AnnouncementAdmin):
     inlines = (AnnouncementCommentInline,)
@@ -301,25 +315,19 @@ class CustomSitinsAdmin(BaseSitinAdmin):
     
     def changelist_view(self, request, extra_context=None):
         # Aggregate statistics
-        programming_language_stats = Sitin.objects.values("programming_language").annotate(count=Count("programming_language"))
-        purpose_stats = Sitin.objects.values("purpose").annotate(count=Count("purpose"))
-        lab_room_stats = Sitin.objects.values("lab_room").annotate(count=Count("lab_room"))
         pending_sitins = Sitin.objects.filter(status="pending")
         current_sitins = Sitin.objects.filter(status="approved")
         finished_sitins = Sitin.objects.filter(status="finished")
         # Pass stats to the template
         extra_context = extra_context or {}
         extra_context["title"] = _("Select Students to Approve Sit-ins")
-        extra_context["programming_language_stats"] = programming_language_stats
-        extra_context["purpose_stats"] = purpose_stats
-        extra_context["lab_room_stats"] = lab_room_stats
         extra_context["pending_sitins"] = pending_sitins
         extra_context["current_sitins"] = current_sitins
         extra_context["finished_sitins"] = finished_sitins
 
         return super().changelist_view(request, extra_context=extra_context)
 
-class SitinRequestsAdmin(BaseSitinAdmin):
+class SitinRequestsAdmin(BaseSitinAdmin):  
     def get_queryset(self, request):
         return super().get_queryset(request).filter(status="pending")
 
@@ -331,6 +339,7 @@ class SitinRequestsAdmin(BaseSitinAdmin):
 
 class CurrentSitinsAdmin(BaseSitinAdmin):
     change_list_template = 'admin/backend/sitin/logout_change_list.html'
+    
     def get_queryset(self, request):
         return super().get_queryset(request).filter(status="approved")
 
@@ -392,7 +401,7 @@ class FinishedSitins(Sitin):
         verbose_name = "Timed-out Sit-in"
         verbose_name_plural = "Timed-out Sit-ins"
 
-admin_site.register(ExtraSitins, ExtraSitinsAdmin)
+# admin_site.register(ExtraSitins, ExtraSitinsAdmin)
 admin_site.register(Sitin, CustomSitinsAdmin)
 # admin_site.register(SitinRequests, SitinRequestsAdmin)
 admin_site.register(CurrentSitins, CurrentSitinsAdmin)

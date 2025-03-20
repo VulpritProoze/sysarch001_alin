@@ -1,4 +1,13 @@
 {% extends "admin/custom_change_list.html" %}
+{% load i18n admin_urls static admin_list %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+<a href="{% url 'admin:index' %}">{% translate 'Home' %}</a>
+&rsaquo; <a href="{% url 'admin:admin-sitin_index' %}">Sitin</a>
+&rsaquo; {{ cl.opts.verbose_name_plural|capfirst }}
+</div>
+{% endblock %}
 
 {% block object-tools-items %}
     <li>
@@ -8,14 +17,3 @@
     </li>
     {{ block.super }}
 {% endblock %}
-
-
-
-<!-- 
-
-<a id="download-report" href="{% url 'custom_admin:admin-export_all_sitins' %}" 
-           class="btn btn-primary" download="sit_in_history.xlsx">
-            Generate Reports
-        </a>
-        
-        -->

@@ -1,5 +1,110 @@
-{% extends "admin/index.html" %}
+{% extends "admin/base_site.html" %}
 {% load i18n %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+  .app-navigation table {
+    width: 100%;
+  }
+  .container {
+      display: grid;
+      /* Flexible columns */
+      gap: 20px;
+      /* Space between charts */
+      justify-content: center;
+      /* Center align items */
+      padding: 20px;
+  }
+  .chart-container {
+      width: 400px;
+      /* Default size */
+      max-width: 100%;
+      margin: 5px auto;
+      /* Center align */
+  }
+
+  @media (max-width: 992px) {
+      .chart-container {
+          width: 200px;
+          /* Set width to 80% for medium screens */
+      }
+  }
+
+  /* Small Screens (Mobile Devices) */
+  @media (max-width: 576px) {
+      .chart-container {
+          width: 150px;
+          /* Set width to 95% for small screens */
+      }
+  }
+
+  .child-container > div {
+    text-align: center;
+  }
+</style>
+{% endblock %}
+
+{% block extrahead %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        function createPieChart(chartId, labels, data) {
+            new Chart(document.getElementById(chartId), {
+                type: "pie",
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: [
+                            "rgba(255, 99, 132, 0.5)",
+                            "rgba(54, 162, 235, 0.5)",
+                            "rgba(255, 206, 86, 0.5)",
+                            "rgba(75, 192, 192, 0.5)",
+                            "rgba(153, 102, 255, 0.5)",
+                            "rgba(255, 159, 64, 0.5)"
+                        ],
+                        borderColor: [
+                            "rgba(255, 99, 132, 1)",
+                            "rgba(54, 162, 235, 1)",
+                            "rgba(255, 206, 86, 1)",
+                            "rgba(75, 192, 192, 1)",
+                            "rgba(153, 102, 255, 1)",
+                            "rgba(255, 159, 64, 1)"
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: "bottom"
+                        }
+                    }
+                }
+            });
+        }
+
+        // Data for Charts
+        const programmingLanguageLabels = [{% for stat in programming_language_stats %}"{{ stat.programming_language }}",{% endfor %}];
+        const programmingLanguageData = [{% for stat in programming_language_stats %}{{ stat.count }},{% endfor %}];
+
+        const purposeLabels = [{% for stat in purpose_stats %}"{{ stat.purpose }}",{% endfor %}];
+        const purposeData = [{% for stat in purpose_stats %}{{ stat.count }},{% endfor %}];
+
+        const labRoomLabels = [{% for stat in lab_room_stats %}"{{ stat.lab_room }}",{% endfor %}];
+        const labRoomData = [{% for stat in lab_room_stats %}{{ stat.count }},{% endfor %}];
+
+        // Create Charts
+        createPieChart("programmingLanguageChart", programmingLanguageLabels, programmingLanguageData);
+        createPieChart("purposeChart", purposeLabels, purposeData);
+        createPieChart("labRoomChart", labRoomLabels, labRoomData);
+    });
+</script>
+{% endblock %}
+
 
 {% block bodyclass %}{{ block.super }} app-{{ app_label }}{% endblock %}
 
@@ -13,8 +118,42 @@
 {% endblock %}
 
 {% block content %}
-  <h1>{% translate "Sit-in Requests" %}</h1>
+  {% block content_title %}{% endblock %}
+  <h1>{% translate "Sit-in Management" %}</h1>
   <p>{% translate "Manage and approve sit-in requests here." %}</p>
+  <div class="app-navigation">
+    <div class="card">
+      <div class="card-body">
+        <h4>Navigate to Sitin Management Modules:</h4>
+        {% include 'admin/app_list.html' with app_list=app_list %}
+      </div>
+    </div>
+  </div>
+  <h3>Sitin Statistics</h3>
+  <div class="container card">
+    <div class="container child-container card-body">
+      <div>
+          <h4>Programming Language Usage</h4>
+          <div class="chart-container">
+              <canvas id="programmingLanguageChart"></canvas>
+          </div>
+      </div>
+
+      <div>
+          <h4>Purposes</h4>
+          <div class="chart-container">
+              <canvas id="purposeChart"></canvas>
+          </div>
+      </div>
+
+      <div>
+          <h4>Lab Rooms Used</h4>
+          <div class="chart-container">
+              <canvas id="labRoomChart"></canvas>
+          </div>
+      </div>
+    </div>
+  </div>
 {% endblock %}
 
 {% block sidebar %}{% endblock %}

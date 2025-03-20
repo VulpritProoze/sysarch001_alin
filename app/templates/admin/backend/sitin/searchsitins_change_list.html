@@ -2,65 +2,49 @@
 {% extends "admin/custom_change_list.html" %}
 {% load i18n admin_urls static admin_list %}
 
+{% block extrastyle %}
+{{ block.super }}
+<style>
+    .table-container {
+        overflow-x: auto;
+        /* Enable horizontal scrolling */
+        width: 100%;
+        /* Ensure the container takes full width */
+        margin-bottom: 20px;
+        /* Add some spacing between tables */
+    }
+
+    ;
+
+    .table-container table {
+        width: 100%;
+        /* Ensure the table takes full width */
+        border-collapse: collapse;
+        /* Remove spacing between cells */
+    }
+
+    .table-container th,
+    .table-container td {
+        padding: 8px !important;
+        /* Add padding to cells */
+        text-align: left;
+        /* Align text to the left */
+        white-space: nowrap;
+        /* Prevent text from wrapping */
+    }
+
+    .modal * {
+        font-size: small;
+    }
+
+    h4 {
+        text-align: center;
+    }
+</style>
+{% endblock %}
+
 {% block extrahead %}
 {{ block.super }}
-<script>
-    document.addEventListener("DOMContentLoaded", function () {
-        function createPieChart(chartId, labels, data) {
-            new Chart(document.getElementById(chartId), {
-                type: "pie",
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        data: data,
-                        backgroundColor: [
-                            "rgba(255, 99, 132, 0.5)",
-                            "rgba(54, 162, 235, 0.5)",
-                            "rgba(255, 206, 86, 0.5)",
-                            "rgba(75, 192, 192, 0.5)",
-                            "rgba(153, 102, 255, 0.5)",
-                            "rgba(255, 159, 64, 0.5)"
-                        ],
-                        borderColor: [
-                            "rgba(255, 99, 132, 1)",
-                            "rgba(54, 162, 235, 1)",
-                            "rgba(255, 206, 86, 1)",
-                            "rgba(75, 192, 192, 1)",
-                            "rgba(153, 102, 255, 1)",
-                            "rgba(255, 159, 64, 1)"
-                        ],
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: "bottom"
-                        }
-                    }
-                }
-            });
-        }
-
-        // Data for Charts
-        const programmingLanguageLabels = [{% for stat in programming_language_stats %}"{{ stat.programming_language }}",{% endfor %}];
-        const programmingLanguageData = [{% for stat in programming_language_stats %}{{ stat.count }},{% endfor %}];
-
-        const purposeLabels = [{% for stat in purpose_stats %}"{{ stat.purpose }}",{% endfor %}];
-        const purposeData = [{% for stat in purpose_stats %}{{ stat.count }},{% endfor %}];
-
-        const labRoomLabels = [{% for stat in lab_room_stats %}"{{ stat.lab_room }}",{% endfor %}];
-        const labRoomData = [{% for stat in lab_room_stats %}{{ stat.count }},{% endfor %}];
-
-        // Create Charts
-        createPieChart("programmingLanguageChart", programmingLanguageLabels, programmingLanguageData);
-        createPieChart("purposeChart", purposeLabels, purposeData);
-        createPieChart("labRoomChart", labRoomLabels, labRoomData);
-    });
-</script>
-
 <script>
     sitin_id = null;
 
@@ -159,41 +143,15 @@
 </script>
 {% endblock %}
 
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+<a href="{% url 'admin:index' %}">{% translate 'Home' %}</a>
+&rsaquo; <a href="{% url 'admin:admin-sitin_index' %}">Sitin</a>
+&rsaquo; {{ cl.opts.verbose_name_plural|capfirst }}
+</div>
+{% endblock %}
+
 {% block content %}
-
-<style>
-    .table-container {
-        overflow-x: auto;
-        /* Enable horizontal scrolling */
-        width: 100%;
-        /* Ensure the container takes full width */
-        margin-bottom: 20px;
-        /* Add some spacing between tables */
-    }
-
-    ;
-
-    .table-container table {
-        width: 100%;
-        /* Ensure the table takes full width */
-        border-collapse: collapse;
-        /* Remove spacing between cells */
-    }
-
-    .table-container th,
-    .table-container td {
-        padding: 8px !important;
-        /* Add padding to cells */
-        text-align: left;
-        /* Align text to the left */
-        white-space: nowrap;
-        /* Prevent text from wrapping */
-    }
-
-    .modal * {
-        font-size: small;
-    }
-</style>
 
 <!-- Bootstrap Confirmation Modal -->
 <div class="modal fade" id="confirmApproveModal" tabindex="-1" aria-labelledby="confirmApproveModal" aria-hidden="true">
@@ -368,70 +326,4 @@
     </div>
 </div>
 
-<h3>Sitin Statistics</h3>
-<div class="container">
-
-    <div>
-        <h4>Programming Language Usage</h4>
-        <div class="chart-container">
-            <canvas id="programmingLanguageChart"></canvas>
-        </div>
-    </div>
-
-    <div>
-        <h4>Purposes</h4>
-        <div class="chart-container">
-            <canvas id="purposeChart"></canvas>
-        </div>
-    </div>
-
-    <div>
-        <h4>Lab Rooms Used</h4>
-        <div class="chart-container">
-            <canvas id="labRoomChart"></canvas>
-        </div>
-    </div>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-<style>
-    .container {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-        /* Flexible columns */
-        gap: 20px;
-        /* Space between charts */
-        justify-content: center;
-        /* Center align items */
-        padding: 20px;
-    }
-
-    h4 {
-        text-align: center;
-    }
-
-    .chart-container {
-        width: 400px;
-        /* Default size */
-        max-width: 100%;
-        margin: 5px auto;
-        /* Center align */
-    }
-
-    @media (max-width: 992px) {
-        .chart-container {
-            width: 200px;
-            /* Set width to 80% for medium screens */
-        }
-    }
-
-    /* Small Screens (Mobile Devices) */
-    @media (max-width: 576px) {
-        .chart-container {
-            width: 150px;
-            /* Set width to 95% for small screens */
-        }
-    }
-</style>
 {% endblock %}

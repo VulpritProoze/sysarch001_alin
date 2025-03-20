@@ -323,13 +323,5 @@ def export_sitins(request, lab_room, file_type):
         return JsonResponse({"error": "Sit-in not found"}, status=404)
     return JsonResponse({"error": "Bad Request"}, status=400)
 
-def export_sitins_xlsx(lab_room):
-    pass
-def export_sitins_csv(lab_room):
-    pass
-def export_sitins_pdf(lab_room):
-    pass
-    
-
 def error_404_view(request, exception):
     return render(request, 'backend/pages/404.html')

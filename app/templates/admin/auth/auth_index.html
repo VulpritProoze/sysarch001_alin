@@ -1,5 +1,15 @@
-{% extends "admin/index.html" %}
+{% extends "admin/base_site.html" %}
 {% load i18n %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+  .app-navigation table {
+    width: 100%;
+  }
+</style>
+{% endblock %}
+
 
 {% block bodyclass %}{{ block.super }} app-{{ app_label }}{% endblock %}
 
@@ -13,8 +23,17 @@
 {% endblock %}
 
 {% block content %}
+  {% block content_title %}{% endblock %}
   <h1>{% translate "Authentication Dashboard" %}</h1>
   <p>{% translate "Manage user authentication and access control settings here." %}</p>
+  <div class="app-navigation">
+    <div class="card">
+      <div class="card-body">
+        <h4>Navigate to Authorization Management Modules:</h4>
+        {% include 'admin/app_list.html' with app_list=app_list %}
+      </div>
+    </div>
+  </div>
 {% endblock %}
 
 {% block sidebar %}{% endblock %}

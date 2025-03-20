@@ -1,5 +1,58 @@
 {% extends "admin/change_list.html" %}
 
+{% block extrastyle %}
+{{ block.super }}
+<style>
+    .filter-toggle-btn {
+        left: 0;
+        text-align: center;
+        transition: all 0.3s ease-in-out;
+        background-color: transparent;
+        border-width: 0;
+        color: white;
+    }
+    a {
+        border-width: 0;
+    }
+
+    button {
+        font-family: var(--font-family-primary);
+        font-size: 11px;
+        cursor: pointer;
+    }
+</style>
+{% endblock %}
+
+{% block extrahead %}
+{{ block.super }}
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const filterPanel = document.getElementById("changelist-filter"); // Sidebar filter
+        const toggleButton = document.getElementById("toggle-filter-sidebar");
+
+        if (filterPanel && toggleButton) {
+            // Ensure display is explicitly set to 'block' if it's not already set
+            if (filterPanel.style.display === "") {
+                filterPanel.style.display = "block";
+            }
+
+            toggleButton.parentElement.addEventListener("click", function () {
+                const isHidden = filterPanel.style.display === "none";
+                filterPanel.style.display = isHidden ? "block" : "none";
+
+                // Save state in localStorage (like Django admin nav toggle)
+                localStorage.setItem("filterSidebarHidden", isHidden);
+            });
+
+            // Restore state from localStorage
+            if (localStorage.getItem("filterSidebarHidden") === "true") {
+                filterPanel.style.display = "none";
+            }
+        }
+    });
+</script>
+{% endblock %}
+
 <!-- For some reason, object-tools have actually been moved into content-main -->
 <!-- The documentation is wrong, then? o_0 -->
 
@@ -9,52 +62,5 @@
     <a href="#">
         <span class="filter-toggle-btn" id="toggle-filter-sidebar" aria-label="Toggle filters">☰ TOGGLE FILTERS</span>
     </a>
-    <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            const filterPanel = document.getElementById("changelist-filter"); // Sidebar filter
-            const toggleButton = document.getElementById("toggle-filter-sidebar");
-    
-            if (filterPanel && toggleButton) {
-                // Ensure display is explicitly set to 'block' if it's not already set
-                if (filterPanel.style.display === "") {
-                    filterPanel.style.display = "block";
-                }
-    
-                toggleButton.parentElement.addEventListener("click", function () {
-                    const isHidden = filterPanel.style.display === "none";
-                    filterPanel.style.display = isHidden ? "block" : "none";
-    
-                    // Save state in localStorage (like Django admin nav toggle)
-                    localStorage.setItem("filterSidebarHidden", isHidden);
-                });
-    
-                // Restore state from localStorage
-                if (localStorage.getItem("filterSidebarHidden") === "true") {
-                    filterPanel.style.display = "none";
-                }
-            }
-        });
-    </script>
-    
-
-    <style>
-        .filter-toggle-btn {
-            left: 0;
-            text-align: center;
-            transition: all 0.3s ease-in-out;
-            background-color: transparent;
-            border-width: 0;
-            color: white;
-        }
-        a {
-            border-width: 0;
-        }
-
-        button {
-            font-family: var(--font-family-primary);
-            font-size: 11px;
-            cursor: pointer;
-        }
-    </style>
 </li>
 {% endblock %}

@@ -1,53 +1,50 @@
 {% extends "admin/index.html" %}
 
+{% block extrahead %}
+<!-- Chart.js Library -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
 
-{% block content %}
-
+{% block extrastyle %}
+{{ block.super }}
 <!-- Custom Styles -->
 <style>
     #content {
         width: 100% !important;
-        margin: 0;
-        display: flex;
-        flex-direction: column; /* Change to column direction for flex */
-        gap: 20px; /* Optional: to provide space between items */
-        margin-bottom: 20px; /* Optional: space below the container */
-    }
-
-    .container {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        width: 100%;
+        display: grid;
+        grid-template-columns: 70% 30%;
         gap: 2rem;
     }
 
-    #content-main, #content-related {
-        width: 100%; /* Ensure they are taking full width in the column */
-        margin: 0;
+    #content-main {
+        width: 100%;
+    }
+
+    #content-related {
+        width: 100% !important;
     }
 
     /* Medium Screens (Tablets) */
     @media (max-width: 992px) {
-        .card {
-            width: 600px !important;
+        #content {
+            grid-template-columns: 1fr;
         }
     }
 
     /* Small Screens (Mobile Devices) */
     @media (max-width: 576px) {
-        .card {
-            width: 400px !important;
-        }
+        /*  leave empty just in case  */
+        
+    }
+
+    .card {
+        width: 100%;
     }
 
     .card-body {
         display: flex;
-        justify-content: center;
-    }
-
-    .card {
-        width: 750px;
+        flex-direction: column;
+        align-items: center;
     }
 
     /* Pie Chart Container */
@@ -72,7 +69,7 @@
     /* Styling the Pie Chart */
     canvas {
         max-width: 100%;
-        height: auto;
+        height: 300px !important;
     }
 
     /* Custom Buttons (optional) */
@@ -97,14 +94,18 @@
         background: var(--body-bg) !important;
     }
 </style>
+{% endblock %}
 
-<div class="container">
-    <p class="text-center">Here is the latest overview of your admin dashboard:</p>
+{% block content_title %}
+{% endblock %}
 
-    <!-- Dashboard Stats - Pie Chart -->
+{% block content %}
+<div id="content-main">
     <div class="row">
         <div class="card">
             <div class="card-body">
+                <h2>Welcome to CCS Sitin Management Admin Panel</h2>
+                <p class="text-center">Here is the latest overview of your admin dashboard:</p>
                 <div class="chart-container">
                     <h5 class="card-title">Dashboard Stats Overview</h5>
                     <canvas id="combinedStatsChart" height="300"></canvas>
@@ -112,20 +113,25 @@
             </div>
         </div>
     </div>
-
-<!-- Chart.js Library -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <br>
+    {% include 'admin/app_list.html' with app_list=app_list show_changelinks=True %}
+</div>
 
 <script>
     // Pie Chart for Combined Stats
     var ctx = document.getElementById('combinedStatsChart').getContext('2d');
+    const total_users = parseInt('4', 10);
+    const total_announcements = parseInt('5', 10);
+    const total_comments = parseInt('50', 10);
+    const total_sitins = parseInt('7', 10);
+    const data_list = [total_users, total_announcements, total_comments, total_sitins];
     new Chart(ctx, {
         type: 'pie',
         data: {
             labels: ['Total Users', 'Total Announcements', 'Total Comments', 'Total Sitins'],
             datasets: [{
                 label: 'Dashboard Stats Breakdown',
-                data: [{{ total_users }}, {{ total_announcements }}, {{ total_comments }}, {{ total_sitins }}],
+                data: data_list,
                 backgroundColor: [
                     '#007bff', // Blue
                     '#28a745', // Green
@@ -143,6 +149,7 @@
         },
         options: {
             responsive: true,
+            maintainAspectRatio: false, // Allow chart to resize freely
             plugins: {
                 legend: {
                     position: 'top',
@@ -159,5 +166,8 @@
     });
 </script>
 
+{% endblock %}
+
+{% block sidebar %}
 {{ block.super }}
 {% endblock %}
