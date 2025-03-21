@@ -158,12 +158,10 @@ class CustomAdminSite(AdminSite):
     
 # Instantiate your custom admin site
 admin_site = CustomAdminSite(name='custom_admin')
-admin_site.register(User)
 
 admin_site.site_header = "CCS Sitin Administration"
 admin_site.site_title = "CCS Sitin Administration"
 admin_site.index_title = "Welcome to the Sitin Administration Panel of CCS Department"
-
 
 # @admin.register(Registration, site=admin_site)
 class RegistrationInline(admin.StackedInline):
@@ -181,10 +179,26 @@ class RegistrationInline(admin.StackedInline):
 
 # @admin.site.unregister(User)
 class CustomUserAdmin(UserAdmin):
+    list_display = ('username', 'email', 'is_staff')
+    fieldsets = (
+        (None, {"fields": ("username", "password")}),
+        ('Personal info', {'fields': ('email',)}),
+        (
+            _("Permissions"),
+            {
+                "fields": (
+                    "is_active",
+                    "is_staff",
+                    "is_superuser",
+                    "groups",
+                    "user_permissions",
+                ),
+            },
+        ),
+        (_("Important dates"), {"fields": ("last_login", "date_joined")}),
+    )
     inlines = UserAdmin.inlines + (RegistrationInline,)
-    
 
-admin_site.unregister(User)
 admin_site.register(User, CustomUserAdmin)
     
 class SuperuserFilter(admin.SimpleListFilter):

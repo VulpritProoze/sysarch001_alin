@@ -145,13 +145,11 @@
 
 {% block extrahead %}
 {{ block.super }}
-<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 <script>
+document.addEventListener('DOMContentLoaded', function() {
     sitin_id = null;
 
-    function showConfirmLogoutModal(id) {
+    window.showConfirmLogoutModal = function(id) {
         sitin_id = id;
         let modal = new bootstrap.Modal(document.getElementById('confirmLogoutModal'));
         modal.show();
@@ -161,7 +159,7 @@
         LogoutStudent();
     });
 
-    async function LogoutStudent() {
+    window.LogoutStudent = async function() {
         console.log('called')
         if (sitin_id) {
             const data = new URLSearchParams();
@@ -201,7 +199,7 @@
 
     const parent = document.querySelector("#main");
 
-    function RenderSuccessDiv(parentElement, data) {
+    window.RenderSuccessDiv = function(parentElement, data) {
         for (let field in data) {
             let successDiv = document.createElement('div');
             let text = document.createElement('span');
@@ -216,7 +214,7 @@
         });
     }
 
-    function RenderErrorDiv(parentElement, data) {
+    window.RenderErrorDiv = function(parentElement, data) {
         for (let field in data) {
             let errorDiv = document.createElement('div');
             let text = document.createElement('span');
@@ -231,7 +229,7 @@
         });
     }
 
-    document.addEventListener('DOMContentLoaded', function () {
+    function Initialize() {
         const alertMessages = JSON.parse(localStorage.getItem('alertMessages'));
         // Define 'parent' as container to append success message in any html script.
         if (parent) {
@@ -241,8 +239,10 @@
         if (alertMessages) {
             localStorage.removeItem('alertMessages');
         }
-    });
+    }
 
+    Initialize();
+});
 </script>
 {% endblock %}
 

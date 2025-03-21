@@ -246,7 +246,8 @@ class SitinDeleteView(generics.RetrieveDestroyAPIView):
 @login_required
 def sitin_history(request):
     if request.user.is_authenticated:
-        return render(request, 'backend/pages/sitin_history.html')
+        sitin_history = Sitin.objects.filter(status='finished', user=request.user)
+        return render(request, 'backend/pages/sitin_history.html', {'sitin_history': sitin_history})
     return redirect('/')
 
 @login_required

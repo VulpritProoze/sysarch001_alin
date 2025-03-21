@@ -35,14 +35,15 @@
                 </tr>
             </thead>
             <tbody class="table-light">
+                {% for sitin in sitin_history %}
                 <tr>
-                    <td>22659536</td>
-                    <td>Ram Railey Alin</td>
-                    <td><span class="badge bg-info text-white">Research</span></td>
-                    <td>Python</td>
-                    <td>Lab 524</td>
-                    <td>03/14/25 12:54 PM</td>
-                    <td>03/14/25 01:54 PM</td>
+                    <td>{{ sitin.user.registration.idno }}</td>
+                    <td>{{ sitin.user.registration.firstname }} {{ sitin.user.registration.middlename }} {{ sitin.user.registration.lastname }}</td>
+                    <td><span class="badge bg-info text-white">{{ sitin.purpose }}</span></td>
+                    <td>{{ sitin.programming_language }}</td>
+                    <td>Lab {{ sitin.lab_room }}</td>
+                    <td>{{ sitin.sitin_date }}</td>
+                    <td>{{ sitin.logout_date }}</td>
                     <td>
                         <button class="btn btn-sm btn-outline-success rounded-circle feedback-btn" 
                                 data-toggle="modal" data-target="#feedbackModal" 
@@ -52,6 +53,7 @@
                         </button>
                     </td>
                 </tr>
+                {% endfor %}
             </tbody>
         </table>
         <!-- {% if sitins %}

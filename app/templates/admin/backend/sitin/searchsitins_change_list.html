@@ -46,9 +46,10 @@
 {% block extrahead %}
 {{ block.super }}
 <script>
+document.addEventListener('DOMContentLoaded', function() {
     sitin_id = null;
 
-    function showConfirmApproveModal(id) {
+    window.showConfirmApproveModal = function(id) {
         sitin_id = id;
         let modal = new bootstrap.Modal(document.getElementById('confirmApproveModal'));
         modal.show();
@@ -58,7 +59,7 @@
         ApproveSitin();
     });
 
-    async function ApproveSitin() {
+    window.ApproveSitin = async function() {
         console.log('called')
         if (sitin_id) {
             const data = new URLSearchParams();
@@ -98,7 +99,7 @@
 
     const parent = document.querySelector("#main");
 
-    function RenderSuccessDiv(parentElement, data) {
+    window.RenderSuccessDiv = function(parentElement, data) {
         for (let field in data) {
             let successDiv = document.createElement('div');
             let text = document.createElement('span');
@@ -113,7 +114,7 @@
         });
     }
 
-    function RenderErrorDiv(parentElement, data) {
+    window.RenderErrorDiv = function(parentElement, data) {
         for (let field in data) {
             let errorDiv = document.createElement('div');
             let text = document.createElement('span');
@@ -128,7 +129,7 @@
         });
     }
 
-    document.addEventListener('DOMContentLoaded', function () {
+    function Initialize() {
         const alertMessages = JSON.parse(localStorage.getItem('alertMessages'));
         // Define 'parent' as container to append success message in any html script.
         if (parent) {
@@ -138,7 +139,10 @@
         if (alertMessages) {
             localStorage.removeItem('alertMessages');
         }
-    });
+    }
+
+    Initialize();
+});
 
 </script>
 {% endblock %}
