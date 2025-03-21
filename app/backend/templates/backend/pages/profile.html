@@ -8,6 +8,9 @@
 {% block content %}
 <div id="profile-container" class="container mt-5">
     {% csrf_token %}
+    <div id="loading-spinner" class="custom-spinner" style="float:right; display: none;" role="status">
+        <span class="sr-only">Loading...</span>
+    </div>
     <div class="row">
         <!-- Left Column (Profile Picture & Upload) -->
         <div class="col-lg-4 col-md-12 mb-4">
@@ -51,9 +54,6 @@
                     <div id="profile-view">
                         <div class="d-flex justify-content-between">
                             <h5 class="card-title">Profile Information</h5>
-                            <div id="loading-spinner" class="custom-spinner" style="display: none;" role="status">
-                                <span class="sr-only">Loading...</span>
-                            </div>
                         </div>
                         <hr>
                         <p id="profile-id"><i class="fas fa-id-card"></i> <span>Idno:</span> {% if registration.idno %}{{ registration.idno }}{% else %}N/A{% endif %}</p>
@@ -181,8 +181,10 @@
         }
 
         formData.append('profilepicture', fileInput.files[0]);
+        let spinner = document.getElementById('loading-spinner');
+        spinner.style.display = 'block';
 
-        fetch(`/profile/{{ registration.idno }}`, {
+        fetch(`/profile/{{ registration.idno }}/`, {
             method: 'PATCH',
             body: formData,
             headers: {
@@ -204,11 +206,14 @@
                     RenderErrorDiv(document.getElementById('profile-container'), body);
                     window.location.href = '#';
                 }
+                spinner.style.display = 'none';
             })
             .catch(error => {
                 console.log("Failed to update profile picture: ", error);
                 window.location.href = '#';
+                spinner.style.display = 'none';
             });
+            
     }
 </script>
 
