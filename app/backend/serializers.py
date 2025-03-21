@@ -47,5 +47,10 @@ class SitinSerializer(serializers.ModelSerializer):
         if data.get('purpose') == '':
             raise serializers.ValidationError({"Sitin Request": "None of the sitin request fields can be empty."})
         return data
-        
+    
+class SitinFeedbackSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Sitin
+        fields = '__all__'
+        read_only_fields = ['user']
     

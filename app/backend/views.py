@@ -12,7 +12,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 # from rest_framework.exceptions import ValidationError
-from .serializers import RegistrationSerializer, AnnouncementCommentSerializer, SitinSerializer
+from .serializers import RegistrationSerializer, AnnouncementCommentSerializer, SitinSerializer, SitinFeedbackSerializer
 from .models import Registration, Announcement, AnnouncementComment, Sitin
 from .forms import RegistrationForm
 from .choices import COURSE_CHOICES, LEVEL_CHOICES, PROGRAMMING_LANGUAGE_CHOICES, SITIN_PURPOSE_CHOICES, LAB_ROOM_CHOICES
@@ -246,9 +246,28 @@ class SitinDeleteView(generics.RetrieveDestroyAPIView):
 @login_required
 def sitin_history(request):
     if request.user.is_authenticated:
-        sitin_history = Sitin.objects.filter(status='finished', user=request.user)
+        sitin_history = Sitin.objects.filter(status='finished', user=request.user, feedback=None)
         return render(request, 'backend/pages/sitin_history.html', {'sitin_history': sitin_history})
     return redirect('/')
+
+class SitinHistoryUpdateView(generics.RetrieveUpdateAPIView):
+    queryset = Sitin.objects.all()
+    serializer_class = SitinFeedbackSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        sitin_id = self.kwargs.get('pk')
+        obj = Sitin.objects.filter(id=sitin_id, status='finished')
+        print(obj)
+        return obj
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        print(request.data)
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        return Response({'Feedback': 'Successfully submitted.'}, status=status.HTTP_200_OK)
 
 @login_required
 def sessions(request):

@@ -297,7 +297,7 @@ class BaseSitinAdmin(admin.ModelAdmin):
     get_formatted_sitin_date.admin_order_field = "sitin_date"  # Ensure the field is sortable by date
     
 class ExtraSitinsAdmin(BaseSitinAdmin):
-    list_display = ("get_user_idno", "get_fullname", "purpose", "lab_room", "status", "user__registration__sessions", 'get_formatted_date', "get_formatted_sitin_date", "get_formatted_logout_date")
+    list_display = ("get_user_idno", "get_fullname", "purpose", "lab_room", "status", "user__registration__sessions", 'get_formatted_date', "get_formatted_sitin_date", "get_formatted_logout_date", 'feedback')
     list_editable = ('status',)
     
     class Meta:
@@ -312,6 +312,7 @@ class ExtraSitinsAdmin(BaseSitinAdmin):
 
 class CustomSitinsAdmin(BaseSitinAdmin):
     change_list_template = 'admin/backend/sitin/searchsitins_change_list.html'
+    search_fields = ('user__registration__idno',)
     # change_list_template = 'admin/custom_change_list.html'
 
     def get_model_perms(self, request):
@@ -375,7 +376,7 @@ class CurrentSitinsAdmin(BaseSitinAdmin):
     #     super().save_model(request, obj, form, change)
     
 class FinishedSitinsAdmin(BaseSitinAdmin):    
-    list_display = ("get_user_idno", "get_fullname", "purpose", "lab_room", "status", "user__registration__sessions", "get_formatted_logout_date")
+    list_display = ("get_user_idno", "get_fullname", "purpose", "lab_room", "status", "user__registration__sessions", "get_formatted_logout_date", "feedback")
     change_list_template = "admin/backend/sitin/timedout_change_list.html"
 
     def get_model_perms(self, request):
@@ -389,6 +390,10 @@ class FinishedSitinsAdmin(BaseSitinAdmin):
         self.model._meta.verbose_name = "View Sit-in History"
         self.model._meta.verbose_name_plural = "View Sit-in History"
         return qs
+    
+    def get_readonly_fields(self, request, obj=None):
+        """Make the feedback field uneditable in the change form."""
+        return super().get_readonly_fields(request, obj) + ("feedback",)
 
 # Proxy models
 class ExtraSitins(Sitin):
@@ -415,7 +420,7 @@ class FinishedSitins(Sitin):
         verbose_name = "Timed-out Sit-in"
         verbose_name_plural = "Timed-out Sit-ins"
 
-# admin_site.register(ExtraSitins, ExtraSitinsAdmin)
+admin_site.register(ExtraSitins, ExtraSitinsAdmin)
 admin_site.register(Sitin, CustomSitinsAdmin)
 # admin_site.register(SitinRequests, SitinRequestsAdmin)
 admin_site.register(CurrentSitins, CurrentSitinsAdmin)

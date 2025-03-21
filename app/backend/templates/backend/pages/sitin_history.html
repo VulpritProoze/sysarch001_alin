@@ -12,7 +12,7 @@
     }
 </style>
 
-<div class="container mt-5">
+<div class="container mt-5" id="sitin-history">
     <h5 class="mb-4">Sit-in History</h5>
 
     <!-- Search Bar -->
@@ -46,9 +46,7 @@
                     <td>{{ sitin.logout_date }}</td>
                     <td>
                         <button class="btn btn-sm btn-outline-success rounded-circle feedback-btn" 
-                                data-toggle="modal" data-target="#feedbackModal" 
-                                data-student="{{ sitin.full_name }}" 
-                                data-sitinid="{{ sitin.id }}">
+                                onclick="showFeedbackModal('{{ sitin.id }}')">
                             <i class="fas fa-comment-alt"></i>
                         </button>
                     </td>
@@ -94,8 +92,8 @@
 </div>
 
 <!-- Feedback Modal -->
-<div class="modal fade" id="feedbackModal" tabindex="-1" role="dialog" aria-labelledby="feedbackModalLabel" aria-hidden="true">
-    <div class="modal-dialog" role="document">
+<div class="modal fade" id="feedbackModal" tabindex="-1" aria-labelledby="feedbackModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header bg-primary text-white">
                 <h5 class="modal-title" id="feedbackModalLabel">Give Feedback</h5>
@@ -104,23 +102,17 @@
                 </button>
             </div>
             <div class="modal-body">
-                <form id="feedbackForm" method="POST">
+                <form id="feedbackForm">
                     {% csrf_token %}
                     <input type="hidden" id="sitinId" name="sitin_id">
-
-                    <div class="form-group">
-                        <label for="studentName">Student Name</label>
-                        <input type="text" id="studentName" class="form-control" readonly>
-                    </div>
-
                     <div class="form-group">
                         <label for="feedbackText">Your Feedback</label>
-                        <textarea class="form-control" id="feedbackText" name="feedback" rows="4" required></textarea>
+                        <textarea class="form-control" id="feedbackText" name="feedback" rows="4" required style="resize: none;"></textarea>
                     </div>
 
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-success">Submit Feedback</button>
+                        <button type="button" class="btn btn-success" id="submitBtnSitin">Submit Feedback</button>
                     </div>
                 </form>
             </div>
@@ -130,21 +122,71 @@
 
 <!-- JavaScript to Handle Modal Data -->
 <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        const feedbackButtons = document.querySelectorAll(".feedback-btn");
-        const studentNameInput = document.getElementById("studentName");
-        const sitinIdInput = document.getElementById("sitinId");
+document.addEventListener("DOMContentLoaded", function () {
+    let parent = document.getElementById('sitin-history');
+    let id = null;
+    let feedback = null;
+    const csrf_token = '{{ csrf_token }}';
 
-        feedbackButtons.forEach(button => {
-            button.addEventListener("click", function () {
-                const studentName = this.getAttribute("data-student");
-                const sitinId = this.getAttribute("data-sitinid");
+    window.SubmitFeedback = async function() {
 
-                studentNameInput.value = studentName;
-                sitinIdInput.value = sitinId;
-            });
-        });
+        if (id && feedback) {
+            try {
+                let url = `/sitin_history/${id}/`;
+                const data = {
+                    'id': id,
+                    'feedback': feedback
+                };
+                let params = {
+                    'method': 'PATCH',
+                    'headers': {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrf_token
+                    },
+                    'body': JSON.stringify(data)
+                }
+                const res = await fetch(url, params);
+                const res_data = await res.json();
+                if(res.ok) {
+                    setAlertMessageInLocalStorage(res_data);
+                    window.location.reload();
+                } else {
+                    RenderErrorDiv(parent, res_data);
+                    window.location.href='#';
+                }
+            } catch(error) {
+                console.log('error ', error);
+                RenderErrorDiv(parent, {'Feedback': 'Something went wrong with the server.'});
+            }
+        }
+    };
+
+    document.getElementById('submitBtnSitin').addEventListener('click', function() {
+        feedback = document.getElementById('feedbackText').value;
+        SubmitFeedback();
     });
+
+    window.showFeedbackModal = function(sitinId) {
+        id = sitinId;
+        let modal = new bootstrap.Modal(document.getElementById('feedbackModal'));
+        modal.show();
+    }
+
+    function Initialize() {
+        const alertMessages = JSON.parse(localStorage.getItem('alertMessages'));
+        // Define 'parent' as container to append success message in any html script.
+        if (parent) {
+            RenderSuccessDiv(parent, alertMessages);
+        }
+
+        if (alertMessages) {
+            localStorage.removeItem('alertMessages');
+        }
+    }
+
+    Initialize();
+
+});
 </script>
 
 {% endblock %}

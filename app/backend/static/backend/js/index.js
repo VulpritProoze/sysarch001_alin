@@ -1,3 +1,15 @@
+document.addEventListener('DOMContentLoaded', function () {
+    const alertMessages = JSON.parse(localStorage.getItem('alertMessages'));
+    // Define 'parent' as container to append success message in any html script.
+    if (parent) {
+        RenderSuccessDiv(parent, alertMessages);
+    }
+
+    if (alertMessages) {
+        localStorage.removeItem('alertMessages');
+    }
+});
+
 function RenderErrorDiv(parentElement, data) {    
     for (let field in data) {
         let errorDiv = document.createElement('div');
@@ -5,7 +17,11 @@ function RenderErrorDiv(parentElement, data) {
         errorDiv.classList.add('custom-alerts', 'alert', 'alert-danger', 'mb-1', 'small', 'fade-in');
         text.textContent = `${field.toUpperCase()}: ${data[field]}`;
         errorDiv.appendChild(text);
-        parentElement.insertAdjacentElement("beforebegin", errorDiv);
+        if(parentElement) {
+            parentElement.insertAdjacentElement("beforebegin", errorDiv);
+        } else {
+            console.log('nabuang na')
+        }
     }
 
     document.querySelectorAll('.custom-alerts').forEach(el => {
@@ -20,25 +36,17 @@ function RenderSuccessDiv(parentElement, data) {
         successDiv.classList.add('custom-alerts','alert', 'alert-success', 'mb-1', 'small', 'fade-in');
         text.textContent = `${field.toUpperCase()}: ${data[field]}`;
         successDiv.appendChild(text);
-        parentElement.insertAdjacentElement("beforebegin", successDiv);
+        if(parentElement) {
+            parentElement.insertAdjacentElement("beforebegin", successDiv);
+        } else {
+            console.log('nabuang na')
+        }
     }
 
     document.querySelectorAll('.custom-alerts').forEach(el => {
         setTimeout(() => el.remove(), 10000);
     });
 }
-
-document.addEventListener('DOMContentLoaded', function () {
-    const alertMessages = JSON.parse(localStorage.getItem('alertMessages'));
-    // Define 'parent' as container to append success message in any html script.
-    if (parent) {
-        RenderSuccessDiv(parent, alertMessages);
-    }
-
-    if (alertMessages) {
-        localStorage.removeItem('alertMessages');
-    }
-});
 
 // POST Comment on Announcement
 // Ang form murag di naman needed
