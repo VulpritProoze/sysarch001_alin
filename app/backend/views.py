@@ -144,7 +144,7 @@ def announcement(request, announcement_id):
         comments = AnnouncementComment.objects.filter(announcement=announcement).order_by('-updated_at')
 
         # Pagination (uses Paginator)
-        paginator = Paginator(comments, 10)
+        paginator = Paginator(comments, 30)
         page_number = request.GET.get('page')
         page_obj = paginator.get_page(page_number)
 
@@ -246,8 +246,12 @@ class SitinDeleteView(generics.RetrieveDestroyAPIView):
 @login_required
 def sitin_history(request):
     if request.user.is_authenticated:
-        sitin_history = Sitin.objects.filter(status='finished', user=request.user, feedback=None)
-        return render(request, 'backend/pages/sitin_history.html', {'sitin_history': sitin_history})
+        sitin_history = Sitin.objects.filter(status='finished', user=request.user).order_by('-logout_date')
+        # Pagination (uses Paginator)
+        paginator = Paginator(sitin_history, 25)
+        page_number = request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+        return render(request, 'backend/pages/sitin_history.html', {'sitin_history': page_obj})
     return redirect('/')
 
 class SitinHistoryUpdateView(generics.RetrieveUpdateAPIView):

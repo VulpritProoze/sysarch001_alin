@@ -4,20 +4,30 @@
     Sit-in History | CCS Sitin Monitoring System
 {% endblock title %}
 
-{% block content %}
 
+
+{% block content %}
 <style>
     table {
         font-size: small !important;
     }
+    .badge-hover-outline {
+        transition: all 0.3s ease; /* Smooth transition */
+    }
+    .badge-hover-outline:hover {
+        color: #28a745; /* Green text on hover */
+        background-color: transparent; /* Transparent background on hover */
+        border: 1px solid #28a745; /* Green outline on hover */
+    }
 </style>
+
 
 <div class="container mt-5" id="sitin-history">
     <h5 class="mb-4">Sit-in History</h5>
 
     <!-- Search Bar -->
     <div class="mb-3">
-        <input type="text" id="searchInput" class="form-control" placeholder="Search by Student ID or Name...">
+        <input type="text" id="searchInput" class="form-control" placeholder="Search by purpose, language, or room...">
     </div>
 
     <div class="table-responsive d-flex flex-column">
@@ -35,6 +45,7 @@
                 </tr>
             </thead>
             <tbody class="table-light">
+                {% if sitin_history %}
                 {% for sitin in sitin_history %}
                 <tr>
                     <td>{{ sitin.user.registration.idno }}</td>
@@ -44,46 +55,58 @@
                     <td>Lab {{ sitin.lab_room }}</td>
                     <td>{{ sitin.sitin_date }}</td>
                     <td>{{ sitin.logout_date }}</td>
+                    {% if sitin.feedback %}
+                    <td>
+                        <span class="badge badge-pill badge-success badge-hover-outline"
+                        style="cursor: not-allowed;">
+                            <i class="fas fa-check-circle"></i> Feedback sent
+                        </span>
+                    </td>
+                    {% else %}
                     <td>
                         <button class="btn btn-sm btn-outline-success rounded-circle feedback-btn" 
                                 onclick="showFeedbackModal('{{ sitin.id }}')">
                             <i class="fas fa-comment-alt"></i>
                         </button>
                     </td>
+                    {% endif %}
                 </tr>
                 {% endfor %}
+                {% else %}
+                <tr></tr>
+                {% endif %}
             </tbody>
         </table>
-        <!-- {% if sitins %}
+        {% if sitin_history %}
         {% else %}
-        <div class="small text-center">Woah! you have no pending sit-ins, apparently... ｡°(°.◜ᯅ◝°)°｡</div>
-        {% endif %} -->
+        <div class="small text-center">Woah! You're in the clear... (￣^￣ )ゞ</div>
+        {% endif %}
     </div>
 
     <!-- Pagination Controls -->
     <div class="pagination mt-3 d-flex flex-column justify-content-center">
-        <nav aria-label="Comment pagination">
+        <nav aria-label="Sitin History pagination">
             <ul class="pagination justify-content-center">
-                {% if sitin.has_previous %}
+                {% if sitin_history.has_previous %}
                 <li class="page-item">
                     <a class="page-link" href="?page=1">First</a>
                 </li>
                 <li class="page-item">
                     <a class="page-link"
-                        href="?page={{ announcementcomments.previous_page_number }}">Previous</a>
+                        href="?page={{ sitin_history.previous_page_number }}">Previous</a>
                 </li>
                 {% endif %}
 
                 <li class="page-item disabled">
-                    <span class="page-link">Page {{ sitin.number }} of {{ sitin.paginator.num_pages }}</span>
+                    <span class="page-link">Page {{ sitin_history.number }} of {{ sitin_history.paginator.num_pages }}</span>
                 </li>
 
-                {% if sitin.has_next %}
+                {% if sitin_history.has_next %}
                 <li class="page-item">
-                    <a class="page-link" href="?page={{ sitin.next_page_number }}">Next</a>
+                    <a class="page-link" href="?page={{ sitin_history.next_page_number }}">Next</a>
                 </li>
                 <li class="page-item">
-                    <a class="page-link" href="?page={{ sitin.paginator.num_pages }}">Last</a>
+                    <a class="page-link" href="?page={{ sitin_history.paginator.num_pages }}">Last</a>
                 </li>
                 {% endif %}
             </ul>
@@ -127,6 +150,24 @@ document.addEventListener("DOMContentLoaded", function () {
     let id = null;
     let feedback = null;
     const csrf_token = '{{ csrf_token }}';
+
+    // Search Functionality
+    document.getElementById("searchInput").addEventListener("input", function () {
+        let searchValue = this.value.toLowerCase();
+        let rows = document.querySelectorAll("tbody tr");
+
+        rows.forEach(row => {
+            let purpose = row.cells[2]?.innerText.toLowerCase() || "";
+            let language = row.cells[3]?.innerText.toLowerCase() || "";
+            let room = row.cells[4]?.innerText.toLowerCase() || "";
+
+            if (purpose.includes(searchValue) || language.includes(searchValue) || room.includes(searchValue)) {
+                row.style.display = "";
+            } else {
+                row.style.display = "none";
+            }
+        });
+    });
 
     window.SubmitFeedback = async function() {
 

@@ -1,18 +1,20 @@
 from django.contrib import admin
-from django.contrib import messages
 from django.contrib.auth.models import User
 from django.contrib.auth.admin import UserAdmin
-from django.contrib.admin.views.main import ChangeList
-from django.contrib.auth.decorators import login_required
 from django.contrib.admin import AdminSite
 from django.utils.translation import gettext_lazy as _
+from django.utils.html import format_html
+from django.utils.safestring import mark_safe
 from django.urls import path
+from django.urls.resolvers import URLPattern
 from django.shortcuts import render
 from django.db.models import Count, Q
 from . import views
 from .models import Registration, Announcement, AnnouncementComment, Sitin
 from .choices import LAB_ROOM_CHOICES
 from .custom_changelist import CustomChangeList
+from .swear_words import swear_words
+from better_profanity import profanity
 
 class CustomAdminSite(AdminSite):
     index_template = 'admin/custom_index.html'
@@ -32,6 +34,7 @@ class CustomAdminSite(AdminSite):
             path('sitin/finishedsitins/', self.admin_view(FinishedSitinsAdmin(FinishedSitins, self).changelist_view), name='finished_sitins_changelist'),
             path('sitin/allsitins/', self.admin_view(AllSitinsAdmin(AllSitins, self).changelist_view), name='all_sitins_changelist'),
             path('sitin/searchsitins/', self.admin_view(SearchSitinsAdmin(SearchSitins, self).changelist_view), name='search_sitins_changelist'),
+            path('sitin/feedbackreport/', self.admin_view(FeedbackReportAdmin(FeedbackReport, self).changelist_view), name='feedback_report_changelist'),
         ]
         return custom_urls + urls
 
@@ -106,7 +109,7 @@ class CustomAdminSite(AdminSite):
         }
         auth_models = ["User", "Registration"]
         general_models = ["Announcement", "AnnouncementComment"]
-        sitin_models = ["SearchSitins", "SitinRequests", "CurrentSitins", "FinishedSitins", "AllSitins"]
+        sitin_models = ["SearchSitins", "SitinRequests", "CurrentSitins", "FinishedSitins", "AllSitins", "FeedbackReport"]
 
         for app in original_app_list:
             for model in app["models"]:
@@ -125,8 +128,10 @@ class CustomAdminSite(AdminSite):
                         model["admin_url"] = "/admin/sitin/finishedsitins/"
                     elif model_name == "AllSitins":
                         model["admin_url"] = "/admin/sitin/allsitins/"
+                    elif model_name == "FeedbackReport":
+                        model["admin_url"] = "/admin/sitin/feedbackreport/"
                     custom_apps["Sit-in Management"]["models"].append(model)
-        desired_order = ['SearchSitins', 'CurrentSitins', 'FinishedSitins', "AllSitins"]
+        desired_order = ['SearchSitins', 'CurrentSitins', 'FinishedSitins', "FeedbackReport", "AllSitins",]
         custom_apps["Sit-in Management"]['models'].sort(key=lambda x: desired_order.index(x['object_name']) if x['object_name'] in desired_order else len(desired_order))
                 # else:
                 #     custom_apps["Other Models"]["models"].append(model)
@@ -224,6 +229,18 @@ class CustomUserAdmin(UserAdmin):
         return obj.registration.sessions
     get_sessions.short_description = "Sessions"
     get_sessions.admin_order_field = "registration__sessions"
+    
+    actions = ['reset_sessions_to_30']
+    
+    def reset_sessions_to_30(self,request, queryset):
+        updated_count = 0
+        for user in queryset:
+            if hasattr(user, 'registration'):
+                user.registration.sessions = 30
+                user.registration.save()
+                updated_count += 1
+        self.message_user(request, f"{updated_count} user(s) had their sessions reset back to 30.")
+    reset_sessions_to_30.short_description = "Reset selected users' session back to 30"
 
 admin_site.register(User, CustomUserAdmin)
     
@@ -440,7 +457,7 @@ class CurrentSitinsAdmin(BaseSitinAdmin):
     
 # Sit-in History (admin can view students who has been timed-out by admin, and admin can also generate reports into pdf, csv, excel, and print)
 class FinishedSitinsAdmin(BaseSitinAdmin):    
-    list_display = ("get_user_idno", "get_fullname", "purpose", "lab_room", "status", "user__registration__sessions", "get_formatted_logout_date",)
+    list_display = ("get_user_idno", "get_fullname", "purpose", "lab_room", "status", "get_user_sessions", "get_formatted_logout_date",)
     change_list_template = "admin/backend/sitin/timedout_change_list.html"
     fieldsets = (
         (None, {'fields': ('purpose', 'programming_language', 'lab_room', 'sitin_details', 'status', 'sitin_date', 'logout_date', 'user', 'feedback')}),
@@ -458,10 +475,58 @@ class FinishedSitinsAdmin(BaseSitinAdmin):
     
     def has_change_permission(self, request, obj=False):
         return False
+
+class FeedbackReportAdmin(BaseSitinAdmin):
+    list_display = ('get_user_idno', 'get_fullname', 'purpose', 'lab_room', 'status', 'get_user_sessions', 'get_formatted_login_date', 'get_formatted_logout_date', 'feedback_display')
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request).filter(status="finished")
+        return qs
     
-    def get_readonly_fields(self, request, obj=None):
-        """Make the feedback field uneditable in the change form."""
-        return super().get_readonly_fields(request, obj) + ("feedback",)
+    def get_model_perms(self, request):
+        return {"view": True}
+    
+    def has_add_permission(self, request, obj=None):
+        return False
+    
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def get_urls(self):
+        # Get the default URLs
+        urls = super().get_urls()
+
+        # Filter out the change view URL pattern
+        urls = [
+            url for url in urls
+            if not (
+                isinstance(url, URLPattern) and
+                url.pattern._route == '<path:object_id>/change/'
+            )
+        ]
+
+        return urls
+    
+    # Make the feedback field a read-only textarea so that it becomes more emphasized
+    def feedback_display(self, obj):
+        feedback_text = obj.feedback
+        profanity.load_censor_words()
+        profanity.add_censor_words(swear_words)
+        if feedback_text != None:
+            words = feedback_text.split()
+            highlighted_words = []
+            for word in words:
+                if profanity.contains_profanity(word):
+                    highlighted_words.append(f"<span style='color: red;'>{profanity.censor(word,censor_char='*')}</span>")
+                else:
+                    highlighted_words.append(word)
+            feedback_html = format_html(
+                '<div style="border: 1px solid #ccc; padding: 5px; width: 300px; height: 120px; overflow-y: auto; resize: none;">{}</div>',
+                mark_safe(' '.join(highlighted_words))
+            )
+            return feedback_html
+    feedback_display.short_description = 'Feedback'  # Column header name
+    feedback_display.admin_order_field = 'feedback'  # Allow sorting by the feedback field
 
 # Proxy models
 # User proxy for SearchSitins
@@ -485,19 +550,25 @@ class CurrentSitins(Sitin):
         verbose_name = "Current Sit-in"
         verbose_name_plural = "Current Sit-ins"
 
-
-
 # Sit-in History
 class FinishedSitins(Sitin):
     class Meta:
         proxy = True
-        verbose_name = "View Sit-in History"
-        verbose_name_plural = "View Sit-ins History"
+        verbose_name = "Sit-in History"
+        verbose_name_plural = "Sit-ins History"
+        
+# Feedback Report
+class FeedbackReport(Sitin):
+    class Meta:
+        proxy = True 
+        verbose_name = "Feedback Report"
+        verbose_name_plural = "Feedback Reports"
 
-admin_site.register(AllSitins, AllSitinsAdmin)
+# admin_site.register(AllSitins, AllSitinsAdmin)
 admin_site.register(SearchSitins, SearchSitinsAdmin)
 admin_site.register(CurrentSitins, CurrentSitinsAdmin)
 admin_site.register(FinishedSitins, FinishedSitinsAdmin)
+admin_site.register(FeedbackReport, FeedbackReportAdmin)
 
     
 # admin
