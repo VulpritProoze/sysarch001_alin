@@ -97,6 +97,16 @@
     .custom-alerts {
         font-size: small !important;
     }
+
+    /*  override django admin's h2 styling on inline change_form */
+    .module caption, .inline-group h2 {
+        text-transform: none !important;
+    }
+
+    /* override django admin's a styling on submit-rows on change_form */
+    .submit-row > a {
+        height: auto !important;
+    }
 </style>
 {% endblock %}
 

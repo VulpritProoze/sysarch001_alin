@@ -2,16 +2,17 @@ from django.contrib import admin
 from django.contrib import messages
 from django.contrib.auth.models import User
 from django.contrib.auth.admin import UserAdmin
+from django.contrib.admin.views.main import ChangeList
 from django.contrib.auth.decorators import login_required
 from django.contrib.admin import AdminSite
-from django.forms import BaseInlineFormSet
 from django.utils.translation import gettext_lazy as _
 from django.urls import path
 from django.shortcuts import render
-from django.db.models import Count
+from django.db.models import Count, Q
 from . import views
 from .models import Registration, Announcement, AnnouncementComment, Sitin
 from .choices import LAB_ROOM_CHOICES
+from .custom_changelist import CustomChangeList
 
 class CustomAdminSite(AdminSite):
     index_template = 'admin/custom_index.html'
@@ -29,8 +30,8 @@ class CustomAdminSite(AdminSite):
             # custom ahh urls for app_list models
             path('sitin/currentsitins/', self.admin_view(CurrentSitinsAdmin(CurrentSitins, self).changelist_view), name='current_sitins_changelist'),
             path('sitin/finishedsitins/', self.admin_view(FinishedSitinsAdmin(FinishedSitins, self).changelist_view), name='finished_sitins_changelist'),
-            path('sitin/extrasitins/', self.admin_view(ExtraSitinsAdmin(ExtraSitins, self).changelist_view), name='extra_sitins_changelist'),
-            path('sitin/sitins/', self.admin_view(CustomSitinsAdmin(Sitin, self).changelist_view), name='sitins_changelist'),
+            path('sitin/allsitins/', self.admin_view(AllSitinsAdmin(AllSitins, self).changelist_view), name='all_sitins_changelist'),
+            path('sitin/searchsitins/', self.admin_view(SearchSitinsAdmin(SearchSitins, self).changelist_view), name='search_sitins_changelist'),
         ]
         return custom_urls + urls
 
@@ -105,7 +106,7 @@ class CustomAdminSite(AdminSite):
         }
         auth_models = ["User", "Registration"]
         general_models = ["Announcement", "AnnouncementComment"]
-        sitin_models = ["Sitin", "SitinRequests", "CurrentSitins", "FinishedSitins", "ExtraSitins"]
+        sitin_models = ["SearchSitins", "SitinRequests", "CurrentSitins", "FinishedSitins", "AllSitins"]
 
         for app in original_app_list:
             for model in app["models"]:
@@ -116,16 +117,16 @@ class CustomAdminSite(AdminSite):
                     custom_apps["General Management"]["models"].append(model)
                 elif model_name in sitin_models:
                     # have to add this cuz i had to customize urls
-                    if model_name == "Sitin":
-                        model["admin_url"] = "/admin/sitin/sitins/"
+                    if model_name == "SearchSitins":
+                        model["admin_url"] = "/admin/sitin/searchsitins/"
                     elif model_name == "CurrentSitins":
                         model["admin_url"] = "/admin/sitin/currentsitins/"
                     elif model_name == "FinishedSitins":
                         model["admin_url"] = "/admin/sitin/finishedsitins/"
-                    elif model_name == "ExtraSitins":
-                        model["admin_url"] = "/admin/sitin/extrasitins/"
+                    elif model_name == "AllSitins":
+                        model["admin_url"] = "/admin/sitin/allsitins/"
                     custom_apps["Sit-in Management"]["models"].append(model)
-        desired_order = ['Sitin', 'SitinRequests', 'CurrentSitins', 'FinishedSitins', "ExtraSitins"]
+        desired_order = ['SearchSitins', 'CurrentSitins', 'FinishedSitins', "AllSitins"]
         custom_apps["Sit-in Management"]['models'].sort(key=lambda x: desired_order.index(x['object_name']) if x['object_name'] in desired_order else len(desired_order))
                 # else:
                 #     custom_apps["Other Models"]["models"].append(model)
@@ -140,7 +141,7 @@ class CustomAdminSite(AdminSite):
 
         # Add more statistics or custom data
         recent_announcements = Announcement.objects.all().order_by('-date')[:5]
-        recent_sitins = Sitin.objects.all().order_by('-date')[:5]
+        recent_sitins = Sitin.objects.all().order_by('-sitin_date')[:5]
 
         # Prepare extra context to pass to the template
         extra_context = extra_context or {}
@@ -166,9 +167,8 @@ admin_site.index_title = "Welcome to the Sitin Administration Panel of CCS Depar
 # @admin.register(Registration, site=admin_site)
 class RegistrationInline(admin.StackedInline):
     model = Registration 
-    # list_display = ('idno', 'username', 'firstname', 'lastname', 'middlename', 'course', 'level', 'email', 'sessions')
-    # search_fields = ('firstname', 'middlename', 'lastname', 'username__username')
-    # list_filter = ('course', 'level')
+    extra = 1
+    can_delete = False
     
     # Change the verbose name directly in the model's _meta
     def get_queryset(self, request):
@@ -179,7 +179,8 @@ class RegistrationInline(admin.StackedInline):
 
 # @admin.site.unregister(User)
 class CustomUserAdmin(UserAdmin):
-    list_display = ('username', 'email', 'is_staff')
+    change_list_template = 'admin/auth/user_change_list.html'
+    list_display = ('username', 'get_idno', 'get_firstname', 'get_middlename', 'get_lastname','get_sessions', 'is_staff')
     fieldsets = (
         (None, {"fields": ("username", "password")}),
         ('Personal info', {'fields': ('email',)}),
@@ -198,6 +199,31 @@ class CustomUserAdmin(UserAdmin):
         (_("Important dates"), {"fields": ("last_login", "date_joined")}),
     )
     inlines = UserAdmin.inlines + (RegistrationInline,)
+    
+    def get_idno(self, obj):
+        return obj.registration.idno
+    get_idno.short_description = "Student ID"
+    get_idno.admin_order_field = "registration__idno"
+    
+    def get_firstname(self, obj):
+        return obj.registration.firstname
+    get_firstname.short_description = "Firstname"
+    get_firstname.admin_order_field = "registration__firstname"
+    
+    def get_middlename(self, obj):
+        return obj.registration.middlename
+    get_middlename.short_description = "Middlename"
+    get_middlename.admin_order_field = "registration__middlename"
+    
+    def get_lastname(self, obj):
+        return obj.registration.lastname
+    get_lastname.short_description = "Lastname"
+    get_lastname.admin_order_field = "registration__lastname"
+    
+    def get_sessions(self, obj):
+        return obj.registration.sessions
+    get_sessions.short_description = "Sessions"
+    get_sessions.admin_order_field = "registration__sessions"
 
 admin_site.register(User, CustomUserAdmin)
     
@@ -246,22 +272,25 @@ class AnnouncementAdmin(admin.ModelAdmin):
 #         form.instance.user = self.request.user  # Set the user field
 #         return super().save_new(form, commit=commit)
     
-class AnnouncementCommentInline(admin.TabularInline):
+class AnnouncementCommentInline(admin.StackedInline):
     model = AnnouncementComment 
     fields = ('user', 'comment', 'date', 'updated_at')
     readonly_fields = ('date', 'updated_at',)
     extra = 0
+    
+    def has_add_permission(self, request, obj=None):
+        return False
 
 class ExtendedAnnouncementAdmin(AnnouncementAdmin):
-    inlines = (AnnouncementCommentInline,)
+    inlines = (AnnouncementCommentInline,)    
 
 admin_site.register(Announcement, ExtendedAnnouncementAdmin)
 
 class BaseSitinAdmin(admin.ModelAdmin):
-    list_display = ("get_user_idno", "get_fullname", "purpose", "lab_room", "status", "user__registration__sessions", "get_formatted_date", "get_formatted_logout_date")
+    list_display = ("get_user_idno", "get_fullname", "purpose", "lab_room", "status", "get_user_sessions", "get_formatted_login_date", "get_formatted_logout_date")
     search_fields = ("user__registration__idno", "user__username", "user__registration__firstname", 
                      "user__registration__middlename", "user__registration__lastname")
-    list_filter = ("programming_language", "purpose", "lab_room", "status", "date")
+    list_filter = ("programming_language", "purpose", "lab_room", "status",)
     change_list_template = 'admin/custom_change_list.html'
     
     def get_user_idno(self, obj):
@@ -278,82 +307,123 @@ class BaseSitinAdmin(admin.ModelAdmin):
     get_fullname.short_description = "Fullname"
     get_fullname.admin_order_field = 'user__registration__lastname'
 
-    def get_formatted_date(self, obj):
-        return obj.date  # You can format the date here if needed
+    def get_formatted_login_date(self, obj):
+        return obj.sitin_date  # You can format the date here if needed
 
-    get_formatted_date.short_description = "Request Date"  # Change the display name here
-    get_formatted_date.admin_order_field = "date"  # Ensure the field is sortable by date
+    get_formatted_login_date.short_description = "Time-in"  # Change the display name here
+    get_formatted_login_date.admin_order_field = "sitin_date"  # Ensure the field is sortable by date
 
     def get_formatted_logout_date(self, obj):
         return obj.logout_date  # You can format the date here if needed
-
     get_formatted_logout_date.short_description = "Time-out"  # Change the display name here
     get_formatted_logout_date.admin_order_field = "logout_date"  # Ensure the field is sortable by date
-
-    def get_formatted_sitin_date(self, obj):
-        return obj.sitin_date  # You can format the date here if needed
-
-    get_formatted_sitin_date.short_description = "Time-in"  # Change the display name here
-    get_formatted_sitin_date.admin_order_field = "sitin_date"  # Ensure the field is sortable by date
     
-class ExtraSitinsAdmin(BaseSitinAdmin):
-    list_display = ("get_user_idno", "get_fullname", "purpose", "lab_room", "status", "user__registration__sessions", 'get_formatted_date', "get_formatted_sitin_date", "get_formatted_logout_date", 'feedback')
+    def get_user_sessions(self, obj):
+        return obj.user.registration.sessions
+    get_user_sessions.short_description = "Sessions"
+    get_user_sessions.admin_order_field = 'user__registration__sessions'
+    
+# AlL Sitins (allows admin to view all sitins, default admin changelist)
+class AllSitinsAdmin(BaseSitinAdmin):
+    list_display = ("get_user_idno", "get_fullname", "purpose", "lab_room", "status", "get_user_sessions", "get_formatted_login_date", "get_formatted_logout_date", 'feedback')
     list_editable = ('status',)
+    change_list_template = 'admin/backend/sitin/allsitins_change_list.html'
+
+class SearchSitinsInline(admin.StackedInline):
+    model = Sitin
+    extra = 0
+    can_delete = False
+    fieldsets = (
+        (None, {'fields': ('purpose', 'programming_language', 'lab_room', 'sitin_details', 'status',)}),
+    )
     
-    class Meta:
-        verbose_name = "All Sitin"
-        verbose_name_plural = "All Sitins"  # Plural version
-
     def get_queryset(self, request):
-        qs = super().get_queryset(request)
-        self.model._meta.verbose_name = "All Sitin"
-        self.model._meta.verbose_name = "All Sitins"
+        qs = super().get_queryset(request).filter(Q(status='approved') | Q(status='none'))
+        self.model._meta.verbose_name = "Add Sitin"
+        self.model._meta.verbose_name_plural = "Add Sitins"
         return qs
+    
+    def get_readonly_fields(self, request, obj=None):
+        # Make all fields in the change form read-only
+        if obj:  # obj is not None, so we're editing an existing object
+            return ['sitin_date', 'logout_date', 'feedback',]
+        return self.readonly_fields
+    
+    def formfield_for_choice_field(self, db_field, request, **kwargs):
+        # Customize the choices for the 'status' field
+        if db_field.name == 'status':
+            # Modify the choices dynamically
+            kwargs['choices'] = (
+                ('none', 'Not Sitin'),
+                ('approved', 'Approved'),
+                ('rejected', 'Rejected'),
+            )
+        return super().formfield_for_choice_field(db_field, request, **kwargs)
 
-class CustomSitinsAdmin(BaseSitinAdmin):
+# Search Sitins (admin can search for student to sitin)
+class SearchSitinsAdmin(admin.ModelAdmin):
     change_list_template = 'admin/backend/sitin/searchsitins_change_list.html'
-    search_fields = ('user__registration__idno',)
-    # change_list_template = 'admin/custom_change_list.html'
+    inlines = (SearchSitinsInline,)
+    list_display = ('get_idno', 'get_firstname', 'get_middlename', 'get_lastname', 'get_sessions')
+    list_display_links = ('get_idno',)
+    list_filter = ('registration__course', 'registration__level')
+    search_fields = ('registration__idno',)
+    fieldsets = (
+        ('Personal info', {'fields': ('registration__idno', 'registration__firstname', 'registration__middlename', 'registration__lastname', 'registration__sessions')}),
+    )     
+
+    def get_idno(self, obj):
+        return obj.registration.idno
+    get_idno.short_description = "Student ID"
+    get_idno.admin_order_field = "registration__idno"
+    
+    def get_firstname(self, obj):
+        return obj.registration.firstname
+    get_firstname.short_description = "Firstname"
+    get_firstname.admin_order_field = "registration__firstname"
+    
+    def get_middlename(self, obj):
+        return obj.registration.middlename
+    get_middlename.short_description = "Middlename"
+    get_middlename.admin_order_field = "registration__middlename"
+    
+    def get_lastname(self, obj):
+        return obj.registration.lastname
+    get_lastname.short_description = "Lastname"
+    get_lastname.admin_order_field = "registration__lastname"
+    
+    def get_sessions(self, obj):
+        return obj.registration.sessions
+    get_sessions.short_description = "Sessions"
+    get_sessions.admin_order_field = "registration__sessions"
 
     def get_model_perms(self, request):
         return {"view": True}  # Hide "Add" and "Delete" buttons
-    
+
     def has_add_permission(self, request):
         return False
+    
+    def has_delete_permission(self, request, object=None):
+        return False
+    
+    def get_readonly_fields(self, request, obj=None):
+        # Make all fields in the change form read-only
+        if obj:  # obj is not None, so we're editing an existing object
+            return ['registration__idno', 'registration__firstname', 'registration__middlename', 'registration__lastname', 'registration__sessions']
+        return self.readonly_fields
         
-    # Change the verbose name directly in the model's _meta
-    def get_queryset(self, request):
-        qs = super().get_queryset(request)
-        self.model._meta.verbose_name = "Search Sitin"
-        self.model._meta.verbose_name_plural = "Search Sitins"
-        return qs
-    
-    def changelist_view(self, request, extra_context=None):
-        # Aggregate statistics
-        pending_sitins = Sitin.objects.filter(status="pending")
-        current_sitins = Sitin.objects.filter(status="approved")
-        finished_sitins = Sitin.objects.filter(status="finished")
-        # Pass stats to the template
-        extra_context = extra_context or {}
-        extra_context["title"] = _("Select Students to Approve Sit-ins")
-        extra_context["pending_sitins"] = pending_sitins
-        extra_context["current_sitins"] = current_sitins
-        extra_context["finished_sitins"] = finished_sitins
-
-        return super().changelist_view(request, extra_context=extra_context)
-
-class SitinRequestsAdmin(BaseSitinAdmin):  
-    def get_queryset(self, request):
-        return super().get_queryset(request).filter(status="pending")
-
-    def get_model_perms(self, request):
-        return {"view": True}  # Hide "Add" and "Delete" buttons
-
-    def has_add_permission(self, request):
-        return False
-
+# Current Sitins (admin can view students who has currently sitin)
 class CurrentSitinsAdmin(BaseSitinAdmin):
     change_list_template = 'admin/backend/sitin/logout_change_list.html'
+    list_display = ("get_user_idno", "get_fullname", "purpose", "lab_room", "get_user_sessions", "get_formatted_login_date",)
+    list_display_links = ('get_user_idno',)
+    fieldsets = (
+        (None, {'fields': ('purpose', 'programming_language', 'lab_room', 'sitin_details', 'status', 'sitin_date', 'user',)}),
+    )
+    actions = None
+    
+    def get_changelist(self, request, **kwargs):
+        return CustomChangeList
     
     def get_queryset(self, request):
         return super().get_queryset(request).filter(status="approved")
@@ -361,23 +431,20 @@ class CurrentSitinsAdmin(BaseSitinAdmin):
     def get_model_perms(self, request):
         return {"view": True}  # Hide "Add" and "Delete" buttons
     
+    def has_change_permission(self, request, obj=False):
+        return False
+    
     def has_add_permission(self, request):
         return False
-
-    # Fuckign stupid ass methof    
-    # def save_model(self, request, obj, form, change):
-    #     """Reduce sessions by 1 when status is changed to 'finished'"""
-    #     if obj.status == "finished" and obj.user.registration:
-    #         regis = obj.user.registration
-    #         regis.logout_date = now()
-    #         if regis.sessions > 0:
-    #             regis.sessions -= 1
-    #         regis.save()
-    #     super().save_model(request, obj, form, change)
     
+    
+# Sit-in History (admin can view students who has been timed-out by admin, and admin can also generate reports into pdf, csv, excel, and print)
 class FinishedSitinsAdmin(BaseSitinAdmin):    
-    list_display = ("get_user_idno", "get_fullname", "purpose", "lab_room", "status", "user__registration__sessions", "get_formatted_logout_date", "feedback")
+    list_display = ("get_user_idno", "get_fullname", "purpose", "lab_room", "status", "user__registration__sessions", "get_formatted_logout_date",)
     change_list_template = "admin/backend/sitin/timedout_change_list.html"
+    fieldsets = (
+        (None, {'fields': ('purpose', 'programming_language', 'lab_room', 'sitin_details', 'status', 'sitin_date', 'logout_date', 'user', 'feedback')}),
+    )
 
     def get_model_perms(self, request):
         return {"view": True}  # Hide "Add" and "Delete" buttons
@@ -387,42 +454,48 @@ class FinishedSitinsAdmin(BaseSitinAdmin):
       
     def get_queryset(self, request):
         qs = super().get_queryset(request).filter(status="finished")
-        self.model._meta.verbose_name = "View Sit-in History"
-        self.model._meta.verbose_name_plural = "View Sit-in History"
         return qs
+    
+    def has_change_permission(self, request, obj=False):
+        return False
     
     def get_readonly_fields(self, request, obj=None):
         """Make the feedback field uneditable in the change form."""
         return super().get_readonly_fields(request, obj) + ("feedback",)
 
 # Proxy models
-class ExtraSitins(Sitin):
+# User proxy for SearchSitins
+class SearchSitins(User):
+    class Meta:
+        proxy = True 
+        verbose_name = "Search Student"
+        verbose_name_plural = "Search Students"  # Plural version
+
+# All Sitins
+class AllSitins(Sitin):
     class Meta:
         proxy = True
         verbose_name = "All Sitin"
         verbose_name_plural = "All Sitins"  # Plural version
 
-class SitinRequests(Sitin):
-    class Meta:
-        proxy = True
-        verbose_name = "Pending Sit-in"
-        verbose_name_plural = "Pending Sit-ins"
-
+# Current Sitins
 class CurrentSitins(Sitin):
     class Meta:
         proxy = True
         verbose_name = "Current Sit-in"
         verbose_name_plural = "Current Sit-ins"
 
+
+
+# Sit-in History
 class FinishedSitins(Sitin):
     class Meta:
         proxy = True
-        verbose_name = "Timed-out Sit-in"
-        verbose_name_plural = "Timed-out Sit-ins"
+        verbose_name = "View Sit-in History"
+        verbose_name_plural = "View Sit-ins History"
 
-admin_site.register(ExtraSitins, ExtraSitinsAdmin)
-admin_site.register(Sitin, CustomSitinsAdmin)
-# admin_site.register(SitinRequests, SitinRequestsAdmin)
+admin_site.register(AllSitins, AllSitinsAdmin)
+admin_site.register(SearchSitins, SearchSitinsAdmin)
 admin_site.register(CurrentSitins, CurrentSitinsAdmin)
 admin_site.register(FinishedSitins, FinishedSitinsAdmin)
 

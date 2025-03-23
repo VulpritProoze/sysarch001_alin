@@ -79,7 +79,8 @@
 <div class="breadcrumbs">
 <a href="{% url 'admin:index' %}">{% translate 'Home' %}</a>
 &rsaquo; <a href="{% url 'admin:admin-sitin_index' %}">Sitin</a>
-&rsaquo; {{ cl.opts.verbose_name_plural|capfirst }}
+&rsaquo; <a href="{% url 'admin:finished_sitins_changelist' %}">View Sit-ins History</a>
+&rsaquo; <a href="{% url 'admin:admin-export_all_sitins' %}">Generate Reports</a>
 </div>
 {% endblock %}
 

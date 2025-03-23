@@ -28,7 +28,6 @@ def create_excel_report(queryset, title, description):
         "Lab Room",
         "Status",
         "Sessions",
-        "Request Date",
         "Time-in",
         "Time-out",
     ]
@@ -40,7 +39,6 @@ def create_excel_report(queryset, title, description):
         student_id = sitin.user.registration.idno
 
         # Convert timezone-aware datetimes to timezone-naive
-        request_date = sitin.date.strftime("%m-%d-%Y %H:%M:%S") if sitin.date else None
         time_in = sitin.sitin_date.strftime("%m-%d-%Y %H:%M:%S") if sitin.sitin_date else None
         time_out = sitin.logout_date.strftime("%m-%d-%Y %H:%M:%S") if sitin.logout_date else None
 
@@ -52,7 +50,6 @@ def create_excel_report(queryset, title, description):
             sitin.lab_room,
             sitin.status,
             sitin.user.registration.sessions if hasattr(sitin.user, "registration") else "",
-            request_date,
             time_in,
             time_out,
         ])
@@ -106,7 +103,6 @@ def create_csv_report(queryset, title, description):
             "Lab Room",
             "Status",
             "Sessions",
-            "Request Date",
             "Time-in",
             "Time-out",
         ]
@@ -115,7 +111,6 @@ def create_csv_report(queryset, title, description):
             fullname = f"{sitin.user.registration.firstname} {sitin.user.registration.lastname}"
             student_id = sitin.user.registration.idno
             # Time-zone naive datetimes
-            request_date = sitin.date.strftime("%m-%d-%Y %H:%M:%S") if sitin.date else None
             time_in = sitin.sitin_date.strftime("%m-%d-%Y %H:%M:%S") if sitin.sitin_date else None
             time_out = sitin.logout_date.strftime("%m-%d-%Y %H:%M:%S") if sitin.logout_date else None
 
@@ -125,7 +120,6 @@ def create_csv_report(queryset, title, description):
                 sitin.purpose, 
                 sitin.lab_room,
                 sitin.status, getattr(sitin.user.registration, "sessions", ""),
-                request_date, 
                 time_in, 
                 time_out
             ])
@@ -156,7 +150,6 @@ def create_pdf_report(queryset, title, description):
             "Lab Room",
             "Status",
             "Sessions",
-            "Request Date",
             "Time-in",
             "Time-out",
         ]
@@ -167,7 +160,6 @@ def create_pdf_report(queryset, title, description):
         student_id = sitin.user.registration.idno
         sessions = sitin.user.registration.sessions if sitin.user.registration.sessions else 0
         # Time-zone naive datetimes
-        request_date = sitin.date.strftime("%m-%d-%Y %H:%M:%S") if sitin.date else None
         time_in = sitin.sitin_date.strftime("%m-%d-%Y %H:%M:%S") if sitin.sitin_date else None
         time_out = sitin.logout_date.strftime("%m-%d-%Y %H:%M:%S") if sitin.logout_date else None
 
@@ -178,7 +170,6 @@ def create_pdf_report(queryset, title, description):
             Paragraph(sitin.lab_room, styleN),
             Paragraph(sitin.status, styleN),
             Paragraph(str(sessions), styleN),
-            Paragraph(request_date if request_date else "", styleN),
             Paragraph(time_in if time_in else "", styleN),
             Paragraph(time_out if time_out else "", styleN),
         ]

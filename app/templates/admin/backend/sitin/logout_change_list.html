@@ -25,7 +25,7 @@
 
     .table-container th,
     .table-container td {
-        padding: 8px !important;
+        padding-right: 8px !important;
         /* Add padding to cells */
         text-align: left;
         /* Align text to the left */
@@ -248,9 +248,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
 {% block breadcrumbs %}
 <div class="breadcrumbs">
-<a href="{% url 'admin:index' %}">{% translate 'Home' %}</a>
-&rsaquo; <a href="{% url 'admin:admin-sitin_index' %}">Sitin</a>
-&rsaquo; {{ cl.opts.verbose_name_plural|capfirst }}
+    <a href="{% url 'admin:index' %}">{% translate 'Home' %}</a>
+    &rsaquo; <a href="{% url 'admin:admin-sitin_index' %}">Sitin</a>
+    &rsaquo; {{ cl.opts.verbose_name_plural|capfirst }}
 </div>
 {% endblock %}
 
@@ -278,7 +278,13 @@ document.addEventListener('DOMContentLoaded', function() {
 </div>
 
 <div id="content-main">
-    <!-- For some reason, object-tools have actually been moved into content-main -->
+    {% if cl.formset and cl.formset.errors %}
+        <p class="errornote">
+        {% blocktranslate count counter=cl.formset.total_error_count %}Please correct the error below.{% plural %}Please correct the errors below.{% endblocktranslate %}
+        </p>
+        {{ cl.formset.non_form_errors }}
+    {% endif %}
+    <!-- For some reason, object-tools have actually been moved into content-main (this is old version) -->
     {% block object-tools %}
     {{ block.super }}
     {% endblock %}
@@ -287,42 +293,62 @@ document.addEventListener('DOMContentLoaded', function() {
             {% block search %}{% search_form cl %}{% endblock %}
             {% block date_hierarchy %}{% if cl.date_hierarchy %}{% date_hierarchy cl %}{% endif %}{% endblock %}
 
+            <form id="changelist-form" method="post"{% if cl.formset and cl.formset.is_multipart %} enctype="multipart/form-data"{% endif %} novalidate>{% csrf_token %}
+            {% if cl.formset %}
+                <div>{{ cl.formset.management_form }}</div>
+            {% endif %}
+
+            {% block result_list %}
             <!-- Table for All Sit-ins -->
             <h3>Current Sit-ins</h3>
             <div class="results table-container">
-                <table id="result_list_all">
+                <table id="result_list">
                     <thead>
                         <tr>
-                            <th>Student ID</th>
-                            <th>Fullname</th>
-                            <th>Purpose</th>
-                            <th>Lab Room</th>
-                            <!-- <th>Status</th> -->
-                            <th>Log-out Student?</th>
-                            <th>Time-in</th>
+                            {% for header in cl.result_headers %}
+                            <th scope="col" class="{{ header.class_attrib }}">
+                                {% if header.sortable and header.sort_priority > 0 %}
+                                <div class="sortoptions">
+                                    <a class="sortremove" href="{{ header.url_remove }}" title="{% translate "Remove from sorting" %}"></a>
+                                    {% if num_sorted_fields > 1 %}<span class="sortpriority" title="{% blocktranslate with priority_number=header.sort_priority %}Sorting priority: {{ priority_number }}{% endblocktranslate %}">{{ header.sort_priority }}</span>{% endif %}
+                                    <a href="{{ header.url_toggle }}" class="toggle {{ header.ascending|yesno:'ascending,descending' }}" title="{% translate "Toggle sorting" %}"></a>
+                                    {% if header.ascending %}&uarr;{% else %}&darr;{% endif %}
+                                </div>
+                                {% endif %}
+                                <div class="text">{% if header.sortable %}<a href="{{ header.url_primary }}">{{ header.text|capfirst }}</a>{% else %}<span>{{ header.text|capfirst }}</span>{% endif %}</div>
+                                <div class="clear"></div>
+                            </th>
+                            {% endfor %}
+                            <th>Log-out Student?</th>  <!-- Custom non-sortable column -->
                         </tr>
                     </thead>
                     <tbody>
                         {% for sitin in cl.result_list %}
                         <tr class="{% cycle 'row1' 'row2' %}">
-                            <td>{{ sitin.user.registration.idno }}</td>
+                            <td>
+                                <a href="{% url 'admin:backend_currentsitins_change' sitin.id %}">
+                                    {{ sitin.user.registration.idno }}
+                                </a>
+                            </td>
                             <td>{{ sitin.user.registration.firstname }} {{ sitin.user.registration.lastname }}</td>
                             <td>{{ sitin.purpose }}</td>
                             <td>{{ sitin.lab_room }}</td>
-                            <!-- <td>{{ sitin.status }}</td> -->
+                            <td>{{ sitin.user.registration.sessions }}</td>
+                            <td>{{ sitin.sitin_date }}</td>
                             <td>
                                 <button class="btn btn-danger btn-sm shadow-sm animate-btn"
                                     onclick="showConfirmLogoutModal('{{ sitin.id }}')">
                                     <i class="fas fa-door-open"></i> Log-out
                                 </button>
                             </td>
-                            <td>{{ sitin.sitin_date }}</td>
                         </tr>
                         {% endfor %}
                     </tbody>
                 </table>
             </div>
+            {% endblock %}
             {% block pagination %}{% pagination cl %}{% endblock %}
+            </form>
         </div>
         
         {% block filters %}

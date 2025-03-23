@@ -75,7 +75,7 @@ LAB_ROOM_CHOICES = [
 ]
 
 SITIN_STATUS_CHOICES = [
-    ('pending', 'Pending'),
+    ('none', 'Not Sitin'),
     ('approved', 'Approved'),
     ('rejected', 'Rejected'),
     ('finished', 'Finished'),
