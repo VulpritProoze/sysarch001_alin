@@ -14,8 +14,6 @@
         /* Add some spacing between tables */
     }
 
-    ;
-
     .table-container table {
         width: 100%;
         /* Ensure the table takes full width */
@@ -116,6 +114,10 @@
 
     h4 {
         text-align: center;
+    }
+
+    #confirmLogoutModal {
+        color: #212529 !important;
     }
 
     .chart-container {
@@ -249,9 +251,13 @@ document.addEventListener('DOMContentLoaded', function() {
 {% block breadcrumbs %}
 <div class="breadcrumbs">
     <a href="{% url 'admin:index' %}">{% translate 'Home' %}</a>
-    &rsaquo; <a href="{% url 'admin:admin-sitin_index' %}">Sitin</a>
+    &rsaquo; <a href="{% url 'admin:admin-sitin_index' %}">Sit-in Management</a>
     &rsaquo; {{ cl.opts.verbose_name_plural|capfirst }}
 </div>
+{% endblock %}
+
+{% block content_title %}
+<h1>Select Currently Sit-in Students to Logout</h1>
 {% endblock %}
 
 {% block content %}

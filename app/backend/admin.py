@@ -307,7 +307,7 @@ class BaseSitinAdmin(admin.ModelAdmin):
     list_display = ("get_user_idno", "get_fullname", "purpose", "lab_room", "status", "get_user_sessions", "get_formatted_login_date", "get_formatted_logout_date")
     search_fields = ("user__registration__idno", "user__username", "user__registration__firstname", 
                      "user__registration__middlename", "user__registration__lastname")
-    list_filter = ("programming_language", "purpose", "lab_room", "status",)
+    list_filter = ("programming_language", "purpose", "lab_room",)
     change_list_template = 'admin/custom_change_list.html'
     
     def get_user_idno(self, obj):
@@ -345,6 +345,7 @@ class AllSitinsAdmin(BaseSitinAdmin):
     list_display = ("get_user_idno", "get_fullname", "purpose", "lab_room", "status", "get_user_sessions", "get_formatted_login_date", "get_formatted_logout_date", 'feedback')
     list_editable = ('status',)
     change_list_template = 'admin/backend/sitin/allsitins_change_list.html'
+    change_form_template = 'admin/backend/sitin/change_form/allsitins_change_form.html'
 
 class SearchSitinsInline(admin.StackedInline):
     model = Sitin
@@ -380,6 +381,7 @@ class SearchSitinsInline(admin.StackedInline):
 # Search Sitins (admin can search for student to sitin)
 class SearchSitinsAdmin(admin.ModelAdmin):
     change_list_template = 'admin/backend/sitin/searchsitins_change_list.html'
+    change_form_template = 'admin/backend/sitin/change_form/searchsitins_change_form.html'
     inlines = (SearchSitinsInline,)
     list_display = ('get_idno', 'get_firstname', 'get_middlename', 'get_lastname', 'get_sessions')
     list_display_links = ('get_idno',)
@@ -432,6 +434,7 @@ class SearchSitinsAdmin(admin.ModelAdmin):
 # Current Sitins (admin can view students who has currently sitin)
 class CurrentSitinsAdmin(BaseSitinAdmin):
     change_list_template = 'admin/backend/sitin/logout_change_list.html'
+    change_form_template = 'admin/backend/sitin/change_form/logout_change_form.html'
     list_display = ("get_user_idno", "get_fullname", "purpose", "lab_room", "get_user_sessions", "get_formatted_login_date",)
     list_display_links = ('get_user_idno',)
     fieldsets = (
@@ -459,6 +462,7 @@ class CurrentSitinsAdmin(BaseSitinAdmin):
 class FinishedSitinsAdmin(BaseSitinAdmin):    
     list_display = ("get_user_idno", "get_fullname", "purpose", "lab_room", "status", "get_user_sessions", "get_formatted_logout_date",)
     change_list_template = "admin/backend/sitin/timedout_change_list.html"
+    change_form_template = 'admin/backend/sitin/change_form/timedout_change_form.html'
     fieldsets = (
         (None, {'fields': ('purpose', 'programming_language', 'lab_room', 'sitin_details', 'status', 'sitin_date', 'logout_date', 'user', 'feedback')}),
     )
@@ -475,8 +479,13 @@ class FinishedSitinsAdmin(BaseSitinAdmin):
     
     def has_change_permission(self, request, obj=False):
         return False
+    
+    def has_delete_permission(self, request, obj=False):
+        return False
 
 class FeedbackReportAdmin(BaseSitinAdmin):
+    change_list_template = 'admin/backend/sitin/feedback_change_list.html'
+    # No need for change_form template (I disabled it)
     list_display = ('get_user_idno', 'get_fullname', 'purpose', 'lab_room', 'status', 'get_user_sessions', 'get_formatted_login_date', 'get_formatted_logout_date', 'feedback_display')
 
     def get_queryset(self, request):
@@ -492,6 +501,7 @@ class FeedbackReportAdmin(BaseSitinAdmin):
     def has_change_permission(self, request, obj=None):
         return False
 
+    # Disable change_form view
     def get_urls(self):
         # Get the default URLs
         urls = super().get_urls()
