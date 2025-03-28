@@ -65,6 +65,7 @@
                     {% else %}
                     <td>
                         <button class="btn btn-sm btn-outline-success rounded-circle feedback-btn" 
+                                title="Give feedback"
                                 onclick="showFeedbackModal('{{ sitin.id }}')">
                             <i class="fas fa-comment-alt"></i>
                         </button>
@@ -82,6 +83,13 @@
         <div class="small text-center">Woah! You're in the clear... (￣^￣ )ゞ</div>
         {% endif %}
     </div>
+
+    {% if sitin_history.number == sitin_history.paginator.num_pages %}
+    <div class="eol">
+        <span>⊹˚. ♡.𖥔 ݁ ˖ 𐙚 ‧₊˚ ⋅</span>
+        <span><--------------------- You've reached the end of this page! (˶˃ ᵕ ˂˶) .ᐟ.ᐟ ---------------------></span>
+    </div>
+    {% endif %}
 
     <!-- Pagination Controls -->
     <div class="pagination mt-3 d-flex flex-column justify-content-center">

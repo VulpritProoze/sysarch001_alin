@@ -2,6 +2,7 @@ from django.contrib import admin
 from django.contrib.auth.models import User
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.admin import AdminSite
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
@@ -268,26 +269,12 @@ class AnnouncementAdmin(admin.ModelAdmin):
         if not obj.pk:
             obj.superuser = request.user 
         super().save_model(request, obj, form, change)
-        
-# @admin.register(AnnouncementComment, site=admin_site)
-# class AnnouncementCommentAdmin(admin.ModelAdmin):
-#     list_display = ('comment', 'date', 'announcement', 'user')
-#     list_display_links = ('comment',)
-#     search_fields = ('user__username', 'user__username', 'user__registration__firstname', 'user__registration__middlename','user__registration__lastname',)
-#     list_filter = ( 'announcement', 'date', 'updated_at',)
 
-#     # Change the verbose name directly in the model's _meta
-#     def get_queryset(self, request):
-#         qs = super().get_queryset(request)
-#         self.model._meta.verbose_name = "Announcement Comment"
-#         self.model._meta.verbose_name_plural = "Announcement Comments"
-#         return qs
-
-# Put a default value to user field para ma save frfr
-# class AnnouncementCommentFormSet(BaseInlineFormSet):
-#     def save_new(self, form, commit=True):
-#         form.instance.user = self.request.user  # Set the user field
-#         return super().save_new(form, commit=commit)
+    def get_readonly_fields(self, request, obj=None):
+        # Make all fields in the change form read-only
+        if obj:  # obj is not None, so we're editing an existing object
+            return ['superuser',]
+        return self.readonly_fields
     
 class AnnouncementCommentInline(admin.StackedInline):
     model = AnnouncementComment 
@@ -437,16 +424,24 @@ class CurrentSitinsAdmin(BaseSitinAdmin):
     change_form_template = 'admin/backend/sitin/change_form/logout_change_form.html'
     list_display = ("get_user_idno", "get_fullname", "purpose", "lab_room", "get_user_sessions", "get_formatted_login_date",)
     list_display_links = ('get_user_idno',)
+    list_filter = ('sitin_date',)
     fieldsets = (
         (None, {'fields': ('purpose', 'programming_language', 'lab_room', 'sitin_details', 'status', 'sitin_date', 'user',)}),
     )
-    actions = None
     
     def get_changelist(self, request, **kwargs):
         return CustomChangeList
     
     def get_queryset(self, request):
         return super().get_queryset(request).filter(status="approved")
+    
+    # Disable change_form view
+    def get_urls(self):
+        # Get the default URLs
+        urls = super().get_urls()
+        # Filter out the change view URL pattern
+        urls = [ url for url in urls if not (isinstance(url, URLPattern) and url.pattern._route == '<path:object_id>/change/')]
+        return urls
 
     def get_model_perms(self, request):
         return {"view": True}  # Hide "Add" and "Delete" buttons
@@ -457,6 +452,16 @@ class CurrentSitinsAdmin(BaseSitinAdmin):
     def has_add_permission(self, request):
         return False
     
+    actions = ['logout_student',]
+    
+    def logout_student(self, request, queryset):
+        for sitin in queryset:
+            if hasattr(sitin, 'logout_date') and hasattr(sitin, 'status'):
+                sitin.logout_date = timezone.now()
+                sitin.status = 'finished'
+                sitin.save()
+        self.message_user(request, f"Student/s has been logged out.")
+    logout_student.short_description = "Logout selected students"
     
 # Sit-in History (admin can view students who has been timed-out by admin, and admin can also generate reports into pdf, csv, excel, and print)
 class FinishedSitinsAdmin(BaseSitinAdmin):    
@@ -476,6 +481,14 @@ class FinishedSitinsAdmin(BaseSitinAdmin):
     def get_queryset(self, request):
         qs = super().get_queryset(request).filter(status="finished")
         return qs
+    
+    # Disable change_form view
+    def get_urls(self):
+        # Get the default URLs
+        urls = super().get_urls()
+        # Filter out the change view URL pattern
+        urls = [ url for url in urls if not (isinstance(url, URLPattern) and url.pattern._route == '<path:object_id>/change/')]
+        return urls
     
     def has_change_permission(self, request, obj=False):
         return False
@@ -505,16 +518,8 @@ class FeedbackReportAdmin(BaseSitinAdmin):
     def get_urls(self):
         # Get the default URLs
         urls = super().get_urls()
-
         # Filter out the change view URL pattern
-        urls = [
-            url for url in urls
-            if not (
-                isinstance(url, URLPattern) and
-                url.pattern._route == '<path:object_id>/change/'
-            )
-        ]
-
+        urls = [ url for url in urls if not (isinstance(url, URLPattern) and url.pattern._route == '<path:object_id>/change/')]
         return urls
     
     # Make the feedback field a read-only textarea so that it becomes more emphasized

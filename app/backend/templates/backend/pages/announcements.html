@@ -35,6 +35,9 @@
     background: linear-gradient(to right, rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.1) 50%, rgba(0, 0, 0, 0));
     pointer-events: none; /* Ensure the overlay doesn't block interactions */
 }
+.announcement-title a {
+    color: black;
+}
 </style>
 
 <div class="container mt-5">
@@ -49,14 +52,15 @@
     {% for announcement in announcements %}
     <div id="announcement-body" class="card mb-4 announcement-card shadow-sm">
         <div class="card-body">
-            <h5 class="announcement-title">
-                <i class="fas fa-newspaper text-info"></i> {{ announcement.title }}
-            </h5>
+            <h6 class="announcement-title">
+                <i class="fas fa-newspaper text-info"></i>
+                <a href="{% url 'user-announcement' announcement.id %}" title="View this announcement">{{ announcement.title }}</a>
+            </h6>
             <hr>
             
             <!-- Display Announcement Image -->
             {% if announcement.image %}
-            <div class="text-center">
+            <div class="text-center card">
                 <img src="{{ announcement.image.url }}" alt="Announcement Image" class="img-fluid rounded" style="max-height: 300px; object-fit: cover;">
             </div>
             <hr>
@@ -121,11 +125,19 @@
             </div>
         </div>
     </div>
+
     {% empty %}
     <div class="card p-3 shadow-sm">
         <h5 class="text-muted"><i class="fas fa-exclamation-circle"></i> No announcements available.</h5>
     </div>
     {% endfor %}
+
+    {% if announcements.number == announcements.paginator.num_pages %}
+    <div class="eol">
+        <span>⊹˚. ♡.𖥔 ݁ ˖ 𐙚 ‧₊˚ ⋅</span>
+        <span><--------------------- You've reached the end of this page! (˶˃ ᵕ ˂˶) .ᐟ.ᐟ ---------------------></span>
+    </div>
+    {% endif %}
 
     <!-- Pagination Controls -->
     <div class="pagination mt-3 d-flex flex-column justify-content-center">
@@ -156,7 +168,6 @@
             </ul>
         </nav>
     </div>
-
 </div>
 
 <script>

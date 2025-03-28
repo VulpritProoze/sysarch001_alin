@@ -20,7 +20,7 @@ class Registration(models.Model):
     username = models.OneToOneField(User, on_delete=models.CASCADE)
 
     def __str__(self):
-        return f"{self.idno}, {self.firstname} {self.lastname}"
+        return f"ID #: {self.idno}, Fullname: {self.firstname} {self.lastname}"
 
 class Announcement(models.Model):
     title = models.CharField(max_length=255, blank=True, null=True)
@@ -31,7 +31,7 @@ class Announcement(models.Model):
     superuser = models.ForeignKey(User, on_delete=models.CASCADE, limit_choices_to={'is_superuser': True})
 
     def __str__(self):
-        return f"{self.title}, by {self.superuser.username}"
+        return f"\"{self.title}\", by {self.superuser.username}"
     
 class AnnouncementComment(models.Model):
     comment = models.TextField(blank=True, null=True)
@@ -41,7 +41,7 @@ class AnnouncementComment(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     def __str__(self):
-        return f"{self.comment}, by {self.user.username}"
+        return f"Commented on \"{self.announcement.title}\", by {self.user.username}"
     
 class Sitin(models.Model):
     purpose = models.CharField(max_length=255, choices=SITIN_PURPOSE_CHOICES, blank=True, null=True)
@@ -57,7 +57,16 @@ class Sitin(models.Model):
     def __str__(self):
         return f"By {self.user.username}, at {self.lab_room}, status: {self.status}"
 
+# Not implemented yet
+class LabResource(models.Model):
+    url = models.URLField(blank=True, null=True)
+    title = models.CharField(max_length=50, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
 
+    def __str__(self):
+        return f"\"{self.title}\" by {self.created_by}"
 
 
 

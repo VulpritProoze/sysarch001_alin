@@ -196,3 +196,12 @@ textarea, select {
 .modal * {
   font-size: small;
 }
+
+/* eol = end of line (displayed at bottom of last page) */
+.eol {
+  font-size: small;
+  display: flex;
+  align-items: center;
+  margin: 5rem 0;
+  flex-direction: column;
+}

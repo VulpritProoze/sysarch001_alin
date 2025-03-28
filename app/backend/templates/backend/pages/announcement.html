@@ -45,8 +45,8 @@
 
             <!-- Display Announcement Image -->
             {% if announcement.image %}
-            <div class="text-center">
-                <img src="{{ announcement.image.url }}" alt="Announcement Image" class="img-fluid rounded" style="max-height: 300px; object-fit: cover;">
+            <div class="text-center card">
+                <img src="{{ announcement.image.url }}" alt="Announcement Image" class="img-fluid rounded" style="object-fit: cover;">
             </div>
             <hr>
             {% endif %}

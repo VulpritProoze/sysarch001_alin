@@ -1,0 +1,79 @@
+{% extends 'backend/base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2 class="mb-4">Lab Resources</h2>
+    
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Computers</h5>
+                    <p class="card-text">High-performance desktop computers with the latest hardware for software development, networking, and cybersecurity.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Networking Equipment</h5>
+                    <p class="card-text">Routers, switches, and firewalls for hands-on network configuration and troubleshooting exercises.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Software & Tools</h5>
+                    <p class="card-text">Licensed software such as Visual Studio, PyCharm, VMware, and other essential IT development tools.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="accordion mt-4" id="labResourcesAccordion">
+        <div class="card">
+            <div class="card-header" id="headingOne">
+                <h5 class="mb-0">
+                    <button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                        Lab Schedules
+                    </button>
+                </h5>
+            </div>
+            <div id="collapseOne" class="collapse show" aria-labelledby="headingOne" data-parent="#labResourcesAccordion">
+                <div class="card-body">
+                    Open lab hours: Monday - Friday, 8 AM - 6 PM. Booking required for specialized sessions.
+                </div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-header" id="headingTwo">
+                <h5 class="mb-0">
+                    <button class="btn btn-link collapsed" type="button" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                        Rules & Guidelines
+                    </button>
+                </h5>
+            </div>
+            <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo" data-parent="#labResourcesAccordion">
+                <div class="card-body">
+                    All students must sign in before using resources. Food and drinks are prohibited inside the lab.
+                </div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-header" id="headingThree">
+                <h5 class="mb-0">
+                    <button class="btn btn-link collapsed" type="button" data-toggle="collapse" data-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                        Support & Assistance
+                    </button>
+                </h5>
+            </div>
+            <div id="collapseThree" class="collapse" aria-labelledby="headingThree" data-parent="#labResourcesAccordion">
+                <div class="card-body">
+                    IT support is available during lab hours. Contact the lab supervisor for assistance with hardware or software issues.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

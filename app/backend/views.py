@@ -272,6 +272,12 @@ class SitinHistoryUpdateView(generics.RetrieveUpdateAPIView):
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
         return Response({'Feedback': 'Successfully submitted.'}, status=status.HTTP_200_OK)
+    
+@login_required
+def resources(request):
+    if request.user.is_authenticated:
+        return render(request, 'backend/pages/resources.html')
+    return redirect('/')
 
 @login_required
 def sessions(request):
