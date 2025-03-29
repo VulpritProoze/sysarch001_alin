@@ -265,10 +265,19 @@ class AnnouncementAdmin(admin.ModelAdmin):
     search_fields = ('superuser__username', 'superuser__registration__firstname', 'superuser__registration__middlename','superuser__registration__lastname',)
     list_filter = ('date', 'updated_at', SuperuserFilter)
     
+    # Make the logged-in superuser the author of announcement
     def save_model(self, request, obj, form, change):
         if not obj.pk:
             obj.superuser = request.user 
         super().save_model(request, obj, form, change)
+
+    # Disable option of making other superuser the author
+    def get_fields(self, request, obj=None):
+        # Exclude 'superuser' in the add form (obj is None)
+        fields = super().get_fields(request, obj)
+        if not obj:  # Add form
+            fields = [f for f in fields if f != 'superuser']
+        return fields
 
     def get_readonly_fields(self, request, obj=None):
         # Make all fields in the change form read-only
@@ -456,10 +465,12 @@ class CurrentSitinsAdmin(BaseSitinAdmin):
     
     def logout_student(self, request, queryset):
         for sitin in queryset:
-            if hasattr(sitin, 'logout_date') and hasattr(sitin, 'status'):
+            if hasattr(sitin, 'logout_date') and hasattr(sitin, 'status') and hasattr(sitin.user, 'registration'):
                 sitin.logout_date = timezone.now()
                 sitin.status = 'finished'
+                sitin.user.registration.sessions -= 1
                 sitin.save()
+                sitin.user.registration.save()
         self.message_user(request, f"Student/s has been logged out.")
     logout_student.short_description = "Logout selected students"
     

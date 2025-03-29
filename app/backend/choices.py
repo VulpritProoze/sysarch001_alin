@@ -80,3 +80,11 @@ SITIN_STATUS_CHOICES = [
     ('rejected', 'Rejected'),
     ('finished', 'Finished'),
 ]
+
+RATING_CHOICES = [
+    (1, 1),
+    (2, 2),
+    (3, 3,),
+    (4, 4),
+    (5, 5),
+]
