@@ -88,3 +88,16 @@ RATING_CHOICES = [
     (4, 4),
     (5, 5),
 ]
+
+QUESTION_CHOICES = [
+    (1, "How satisfied are you with the overall sit-in process?"),
+    (2, "How easy was it to book a sit-in slot?"),
+    (3, "Did the system provide clear instructions and requirements for sit-ins?"),
+    (4, "How satisfied are you with the response time for sit-in approvals?"),
+    (5, "Would you recommend this system to other students?"),
+]
+
+SURVEY_STATUS_CHOICES = [
+    ('not taken', 'Not yet taken'),
+    ('taken', 'Taken'),
+]

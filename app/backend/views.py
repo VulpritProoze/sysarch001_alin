@@ -12,10 +12,10 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 # from rest_framework.exceptions import ValidationError
-from .serializers import RegistrationSerializer, AnnouncementCommentSerializer, SitinSerializer, SitinFeedbackSerializer
-from .models import Registration, Announcement, AnnouncementComment, Sitin
+from .serializers import RegistrationSerializer, AnnouncementCommentSerializer, SitinSerializer, SitinFeedbackSerializer, SitinSurveySerializer
+from .models import Registration, Announcement, AnnouncementComment, Sitin, SitinSurvey
 from .forms import RegistrationForm
-from .choices import COURSE_CHOICES, LEVEL_CHOICES, PROGRAMMING_LANGUAGE_CHOICES, SITIN_PURPOSE_CHOICES, LAB_ROOM_CHOICES
+from .choices import COURSE_CHOICES, LEVEL_CHOICES, PROGRAMMING_LANGUAGE_CHOICES, SITIN_PURPOSE_CHOICES, LAB_ROOM_CHOICES, QUESTION_CHOICES
 # Pillow Image Compression
 from PIL import Image
 from io import BytesIO
@@ -273,6 +273,73 @@ class SitinHistoryUpdateView(generics.RetrieveUpdateAPIView):
         self.perform_update(serializer)
         return Response({'Feedback': 'Successfully submitted.'}, status=status.HTTP_200_OK)
     
+@login_required
+def survey(request):
+    if request.user.is_authenticated:
+        sitinsurvey = SitinSurvey.objects.filter(
+            created_by=request.user
+        ).prefetch_related('surveyresponse_set').first()
+        
+        if sitinsurvey and sitinsurvey.status == 'not taken':
+            # Pair questions with their responses
+            questions_with_responses = []
+            for i, question in enumerate(QUESTION_CHOICES):
+                try:
+                    response = sitinsurvey.surveyresponse_set.all()[i]
+                except IndexError:
+                    response = None
+                questions_with_responses.append({
+                    'question': question,
+                    'response': response
+                })
+            
+            context = {
+                'questions_with_responses': questions_with_responses,
+                'sitinsurvey': sitinsurvey
+            }
+            return render(request, 'backend/pages/survey.html', context)
+    return redirect('/')
+
+class SitinSurveyUpdateView(generics.RetrieveUpdateAPIView):
+    queryset = SitinSurvey.objects.all()
+    serializer_class = SitinSurveySerializer
+    permission_classes = [IsAuthenticated]
+    
+    def get_queryset(self):
+        id = self.kwargs.get('pk')
+        user = self.request.user
+        return SitinSurvey.objects.filter(id=id, created_by=user)
+    
+    def update_survey_status(self, survey):
+        has_unanswered = survey.surveyresponse_set.filter(rating__isnull=True).exists()
+        new_status = 'taken' if not has_unanswered else 'not taken'
+        
+        # Only update if status actually changed
+        if survey.status != new_status:
+            survey.status = new_status
+            survey.save(update_fields=['status'])
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        responses = request.data.get('responses', {})
+        
+        # Update responses
+        for question_id, rating in responses.items():
+            try:
+                survey_response = instance.surveyresponse_set.filter(
+                    id=question_id
+                ).first()
+                if survey_response:
+                    survey_response.rating = rating
+                    survey_response.save()
+            except (ValueError, TypeError):
+                continue
+                
+        # Update survey status
+        self.update_survey_status(instance)
+
+        return Response({'Survey': 'Successfully submitted.'}, status=status.HTTP_200_OK)
+
 @login_required
 def resources(request):
     if request.user.is_authenticated:

@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     'django_extensions',
     'debug_toolbar',
     'rest_framework',
+    # 'nested_admin',
     'backend.apps.BackendConfig',
     'crispy_forms',
     'crispy_bootstrap4',

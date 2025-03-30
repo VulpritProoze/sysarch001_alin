@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Registration, Announcement, AnnouncementComment, Sitin
+from .models import Registration, Announcement, AnnouncementComment, Sitin, SitinSurvey
 
 class RegistrationSerializer(serializers.ModelSerializer):
     class Meta:
@@ -53,4 +53,9 @@ class SitinFeedbackSerializer(serializers.ModelSerializer):
         model = Sitin
         fields = '__all__'
         read_only_fields = ['user']
-    
+
+class SitinSurveySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SitinSurvey 
+        fields = '__all__'
+        read_only_fields = ['user']

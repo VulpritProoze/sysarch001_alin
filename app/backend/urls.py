@@ -19,6 +19,8 @@ urlpatterns = [
     path('sitin/<int:pk>/', views.SitinDeleteView.as_view(), name='user-sitin-delete'),
     path('sitin_history/', views.sitin_history, name='user-sitin_history'),
     path('sitin_history/<int:pk>/', views.SitinHistoryUpdateView.as_view(), name='user-sitin_history_feedback'),
+    path('survey/', views.survey, name='user-survey'),
+    path('survey/<int:pk>/', views.SitinSurveyUpdateView.as_view(), name='user-survey-update'),
     path('resources/', views.resources, name='user-resources'),
     path('sessions/', views.sessions, name='user-sessions'),
 ] 

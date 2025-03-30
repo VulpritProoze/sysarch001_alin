@@ -11,11 +11,12 @@ from django.urls.resolvers import URLPattern
 from django.shortcuts import render
 from django.db.models import Count, Q
 from . import views
-from .models import Registration, Announcement, AnnouncementComment, Sitin
+from .models import Registration, Announcement, AnnouncementComment, Sitin, SitinSurvey, SurveyResponse
 from .choices import LAB_ROOM_CHOICES
 from .custom_changelist import CustomChangeList
 from .swear_words import swear_words
 from better_profanity import profanity
+import nested_admin
 
 class CustomAdminSite(AdminSite):
     index_template = 'admin/custom_index.html'
@@ -108,8 +109,8 @@ class CustomAdminSite(AdminSite):
             #     "models": []
             # }
         }
-        auth_models = ["User", "Registration"]
-        general_models = ["Announcement", "AnnouncementComment"]
+        auth_models = ["User", "Registration",]
+        general_models = ["Announcement", "AnnouncementComment", "SitinSurvey",]
         sitin_models = ["SearchSitins", "SitinRequests", "CurrentSitins", "FinishedSitins", "AllSitins", "FeedbackReport"]
 
         for app in original_app_list:
@@ -244,7 +245,7 @@ class CustomUserAdmin(UserAdmin):
     reset_sessions_to_30.short_description = "Reset selected users' session back to 30"
 
 admin_site.register(User, CustomUserAdmin)
-    
+
 class SuperuserFilter(admin.SimpleListFilter):
     title = "Admin"
     parameter_name = "superuser"
@@ -257,6 +258,46 @@ class SuperuserFilter(admin.SimpleListFilter):
         if self.value():
             return queryset.filter(superuser__id=self.value())
         return queryset
+    
+class SurveyResponseInline(admin.StackedInline):
+    model = SurveyResponse
+    extra = 0
+    can_delete = False
+    
+    def has_add_permission(self, request, obj=None):
+        return False
+    
+    def has_change_permission(self, request, obj=None):
+        return False
+    
+class SitinSurveyAdmin(admin.ModelAdmin):
+    list_display = ('get_idno', 'get_fullname', 'get_sessions', 'status')
+    list_display_links = ('get_idno',)
+    list_filter = ('created_at', 'updated_at')    
+    inlines = (SurveyResponseInline,)
+    
+    def has_add_permission(self, request, obj=None):
+        return False
+    
+    def has_change_permission(self, request, obj=None):
+        return False
+    
+    def get_idno(self, obj):
+        return obj.created_by.registration.idno
+    get_idno.short_description = "Student ID"
+    get_idno.admin_order_field = "created_by__registration__idno"
+    
+    def get_fullname(self, obj):
+        return f"{obj.created_by.registration.lastname}, {obj.created_by.registration.firstname} {obj.created_by.registration.middlename}"
+    get_fullname.short_description = "Fullname"
+    get_fullname.admin_order_field = "created_by__registration__lastname"  
+    
+    def get_sessions(self, obj):
+        return obj.created_by.registration.sessions
+    get_sessions.short_description = "Sessions"
+    get_sessions.admin_order_field = "created_by__registration__sessions"
+    
+admin_site.register(SitinSurvey, SitinSurveyAdmin)    
     
 # @admin.register(Announcement, site=admin_site)
 class AnnouncementAdmin(admin.ModelAdmin):
@@ -379,7 +420,7 @@ class SearchSitinsAdmin(admin.ModelAdmin):
     change_list_template = 'admin/backend/sitin/searchsitins_change_list.html'
     change_form_template = 'admin/backend/sitin/change_form/searchsitins_change_form.html'
     inlines = (SearchSitinsInline,)
-    list_display = ('get_idno', 'get_firstname', 'get_middlename', 'get_lastname', 'get_sessions')
+    list_display = ('get_idno', 'get_fullname', 'get_sessions')
     list_display_links = ('get_idno',)
     list_filter = ('registration__course', 'registration__level')
     search_fields = ('registration__idno',)
@@ -392,20 +433,10 @@ class SearchSitinsAdmin(admin.ModelAdmin):
     get_idno.short_description = "Student ID"
     get_idno.admin_order_field = "registration__idno"
     
-    def get_firstname(self, obj):
-        return obj.registration.firstname
-    get_firstname.short_description = "Firstname"
-    get_firstname.admin_order_field = "registration__firstname"
-    
-    def get_middlename(self, obj):
-        return obj.registration.middlename
-    get_middlename.short_description = "Middlename"
-    get_middlename.admin_order_field = "registration__middlename"
-    
-    def get_lastname(self, obj):
-        return obj.registration.lastname
-    get_lastname.short_description = "Lastname"
-    get_lastname.admin_order_field = "registration__lastname"
+    def get_fullname(self, obj):
+        return f"{obj.registration.lastname}, {obj.registration.firstname} {obj.registration.middlename}"
+    get_fullname.short_description = "Fullname"
+    get_fullname.admin_order_field = "registration__lastname"  
     
     def get_sessions(self, obj):
         return obj.registration.sessions
@@ -596,6 +627,5 @@ admin_site.register(CurrentSitins, CurrentSitinsAdmin)
 admin_site.register(FinishedSitins, FinishedSitinsAdmin)
 admin_site.register(FeedbackReport, FeedbackReportAdmin)
 
-    
 # admin
 # ganymede14337

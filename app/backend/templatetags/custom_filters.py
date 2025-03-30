@@ -1,4 +1,5 @@
 from django import template
+from backend.models import SitinSurvey
 
 register = template.Library()
 

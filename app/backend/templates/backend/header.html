@@ -84,4 +84,26 @@
             </div>
         </div>
     </nav>
+    {% url 'user-survey' as survey_url %}
+    {% if request.get_full_path != survey_url and request.user.sitinsurvey.status == 'not taken' %}
+    <div class="bg-primary p-2 text-white small">
+        <div class="container d-flex justify-content-between">
+            <span>Are you satisfied with our application? Take the 
+                <a href="{{ survey_url }}" class="text-white">satisfaction survey</a>
+                here!
+            </span>
+            <button type="button" class="btn-ghost">
+                <i class="fas fa-times text-white"></i>
+            </button>
+        </div>
+    </div>
+    {% endif %}
 </header>
+
+<style>
+    .btn-ghost {
+        background-color: transparent;
+        border-width: 0;
+        cursor: pointer;
+    }
+</style>

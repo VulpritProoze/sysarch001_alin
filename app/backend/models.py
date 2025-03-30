@@ -1,6 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User, AbstractUser
-from .choices import COURSE_CHOICES, LEVEL_CHOICES, PROGRAMMING_LANGUAGE_CHOICES, LAB_ROOM_CHOICES, SITIN_PURPOSE_CHOICES, SITIN_STATUS_CHOICES, RATING_CHOICES
+from .choices import COURSE_CHOICES, LEVEL_CHOICES, PROGRAMMING_LANGUAGE_CHOICES, LAB_ROOM_CHOICES, SITIN_PURPOSE_CHOICES, SITIN_STATUS_CHOICES, RATING_CHOICES, QUESTION_CHOICES, SURVEY_STATUS_CHOICES
 
 class Registration(models.Model):
     idno = models.IntegerField(primary_key=True)
@@ -44,23 +44,32 @@ class AnnouncementComment(models.Model):
         return f"Commented on \"{self.announcement.title}\", by {self.user.username}"
     
 # Make survey questions for each survey (so that we can query results per survey question)
+''' 
+    I shall use signals such that when a sitinsurvey is
+    created (or submitted by user), 5 survey responses is 
+    generated along side it which all has blank rating,
+    but each response should have different questions. 
+'''
 class SitinSurvey(models.Model):
+    status = models.CharField(max_length=50, choices=SURVEY_STATUS_CHOICES, default='not taken')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    created_by = models.ForeignKey(User, on_delete=models.CASCADE)
+    created_by = models.OneToOneField(User, on_delete=models.CASCADE)
 
     def __str__(self):
-        return f"Survey results for {self.created_by.username}, on {self.created_at}"
+        return f"Survey results for {self.created_by.username}, at {self.created_at}"
+
+# Store rating for each question
+class SurveyResponse(models.Model):
+    question_choices = QUESTION_CHOICES
     
-class SurveyQuestion(models.Model):
-    question = models.TextField(blank=True, null=True)
-    rating = models.IntegerField(choices=RATING_CHOICES, blank=True, null=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    created_by = models.ForeignKey(User, limit_choices_to={'is_super_user': True}, null=True, on_delete=models.SET_NULL)
+    survey = models.ForeignKey(SitinSurvey, on_delete=models.CASCADE)
+    question_order = models.IntegerField(null=True, blank=True)
+    question_text = models.TextField(null=True, blank=True)
+    rating = models.IntegerField(choices=RATING_CHOICES, null=True, blank=True)
 
     def __str__(self):
-        return f"\"{self.question}\", by {self.created_by}"
+        return f"#{self.question_order}"
 
 class Sitin(models.Model):
     purpose = models.CharField(max_length=255, choices=SITIN_PURPOSE_CHOICES, blank=True, null=True)
@@ -71,8 +80,6 @@ class Sitin(models.Model):
     sitin_date = models.DateTimeField(auto_now_add=True)
     logout_date = models.DateTimeField(null=True, blank=True)
     feedback = models.TextField(blank=True, null=True)
-    # Might wanna make this into a one-to-one field
-    survey = models.ForeignKey(SitinSurvey, blank=True, null=True, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     
     def __str__(self):

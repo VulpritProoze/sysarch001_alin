@@ -6,7 +6,7 @@
 {% endblock title %}
 
 {% block content %}
-<div class="container mt-5">
+<div class="container mt-5" id="home-container">
     <div class="row">
         <!-- Left Column -->
         <div class="col-lg-6 col-md-12">
@@ -121,14 +121,15 @@
                     <div class="card shadow">
                         <div class="card-body">
                             <h5 class="card-title">
-                                Latest Announcements
+                                <a href="{% url 'user-announcements' %}" style="color: black;">Latest Announcements</a>
                             </h5>
                             <hr />
                             {% for announcement in announcements %}
                             <div class="card mb-2 border-left-primary shadow-sm">
                                 <div class="card-body">
-                                    <h6 class="font-weight-bold">
-                                        <i class="fas fa-newspaper"></i> {{ announcement.title }}
+                                    <h6>
+                                        <i class="fas fa-newspaper"></i>
+                                        <a href="{% url 'user-announcement' announcement.id %}" style="color: black;">{{ announcement.title }}</a>
                                     </h6>
                                     <small class="text-muted">
                                         <i class="far fa-calendar-alt"></i> {{ announcement.date }}
@@ -143,7 +144,7 @@
                             <p class="text-center text-muted">No announcements available.</p>
                             {% endfor %}
                             <div class="text-right mt-2">
-                                <a class="small text-muted" href="{% url 'user-announcements' %}">
+                                <a class="small text-primary" href="{% url 'user-announcements' %}">
                                     <i class="fas fa-external-link-alt"></i> Go to Announcements page...
                                 </a>
                             </div>
@@ -174,5 +175,25 @@
     .link-black {
         color: black;
     }
+
+    .student-info-card i {
+        /* primary color */
+        color: #007bff;
+    }
 </style>
+
+<script>
+    const parent = document.getElementById('home-container');
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const alertMessages = JSON.parse(localStorage.getItem('alertMessages'));
+        if (parent) {
+            RenderSuccessDiv(parent, alertMessages);
+        }
+
+        if (alertMessages) {
+            localStorage.removeItem('alertMessages');
+        }
+    });
+</script>
 {% endblock %}

@@ -13,8 +13,9 @@ document.addEventListener('DOMContentLoaded', function () {
 function RenderErrorDiv(parentElement, data) {    
     for (let field in data) {
         let errorDiv = document.createElement('div');
-        let text = document.createElement('span');
+        let text = document.createElement('div');
         errorDiv.classList.add('custom-alerts', 'alert', 'alert-danger', 'mb-1', 'small', 'fade-in');
+        text.classList.add('container');
         text.textContent = `${field.toUpperCase()}: ${data[field]}`;
         errorDiv.appendChild(text);
         if(parentElement) {
@@ -32,8 +33,9 @@ function RenderErrorDiv(parentElement, data) {
 function RenderSuccessDiv(parentElement, data) {    
     for (let field in data) {
         let successDiv = document.createElement('div');
-        let text = document.createElement('span');
+        let text = document.createElement('div');
         successDiv.classList.add('custom-alerts','alert', 'alert-success', 'mb-1', 'small', 'fade-in');
+        text.classList.add('container');
         text.textContent = `${field.toUpperCase()}: ${data[field]}`;
         successDiv.appendChild(text);
         if(parentElement) {
