@@ -5,6 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from django.core.paginator import Paginator
 from django.http import JsonResponse
+from django.db.models import Prefetch
 from rest_framework import generics, status
 from rest_framework.views import APIView
 from rest_framework.renderers import JSONRenderer, TemplateHTMLRenderer
@@ -118,13 +119,17 @@ class ProfileUpdateView(generics.RetrieveUpdateAPIView):
 @login_required
 def announcements(request):    
     if request.user.is_authenticated:
-        announcements = Announcement.objects.all().order_by('-updated_at')
-        announcementcomments = {}
-        
-        for announcement in announcements:
-            comment = list(AnnouncementComment.objects.filter(announcement=announcement).order_by('-updated_at')[:5])
-            announcementcomments[announcement.id] = comment
-            
+        # Optimize queries for announcements joining announcementcomments
+        # and related announcementcomments joining user_registration
+        announcements = Announcement.objects.all().prefetch_related(
+            Prefetch(
+                'announcementcomment_set',
+                queryset=AnnouncementComment.objects.select_related(
+                    'user',
+                    'user__registration'
+                ).order_by('-date')
+            )
+        ).order_by('-updated_at')
         # Pagination (uses Paginator)
         paginator = Paginator(announcements, 3)
         page_number = request.GET.get('page')
@@ -134,14 +139,19 @@ def announcements(request):
             register = Registration.objects.get(username=request.user)
         except Registration.DoesNotExist:
             register = request.user
-        return render(request, 'backend/pages/announcements.html', context={'announcements': page_obj, 'announcementcomments': announcementcomments, 'register': register} )
+        return render(request, 'backend/pages/announcements.html', context={'announcements': page_obj, 'register': register} )
     return redirect('/')
 
 @login_required 
 def announcement(request, announcement_id):
     if request.user.is_authenticated:
         announcement = get_object_or_404(Announcement, pk=announcement_id)
-        comments = AnnouncementComment.objects.filter(announcement=announcement).order_by('-updated_at')
+        comments = AnnouncementComment.objects.filter(
+            announcement=announcement
+        ).select_related(
+            'user',  # Fetches the related User in the same query
+            'user__registration'  # Fetches the related Registration in the same query
+        ).order_by('-updated_at')
 
         # Pagination (uses Paginator)
         paginator = Paginator(comments, 30)
@@ -246,7 +256,13 @@ class SitinDeleteView(generics.RetrieveDestroyAPIView):
 @login_required
 def sitin_history(request):
     if request.user.is_authenticated:
-        sitin_history = Sitin.objects.filter(status='finished', user=request.user).order_by('-logout_date')
+        sitin_history = Sitin.objects.filter(
+            status='finished', 
+            user=request.user
+        ).select_related(
+            'user',
+            'user__registration'    
+        ).order_by('-logout_date')
         # Pagination (uses Paginator)
         paginator = Paginator(sitin_history, 25)
         page_number = request.GET.get('page')

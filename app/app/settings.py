@@ -68,6 +68,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'backend.middleware.CacheControlMiddleware',
     'backend.middleware.MethodNotAllowedMiddleware',
+    'backend.middleware.UserPrefetchMiddleware',
     'debug_toolbar.middleware.DebugToolbarMiddleware'
 ]
 
@@ -153,21 +154,7 @@ CRISPY_ALLOWED_TEMPLATE_PACKS = 'bootstrap4'
 # Authentication and Redirect URLs
 LOGIN_REDIRECT_URL = 'user-home'
 
-# INTERNAL_IPS = [
-#     '127.0.0.1',
-# ]
-# Uncomment to see django debug toolbar again
-
-DEBUG_TOOLBAR_PANELS = [
-    "debug_toolbar.panels.versions.VersionsPanel",
-    "debug_toolbar.panels.timer.TimerPanel",
-    "debug_toolbar.panels.settings.SettingsPanel",
-    "debug_toolbar.panels.headers.HeadersPanel",
-    "debug_toolbar.panels.request.RequestPanel",  # ✅ Tracks request/response data
-    "debug_toolbar.panels.sql.SQLPanel",          # ✅ Tracks SQL queries
-    "debug_toolbar.panels.templates.TemplatesPanel",
-    "debug_toolbar.panels.cache.CachePanel",
-    "debug_toolbar.panels.signals.SignalsPanel",
-    "debug_toolbar.panels.logging.LoggingPanel",
-    "debug_toolbar.panels.redirects.RedirectsPanel",
+INTERNAL_IPS = [
+    '127.0.0.1',
 ]
+# Uncomment to see django debug toolbar again

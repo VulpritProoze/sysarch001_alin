@@ -20,10 +20,11 @@
                             <hr />
                             <div class="row">
                                 <div class="col-md-6 col-12 mb-2 d-flex justify-content-center">
-                                    <img
+                                    <div>
+                                        <img
                                         src="{% if registration.profilepicture_md and registration.profilepicture_md.url %}{{ registration.profilepicture_md.url }}{% else %}{% static 'backend/images/default-avatar.jpg' %}{% endif %}"
-                                        alt="profile picture" class="img-fluid rounded" 
-                                        style="max-height: 400px;"/>
+                                        alt="profile picture" class="img-fluid rounded" />
+                                    </div>
                                 </div>
                                 <div class="col-md-6 col-12">
                                     <p>
