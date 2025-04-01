@@ -1,5 +1,6 @@
 {% extends 'backend/base.html' %}
 {% load static %}
+{% load custom_filters %}
 
 {% block title %}
     {{ announcement.title }} | CCS Sitin Monitoring System
@@ -81,8 +82,8 @@
 
                     <div class="d-flex justify-content-between w-100">
                         <div class="comment-user-info flex-grow-1">
-                            <strong>{{ comment.user.username }}</strong>
-                            <span class="comment-date">{{ comment.date }}</span>
+                            <p class="mb-1">{{ comment.user.registration.firstname }} {{ comment.user.registration.middlename }} {{ comment.user.registration.lastname }}</p>
+                            <span class="comment-date">{{ comment.date|time_ago }}</span>
                         </div>
 
                         <!-- Dropdown (Gear Icon) -->

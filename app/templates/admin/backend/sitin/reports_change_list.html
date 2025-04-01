@@ -89,13 +89,36 @@
 <div id="content-main">
     <form id="exportForm">
         {% csrf_token %}
-        <div class="form-row mb-2">
-            <label for="lab-room" class="required mr-2">Select Lab Room: </label>
-            <select name="lab-room" id="lab-room" class="vSelect">
-                {% for choice in lab_room_choices %}
-                <option value="{{ choice.0 }}">{{ choice.1 }}</option>
-                {% endfor %}
-            </select>
+        <div class="card mb-2">
+            <div class="card-body">
+                <div class="row mb-2">
+                    <label for="lab-room" class="required mr-2">Filter by lab room: </label>
+                    <select name="lab-room" id="lab-room" class="vSelect">
+                        <option selected>None</option>
+                        {% for choice in lab_room_choices %}
+                        <option value="{{ choice.0 }}">{{ choice.1 }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="row mb-2">
+                    <label for="purpose" class="required mr-2">Filter by sitin purpose: </label>
+                    <select name="purpose" id="purpose" class="vSelect">
+                        <option selected>None</option>
+                        {% for choice in purpose_choices %}
+                        <option value="{{ choice.0 }}">{{ choice.1 }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="row mb-2">
+                    <label for="level" class="required mr-2">Filter by year level: </label>
+                    <select name="level" id="level" class="vSelect">
+                        <option selected>None</option>
+                        {% for choice in level_choices %}
+                        <option value="{{ choice.0 }}">{{ choice.1 }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
         </div>
 
         <div id="loading-spinner" class="custom-spinner" style="display: none;" role="status">
@@ -116,39 +139,73 @@
 
 <script>
     async function exportReport(type, isPrint) {
+        // Get all filter values
         const labroom = document.getElementById('lab-room').value;
-        if (labroom && type) {
-            const url = `/admin/backend/finishedsitins/export_all_sitins/${labroom}/${type}/`;
-            const request = {
-                'method': 'GET',
-            }
-            const spinner = document.getElementById('loading-spinner');
-            try {
-                const res = await fetch(url, request);
-                spinner.style.display = 'block';
-                if (res.ok) {
-                    const blob = await res.blob();  // Handle file response
-                    if (isPrint) {
-                        printDocument(fileURL=URL.createObjectURL(blob));
-                        return;
-                    }
-                    let link = document.createElement('a');
-                    link.href = URL.createObjectURL(blob);
-                    link.download = `sitin_history-${labroom}.${type}`;  // Set proper file extension
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                } else {
-                    console.log('not ok');
-                    const error = await res.json();
-                    RenderErrorDiv(document.getElementById('content'), { "Export Sitin": error.error });
+        const purpose = document.getElementById('purpose').value;
+        const level = document.getElementById('level').value;
+        
+        if (!type) {
+            RenderErrorDiv(document.getElementById('content-main'), { 
+                "Validation Error": "Please select an export type"
+            });
+            return;
+        }
+    
+        // Build URL
+        let url = `/admin/backend/finishedsitins/export_all_sitins/${type}/`;
+        
+        // Add query parameters - all are optional
+        const params = new URLSearchParams();
+        if (labroom && labroom !== 'None') params.append('lab_room', labroom);
+        if (purpose && purpose !== 'None') params.append('purpose', purpose);
+        if (level && level !== 'None') params.append('level', level);
+        
+        if (params.toString()) {
+            url += `?${params.toString()}`;
+        }
+    
+        const spinner = document.getElementById('loading-spinner');
+        try {
+            spinner.style.display = 'block';
+            const res = await fetch(url);
+            
+            if (res.ok) {
+                const blob = await res.blob();
+                
+                if (isPrint) {
+                    printDocument(URL.createObjectURL(blob));
+                    return;
                 }
-            } catch (error) {
-                console.log('error: ', error);
-                RenderErrorDiv(document.getElementById('content'), { "Export Sitin": "Failed to connect to the server." });
-            } finally {
-                spinner.style.display = 'none';
+                
+                // Create download link
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                
+                // Generate filename with available filters
+                let filename = 'sitin_history';
+                if (labroom && labroom !== 'None') filename += `_${labroom}`;
+                if (purpose && purpose !== 'None') filename += `_${purpose}`;
+                if (level && level !== 'None') filename += `_${level}`;
+                filename += `.${type}`;
+                
+                link.download = filename;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(link.href);
+            } else {
+                const error = await res.json();
+                RenderErrorDiv(document.getElementById('content-main'), { 
+                    "Export Error": error.error || "Failed to export data" 
+                });
             }
+        } catch (error) {
+            console.error('Export error:', error);
+            RenderErrorDiv(document.getElementById('content-main'), { 
+                "Export Error": "Failed to connect to the server. Please try again." 
+            });
+        } finally {
+            spinner.style.display = 'none';
         }
     }
 

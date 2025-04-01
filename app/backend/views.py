@@ -357,18 +357,32 @@ def sessions(request):
         return render(request, 'backend/pages/sessions.html')
     return redirect('/')
 
-def export_sitins(request, lab_room, file_type):
+def export_sitins(request, file_type):
     """
     Export all finished sit-ins to an Excel file.
     """
     # Fetch all finished sit-ins
     if request.method == 'GET':
-        queryset = Sitin.objects.filter(status="finished", lab_room=lab_room)
+        lab_room = request.GET.get('lab_room')
+        purpose = request.GET.get('purpose')
+        level = request.GET.get('level')
+        queryset = Sitin.objects.filter(status="finished")
+        description = "This report contains details of all finished sit-ins"
+        if lab_room:
+            queryset = queryset.filter(lab_room=lab_room)
+            description += f" at Lab room {lab_room}"
+        if purpose:
+            queryset = queryset.filter(purpose=purpose)
+            description += f" for the purpose of {purpose.lower()}"
+        if level:
+            queryset = queryset.filter(user__registration__level=level)
+            description += f" of students at year level {level}"
+        description += "."
+        
         if queryset.exists():
             if lab_room in [choice[0] for choice in LAB_ROOM_CHOICES] or file_type in ['xlsx', 'csv', 'pdf']:
                 # Create the Excel report
                 title = "Sit-in History Report"
-                description = f"This report contains details of all finished sit-ins in Lab room {lab_room}"
                 if file_type == 'xlsx':
                     # Create an in-memory response.
                     wb = create_excel_report(queryset, title, description)

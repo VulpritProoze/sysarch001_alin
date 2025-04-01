@@ -12,7 +12,7 @@ from django.shortcuts import render
 from django.db.models import Count, Q
 from . import views
 from .models import Registration, Announcement, AnnouncementComment, Sitin, SitinSurvey, SurveyResponse
-from .choices import LAB_ROOM_CHOICES
+from .choices import LAB_ROOM_CHOICES, SITIN_PURPOSE_CHOICES, LEVEL_CHOICES
 from .custom_changelist import CustomChangeList
 from .swear_words import swear_words
 from better_profanity import profanity
@@ -25,7 +25,7 @@ class CustomAdminSite(AdminSite):
         urls = super().get_urls()
         custom_urls = [
             path("backend/finishedsitins/export_all_sitins/", self.admin_view(self.export_all_sitins), name="admin-export_all_sitins"),
-            path("backend/finishedsitins/export_all_sitins/<str:lab_room>/<str:file_type>/", views.export_sitins, name="admin-export_sitins_by_type"),
+            path("backend/finishedsitins/export_all_sitins/<str:file_type>/", views.export_sitins, name="admin-export_sitins_by_type"),
             path('auth/', self.admin_view(self.auth_view), name="admin-auth_index"),
             path('backend/', self.admin_view(self.backend_view), name="admin-backend_index"),
             path('sitin/', self.admin_view(self.sitin_view), name="admin-sitin_index"),
@@ -78,6 +78,8 @@ class CustomAdminSite(AdminSite):
         context = self.each_context(request)
         context['app_list'] = self.get_app_list(request)
         context['lab_room_choices'] = LAB_ROOM_CHOICES
+        context['purpose_choices'] = SITIN_PURPOSE_CHOICES
+        context['level_choices'] = LEVEL_CHOICES
         context['title'] = 'Export Sitins'
         return render(request, "admin/backend/sitin/reports_change_list.html", context)
     
