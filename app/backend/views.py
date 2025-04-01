@@ -4,7 +4,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from django.core.paginator import Paginator
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponseRedirect
 from django.db.models import Prefetch
 from rest_framework import generics, status
 from rest_framework.views import APIView
@@ -99,7 +99,7 @@ class ProfileUpdateView(generics.RetrieveUpdateAPIView):
         img.save(img_io, format="JPEG", quality=quality, optimize=True)
         return ContentFile(img_io.getvalue(), name=uploaded_file.name)
 
-    def partial_update(self, request, *args, **kwargs):
+    def update(self, request, *args, **kwargs):
         instance = self.get_object()
 
         if 'profilepicture' in request.FILES:
@@ -161,27 +161,19 @@ def announcement(request, announcement_id):
         return render(request, 'backend/pages/announcement.html', context={ 'announcement': announcement, 'announcementcomments': page_obj })
     return redirect('/')
     
-class AnnouncementCommentCreateView(generics.ListCreateAPIView):
-    queryset = AnnouncementComment.objects.all()
+class AnnouncementCommentCreateView(generics.CreateAPIView):
     serializer_class = AnnouncementCommentSerializer
     permission_classes = [IsAuthenticated]
-
+    
     def get_queryset(self):
-        announcement_id = self.kwargs.get('announcement_id')
-        announcementcomment_id = self.kwargs.get('pk')
-        user = self.request.user
-        return AnnouncementComment.objects.filter(announcement=announcement_id, announcementcomment=announcementcomment_id, user=user)
-
+        announcement = self.kwargs.get('announcement_id')
+        return AnnouncementComment.objects.filter(user=self.request.user, announcement=announcement)
+    
+    # Have to manually pass user and announcement foreign keys
     def perform_create(self, serializer):
-        announcement_id = self.kwargs.get('announcement_id')
-        announcement = Announcement.objects.get(id=announcement_id)
+        # serializer.save only accepts actual instance of the model object
+        announcement = get_object_or_404(Announcement, id=self.kwargs.get('announcement_id'))
         serializer.save(user=self.request.user, announcement=announcement)
-        
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
-        return Response({'Created': 'Comment succesfully submitted.'}, status=status.HTTP_201_CREATED)
 
 class AnnouncementCommentUpdateDeleteView(generics.RetrieveUpdateDestroyAPIView):
     queryset = AnnouncementComment.objects.all()
@@ -212,46 +204,43 @@ def reservation(request):
         return render(request, 'backend/pages/reservation.html')
     return redirect('/')
 
-class SitinHybridView(APIView):
-    permission_classes = [IsAuthenticated]
-    renderer_classes = [TemplateHTMLRenderer, JSONRenderer]
-    template_name = 'backend/pages/sitin.html'
+# class SitinHybridView(APIView):
+#     permission_classes = [IsAuthenticated]
+#     renderer_classes = [TemplateHTMLRenderer, JSONRenderer]
+#     template_name = 'backend/pages/sitin.html'
     
-    def get(self, request, *args, **kwargs):
-        sitins = Sitin.objects.filter(user=request.user, status="pending").order_by('-date')
-        context = {
-            'purpose_choices': SITIN_PURPOSE_CHOICES,
-            'language_choices': PROGRAMMING_LANGUAGE_CHOICES,
-            'room_choices': LAB_ROOM_CHOICES, 
-            'sitins': sitins
-        }
-        if request.accepted_renderer.format == 'html':
-            return Response(context, template_name=self.template_name)
-        serializer = SitinSerializer(sitins, many=True)
-        print(serializer.data)
-        return Response(serializer.data)
+#     def get(self, request, *args, **kwargs):
+#         if request.accepted_renderer.format == 'html':
+#             sitins = Sitin.objects.filter(user=request.user, status="pending").order_by('-date')
+#             context = {
+#                 'purpose_choices': SITIN_PURPOSE_CHOICES,
+#                 'language_choices': PROGRAMMING_LANGUAGE_CHOICES,
+#                 'room_choices': LAB_ROOM_CHOICES, 
+#                 'sitins': sitins
+#             }
+#             return Response(context, template_name=self.template_name)
+#         serializer = SitinSerializer(sitins, many=True)
+#         print(serializer.data)
+#         return Response(serializer.data)
 
-    def post(self, request, *args, **kwargs):
-        request.accepted_renderer = JSONRenderer()
-        request.accepted_media_type = "application/json"    # For some reason, this worked
-        
-        serializer = SitinSerializer(data=request.data)
-        if serializer.is_valid():
-            # print(serializer.validated_data)
-            serializer.save(user=request.user, status="pending")
-            return Response({'Sitin': 'Successfully submitted sit-in request'}, status=status.HTTP_201_CREATED)
-        print(serializer.errors)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+#     def post(self, request, *args, **kwargs):
+#         request.accepted_renderer = JSONRenderer()
+#         request.accepted_media_type = "application/json"    # For some reason, this worked
+#         # Saving logic
+#         serializer = SitinSerializer(data=request.data)
+#         serializer.is_valid(raise_exception=True)
+#         serializer.save(user=request.user, status="pending")
+#         return Response({'Sitin': 'Successfully submitted sit-in request'}, status=status.HTTP_201_CREATED)
     
-class SitinDeleteView(generics.RetrieveDestroyAPIView):
-    queryset = Sitin.objects.all()
-    serializer_class = SitinSerializer
-    permission_classes = [IsAuthenticated]
+# class SitinDeleteView(generics.DestroyAPIView):
+#     queryset = Sitin.objects.all()
+#     serializer_class = SitinSerializer
+#     permission_classes = [IsAuthenticated]
     
-    def destroy(self, request, *args, **kwargs):
-        instance = self.get_object()
-        self.perform_destroy(instance)
-        return Response({'Sitin Request': 'Sitin request deleted successfully.'}, status=status.HTTP_200_OK)
+#     def destroy(self, request, *args, **kwargs):
+#         instance = self.get_object()
+#         self.perform_destroy(instance)
+#         return Response({'Sitin Request': 'Sitin request deleted successfully.'}, status=status.HTTP_200_OK)
     
 @login_required
 def sitin_history(request):
@@ -367,38 +356,6 @@ def sessions(request):
     if request.user.is_authenticated:
         return render(request, 'backend/pages/sessions.html')
     return redirect('/')
-
-# Custom admin views
-def approve_sitin(request):
-    if request.method == "POST":
-        sitin_id = request.POST.get("sitin_id")
-        try:
-            sitin = Sitin.objects.get(id=sitin_id)
-            sitin.status = "approved"
-            sitin.sitin_date = timezone.now()
-            sitin.save()
-            return JsonResponse({"success": True})
-        except Sitin.DoesNotExist:
-            return JsonResponse({"success": False, "error": "Sitin not found"})
-    return JsonResponse({"success": False, "error": "Invalid request method"})
-
-def logout_sitin(request):
-    if request.method == "POST":
-        sitin_id = request.POST.get("sitin_id")
-        try:
-            sitin = Sitin.objects.get(id=sitin_id)
-            sitin.status = "finished"  # Ensure this field exists in your model
-            sitin.logout_date = timezone.now()
-            if hasattr(sitin.user, "registration"):
-                registration = sitin.user.registration
-                if registration.sessions > 0:
-                    registration.sessions -= 1
-                    registration.save(update_fields=["sessions"])
-            sitin.save()
-            return JsonResponse({"success": True, "message": "Student logged out successfully."})
-        except Sitin.DoesNotExist:
-            return JsonResponse({"success": False, "message": "Sit-in record not found."}, status=404)
-    return JsonResponse({"success": False, "message": "Invalid request."}, status=400)
 
 def export_sitins(request, lab_room, file_type):
     """

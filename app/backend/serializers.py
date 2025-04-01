@@ -17,18 +17,7 @@ class AnnouncementCommentSerializer(serializers.ModelSerializer):
         model = AnnouncementComment
         fields = '__all__'  # Include all fields
         read_only_fields = ['user', 'announcement']
-        
-    # Custom validation for when not logged in user attempts to manipulate data
-    def validate(self, data):
-        request = self.context.get('request')
-        instance = self.instance    # User passed from front-end
-        if instance:
-            if instance.user != request.user:
-                raise serializers.ValidationError({"Comment": "Only the user related to this comment can update this."})
-            if instance.comment == '':
-                raise serializers.ValidationError({"Comment": "Empty comments are not allowed."})
-        return data
-    
+
 class SitinSerializer(serializers.ModelSerializer):
     class Meta:
         model = Sitin

@@ -8,8 +8,6 @@ from backend import views
 urlpatterns = [
     path('admin/', admin_site.urls),
     path('', include('backend.urls')),
-     path('admin/approve-sitin/', views.approve_sitin, name='admin-approve-sitin'),
-    path('admin/logout-sitin/', views.logout_sitin, name='admin-logout-sitin'),
 ]
 
 handler404 = 'backend.views.error_404_view'

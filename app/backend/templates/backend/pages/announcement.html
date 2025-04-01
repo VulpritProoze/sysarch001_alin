@@ -29,12 +29,15 @@
 
 
 <div class="container mt-5">
-    {% csrf_token %}
     <h4>Announcements</h4>
     <hr>
     <button class="btn btn-secondary mb-3" onclick="window.location.href = '{% url "user-announcements" %}'">
         ← Back to Announcements
     </button>
+
+    <div id="loading-spinner" class="custom-spinner" style="float:right; display: none;" role="status">
+        <span class="sr-only">Loading...</span>
+    </div>
 
     <div id="announcement-body" class="card mt-4 rounded-box">
         <div class="card-body">
@@ -57,12 +60,14 @@
             <p>
                 <i class="fas fa-comments text-primary"></i> Comments:</p>
             <form id="comment-form">
+                {% csrf_token %}
                 <div class="form-group">
                     <textarea class="form-control" placeholder="Write a comment..."
                         oninput="this.style.height = ''; this.style.height = this.scrollHeight + 'px'" rows="1"
                         style="resize: none;" required></textarea>
                     <button type="button"
-                        onclick="PostComment(this.parentElement.parentElement, '{{ announcement.id }}','{{ csrf_token }}')"
+                        data-announcement_id="{{ announcement.id }}"
+                        onclick="PostComment(this, this.parentElement.parentElement)"
                         class="btn p-1 mt-1 btn-primary float-right"><i class="fas fa-paper-plane"></i> Add comment</button>
                 </div>
             </form>
@@ -107,6 +112,7 @@
 
                 <!-- Hidden Edit Form -->
                 <form id="edit-form-{{ comment.id }}" class="edit-comment-form" style="display: none;">
+                    {% csrf_token %}
                     <div class="form-group">
                         <textarea name="comment" class="form-control" placeholder="Write a comment..."
                             oninput="this.style.height = ''; this.style.height = this.scrollHeight + 'px'" rows="1"
@@ -114,7 +120,9 @@
                     </div>
                     <div class="mt-2">
                         <button type="button"
-                            onclick="EditComment(this.parentElement.parentElement, '{{ announcement.id }}', '{{ comment.id }}', '{{ csrf_token }}', toggleEditForm)"
+                            data-id="{{ comment.id }}"
+                            data-announcement_id="{{ announcement.id }}"
+                            onclick="EditComment(this, this.parentElement.parentElement)"
                             class="btn btn-primary btn-sm">Save</button>
                         <button type="button" class="btn btn-secondary btn-sm"
                             onclick="toggleEditForm('{{ comment.id }}')">Cancel</button>

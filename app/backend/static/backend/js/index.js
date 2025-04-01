@@ -51,12 +51,8 @@ function RenderSuccessDiv(parentElement, data) {
 }
 
 // POST Comment on Announcement
-// Ang form murag di naman needed
-async function PostComment(form, announcement_id, csrf_token) {
+async function PostComment(btn, form) {
     if (form) {
-        const id = announcement_id;
-        const comment = form.getElementsByTagName('textarea')[0].value;
-
         // Manually call input validation
         const input = form.getElementsByTagName('textarea')[0];
         if(input && !input.checkValidity()) {
@@ -64,31 +60,36 @@ async function PostComment(form, announcement_id, csrf_token) {
             return;
         }
 
+        const url = `/announcements/${btn.dataset.announcement_id}/comments/`
+        const request = {
+            'method': 'POST',
+            'headers': {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': form.querySelector('[name=csrfmiddlewaretoken]').value,
+            },
+            'body': JSON.stringify({ comment: input.value })
+        };
+
+        let spinner = document.getElementById('loading-spinner');
+        
         try {
-            let response = await fetch(`/announcements/${id}/comments/`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': csrf_token,
-                },
-                body: JSON.stringify({
-                    comment: comment,
-                })
-            });
-            
+            spinner.style.display = 'block';
+            let response = await fetch(url, request);
             let data = await response.json();
 
             if (response.ok) {
-                setAlertMessageInLocalStorage(data);
+                setAlertMessageInLocalStorage({'Comment': 'Successfully submitted.'});
                 window.location.reload();
             } else {
-                // Display validation errors
-                RenderErrorDiv(document.getElementById('announcement-body'), data);
+                console.error(data);
+                RenderErrorDiv(document.getElementById('announcement-body'), {'Comment': 'Failed to submit.'});
             }
         } catch (error) {
+            console.error(error);
             RenderErrorDiv(document.getElementById('announcement-body'), {'Error': 'Failed to connect to the server. Please try again.'});
         } finally {
             window.location.href = "#";
+            spinner.style.display = 'none';
         }
     }
 }
@@ -97,44 +98,44 @@ function setAlertMessageInLocalStorage(data) {
     localStorage.setItem('alertMessages', JSON.stringify(data));
 }
 
-async function EditComment(form, announcement_id, comment_id, csrf_token, toggleEditForm) {
+async function EditComment(btn, form) {
     if (form) {
         let commentTag = form.getElementsByTagName('textarea')[0];
-        let displayCommentTag = document.getElementById(`comment-text-${comment_id}`).firstElementChild;
-        const comment = commentTag.value;
 
         console.log(commentTag.checkValidity());
         if (commentTag && !commentTag.checkValidity()) {
             commentTag.reportValidity();
             return;
         }
+        
+        const url = `/announcements/${btn.dataset.announcement_id}/comments/${btn.dataset.id}/`;
+        const request = {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': form.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify({ comment: commentTag.value })
+        };
+        let spinner = document.getElementById('loading-spinner');
 
         try {
-            let response = await fetch(`/announcements/${announcement_id}/comments/${comment_id}/`, {
-                method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': csrf_token
-                },
-                body: JSON.stringify({
-                    comment: comment
-                })
-            });
-
+            spinner.style.display = 'block';
+            let response = await fetch(url, request);
             let data = await response.json();
-
             if (response.ok) {
-                // setAlertMessageInLocalStorage(data);
-                displayCommentTag.textContent = comment;
-                RenderSuccessDiv(document.getElementById('announcement-body'), data);
-                toggleEditForm(comment_id);
+                setAlertMessageInLocalStorage({'Comment': 'Successfully updated.'});
+                window.location.reload();
             } else {
-                RenderErrorDiv(document.getElementById('announcement-body'), data);
+                console.error(data);
+                RenderErrorDiv(document.getElementById('announcement-body'), {'Comment': 'Failed to update.'});
             }
         } catch (error) {
+            console.error(data);
             RenderErrorDiv(document.getElementById('announcement-body'), {'Error': 'Failed to connect to the server. Please try again.'});
         } finally {
             window.location.href = "#";
+            spinner.style.display = 'none';
         }
     }
 }

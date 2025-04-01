@@ -24,8 +24,6 @@ class CustomAdminSite(AdminSite):
     def get_urls(self):
         urls = super().get_urls()
         custom_urls = [
-            path('approve-sitin/', views.approve_sitin, name='admin-approve-sitin'),
-            path('logout-sitin/', views.logout_sitin, name='admin-logout-sitin'),
             path("backend/finishedsitins/export_all_sitins/", self.admin_view(self.export_all_sitins), name="admin-export_all_sitins"),
             path("backend/finishedsitins/export_all_sitins/<str:lab_room>/<str:file_type>/", views.export_sitins, name="admin-export_sitins_by_type"),
             path('auth/', self.admin_view(self.auth_view), name="admin-auth_index"),
