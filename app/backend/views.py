@@ -199,6 +199,12 @@ class AnnouncementCommentUpdateDeleteView(generics.RetrieveUpdateDestroyAPIView)
         return Response({'Deleted': 'Comment successfully deleted.'}, status=status.HTTP_200_OK)
 
 @login_required
+def schedule(request):
+    if request.user.is_authenticated:
+        return render(request, 'backend/pages/schedule.html')
+    return redirect('/')
+
+@login_required
 def reservation(request):
     if request.user.is_authenticated:
         return render(request, 'backend/pages/reservation.html')

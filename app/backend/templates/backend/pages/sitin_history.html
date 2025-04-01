@@ -34,8 +34,7 @@
         <table class="table table-hover align-middle">
             <thead class="bg-primary text-white">
                 <tr>
-                    <th>Student ID</th>
-                    <th>Fullname</th>
+                    <th>#</th>
                     <th>Purpose</th>
                     <th>Language</th>
                     <th>Room</th>
@@ -48,8 +47,7 @@
                 {% if sitin_history %}
                 {% for sitin in sitin_history %}
                 <tr>
-                    <td>{{ sitin.user.registration.idno }}</td>
-                    <td>{{ sitin.user.registration.firstname }} {{ sitin.user.registration.middlename }} {{ sitin.user.registration.lastname }}</td>
+                    <td>{{ forloop.counter }}</td>
                     <td><span class="badge bg-info text-white">{{ sitin.purpose }}</span></td>
                     <td>{{ sitin.programming_language }}</td>
                     <td>Lab {{ sitin.lab_room }}</td>

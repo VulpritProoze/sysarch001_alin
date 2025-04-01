@@ -24,8 +24,8 @@ class CustomAdminSite(AdminSite):
     def get_urls(self):
         urls = super().get_urls()
         custom_urls = [
-            path("backend/finishedsitins/export_all_sitins/", self.admin_view(self.export_all_sitins), name="admin-export_all_sitins"),
-            path("backend/finishedsitins/export_all_sitins/<str:file_type>/", views.export_sitins, name="admin-export_sitins_by_type"),
+            path("sitin/finishedsitins/export_all_sitins/", self.admin_view(self.export_all_sitins), name="admin-export_all_sitins"),
+            path("sitin/finishedsitins/export_all_sitins/<str:file_type>/", views.export_sitins, name="admin-export_sitins_by_type"),
             path('auth/', self.admin_view(self.auth_view), name="admin-auth_index"),
             path('backend/', self.admin_view(self.backend_view), name="admin-backend_index"),
             path('sitin/', self.admin_view(self.sitin_view), name="admin-sitin_index"),
@@ -81,7 +81,7 @@ class CustomAdminSite(AdminSite):
         context['purpose_choices'] = SITIN_PURPOSE_CHOICES
         context['level_choices'] = LEVEL_CHOICES
         context['title'] = 'Export Sitins'
-        return render(request, "admin/backend/sitin/reports_change_list.html", context)
+        return render(request, "admin/sitin/sitin/reports_change_list.html", context)
     
     def get_app_list(self, request):
         original_app_list = super().get_app_list(request)
@@ -468,6 +468,7 @@ class CurrentSitinsAdmin(BaseSitinAdmin):
     fieldsets = (
         (None, {'fields': ('purpose', 'programming_language', 'lab_room', 'sitin_details', 'status', 'sitin_date', 'user',)}),
     )
+    actions = ['logout_student',]
     
     def get_changelist(self, request, **kwargs):
         return CustomChangeList
@@ -492,7 +493,6 @@ class CurrentSitinsAdmin(BaseSitinAdmin):
     def has_add_permission(self, request):
         return False
     
-    actions = ['logout_student',]
     
     def logout_student(self, request, queryset):
         for sitin in queryset:

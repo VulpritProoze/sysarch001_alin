@@ -1,0 +1,137 @@
+{% extends 'backend/base.html' %}
+
+{% block title %}
+Lab Schedules | CCS Sitin Monitoring System
+{% endblock %}
+
+{% block content %}
+<style>
+    table {
+        font-size: small !important;
+    }
+</style>
+
+<div class="container mt-5">
+    <h4 class="mb-4">Lab Schedules</h4>
+    <hr>
+    
+    <!-- Current Study Load Schedule -->
+    <div class="card mb-5">
+        <div class="card-body">
+            <h5 class="mb-2"><i class="fas fa-book"></i> My Class Schedule</h5>
+            <hr>
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="bg-primary text-white">
+                        <tr>
+                            <th>Course Code</th>
+                            <th>Subject</th>
+                            <th>Day</th>
+                            <th>Time</th>
+                            <th>Room</th>
+                            <th>Instructor</th>
+                        </tr>
+                    </thead>
+                    <tbody class="table-light">
+                        <tr>
+                            <td>CS 101</td>
+                            <td>Introduction to Programming</td>
+                            <td>Monday</td>
+                            <td>8:00 AM - 10:00 AM</td>
+                            <td>Lab 1</td>
+                            <td>Prof. Smith</td>
+                        </tr>
+                        <tr>
+                            <td>CS 102</td>
+                            <td>Data Structures</td>
+                            <td>Wednesday</td>
+                            <td>1:00 PM - 3:00 PM</td>
+                            <td>Lab 2</td>
+                            <td>Prof. Johnson</td>
+                        </tr>
+                        <tr>
+                            <td>CS 201</td>
+                            <td>Database Systems</td>
+                            <td>Friday</td>
+                            <td>9:00 AM - 11:00 AM</td>
+                            <td>Lab 3</td>
+                            <td>Prof. Williams</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Reserved Lab Sessions -->
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <h5><i class="fas fa-calendar-check"></i> My Reserved Lab Sessions</h5>
+                <hr>
+                <table class="table table-hover align-middle">
+                    <thead class="bg-primary text-white">
+                        <tr>
+                            <th>Date</th>
+                            <th>Day</th>
+                            <th>Time Slot</th>
+                            <th>Lab Room</th>
+                            <th>Computer #</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="table-light">
+                        <tr>
+                            <td>June 15, 2023</td>
+                            <td>Thursday</td>
+                            <td>3:00 PM - 5:00 PM</td>
+                            <td>Lab 2</td>
+                            <td>PC-205</td>
+                            <td><span class="badge badge-success">Confirmed</span></td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-danger">
+                                    <i class="fas fa-times"></i> Cancel
+                                </button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>June 17, 2023</td>
+                            <td>Saturday</td>
+                            <td>10:00 AM - 12:00 PM</td>
+                            <td>Lab 1</td>
+                            <td>PC-103</td>
+                            <td><span class="badge badge-warning">Pending</span></td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-danger">
+                                    <i class="fas fa-times"></i> Cancel
+                                </button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>June 20, 2023</td>
+                            <td>Tuesday</td>
+                            <td>1:00 PM - 3:00 PM</td>
+                            <td>Lab 3</td>
+                            <td>PC-302</td>
+                            <td><span class="badge badge-primary">Upcoming</span></td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-danger">
+                                    <i class="fas fa-times"></i> Cancel
+                                </button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Reserve New Session Button -->
+            <div class="text-right mt-3">
+                <a href="{% url 'user-reservation' %}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Reserve New Lab Session
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

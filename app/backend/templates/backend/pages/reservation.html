@@ -5,7 +5,237 @@
 {% endblock title %}
 
 {% block content %}
-<div class="container m-5">
-    <h4>Reservation</h4>
+<style>
+    table {
+        font-size: small !important;
+    }
+</style>
+
+<div class="container mt-5">
+    <h4 class="mb-4">Computer Reservation</h4>
+    
+    <!-- Lab Room Navigation Tabs -->
+    <ul class="nav nav-tabs" id="labTabs" role="tablist">
+        <li class="nav-item">
+            <a class="nav-link active" id="lab1-tab" data-toggle="tab" href="#lab1" role="tab" aria-controls="lab1" aria-selected="true">
+                <i class="fas fa-desktop"></i> Lab 1
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="lab2-tab" data-toggle="tab" href="#lab2" role="tab" aria-controls="lab2" aria-selected="false">
+                <i class="fas fa-desktop"></i> Lab 2
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="lab3-tab" data-toggle="tab" href="#lab3" role="tab" aria-controls="lab3" aria-selected="false">
+                <i class="fas fa-desktop"></i> Lab 3
+            </a>
+        </li>
+    </ul>
+    
+    <!-- Lab Room Content -->
+    <div class="tab-content p-3 border border-top-0 rounded-bottom" id="labTabsContent">
+        <!-- Lab 1 Content -->
+        <div class="tab-pane fade show active" id="lab1" role="tabpanel" aria-labelledby="lab1-tab">
+            <div class="table-responsive d-flex flex-column">
+                <table class="table table-hover align-middle">
+                    <thead class="bg-primary text-white">
+                        <tr>
+                            <th>Computer #</th>
+                            <th>Status</th>
+                            <th>Specifications</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="table-light">
+                        <tr>
+                            <td>PC-101</td>
+                            <td><span class="badge bg-success text-white">Available</span></td>
+                            <td>i7, 16GB RAM, GTX 1660</td>
+                            <td>
+                                <button class="btn btn-sm btn-primary rounded-circle" 
+                                        data-toggle="modal" 
+                                        data-target="#reserveModal" 
+                                        data-computer="PC-101"
+                                        title="Reserve this computer">
+                                    <i class="fas fa-bookmark"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>PC-102</td>
+                            <td><span class="badge bg-success text-white">Available</span></td>
+                            <td>i7, 16GB RAM, GTX 1660</td>
+                            <td>
+                                <button class="btn btn-sm btn-primary rounded-circle" 
+                                        data-toggle="modal" 
+                                        data-target="#reserveModal" 
+                                        data-computer="PC-102"
+                                        title="Reserve this computer">
+                                    <i class="fas fa-bookmark"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>PC-103</td>
+                            <td><span class="badge bg-danger text-white">In Use</span></td>
+                            <td>i7, 16GB RAM, GTX 1660</td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-secondary rounded-circle" 
+                                        disabled
+                                        title="Computer in use">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Lab 2 Content -->
+        <div class="tab-pane fade" id="lab2" role="tabpanel" aria-labelledby="lab2-tab">
+            <div class="table-responsive d-flex flex-column">
+                <table class="table table-hover align-middle">
+                    <thead class="bg-primary text-white">
+                        <tr>
+                            <th>Computer #</th>
+                            <th>Status</th>
+                            <th>Specifications</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="table-light">
+                        <tr>
+                            <td>PC-201</td>
+                            <td><span class="badge bg-success text-white">Available</span></td>
+                            <td>i5, 8GB RAM, GTX 1050</td>
+                            <td>
+                                <button class="btn btn-sm btn-primary rounded-circle" 
+                                        data-toggle="modal" 
+                                        data-target="#reserveModal" 
+                                        data-computer="PC-201"
+                                        title="Reserve this computer">
+                                    <i class="fas fa-bookmark"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>PC-202</td>
+                            <td><span class="badge bg-danger text-white">In Use</span></td>
+                            <td>i5, 8GB RAM, GTX 1050</td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-secondary rounded-circle" 
+                                        disabled
+                                        title="Computer in use">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Lab 3 Content -->
+        <div class="tab-pane fade" id="lab3" role="tabpanel" aria-labelledby="lab3-tab">
+            <div class="table-responsive d-flex flex-column">
+                <table class="table table-hover align-middle">
+                    <thead class="bg-primary text-white">
+                        <tr>
+                            <th>Computer #</th>
+                            <th>Status</th>
+                            <th>Specifications</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="table-light">
+                        <tr>
+                            <td>PC-301</td>
+                            <td><span class="badge bg-warning text-white">Maintenance</span></td>
+                            <td>i9, 32GB RAM, RTX 3080</td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-secondary rounded-circle" 
+                                        disabled
+                                        title="Under maintenance">
+                                    <i class="fas fa-wrench"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>PC-302</td>
+                            <td><span class="badge bg-success text-white">Available</span></td>
+                            <td>i9, 32GB RAM, RTX 3080</td>
+                            <td>
+                                <button class="btn btn-sm btn-primary rounded-circle" 
+                                        data-toggle="modal" 
+                                        data-target="#reserveModal" 
+                                        data-computer="PC-302"
+                                        title="Reserve this computer">
+                                    <i class="fas fa-bookmark"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 </div>
+
+<!-- Reservation Confirmation Modal -->
+<div class="modal fade" id="reserveModal" tabindex="-1" role="dialog" aria-labelledby="reserveModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="reserveModalLabel">Confirm Reservation</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>You are about to reserve <strong><span id="computerName"></span></strong>.</p>
+                <p>Please confirm your reservation details:</p>
+                <div class="form-group">
+                    <label for="reservationDate">Date:</label>
+                    <input type="date" class="form-control" id="reservationDate">
+                </div>
+                <div class="form-group">
+                    <label for="reservationTime">Time Slot:</label>
+                    <select class="form-control" id="reservationTime">
+                        <option>8:00 AM - 10:00 AM</option>
+                        <option>10:00 AM - 12:00 PM</option>
+                        <option>1:00 PM - 3:00 PM</option>
+                        <option>3:00 PM - 5:00 PM</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary">
+                    <i class="fas fa-check"></i> Confirm Reservation
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function() {
+        // Set computer name in modal when reserve button is clicked
+        $('#reserveModal').on('show.bs.modal', function (event) {
+            var button = $(event.relatedTarget); // Button that triggered the modal
+            var computer = button.data('computer'); // Extract info from data-* attributes
+            var modal = $(this);
+            modal.find('#computerName').text(computer);
+            
+            // Set default date to today
+            var today = new Date().toISOString().split('T')[0];
+            modal.find('#reservationDate').val(today);
+        });
+    });
+</script>
 {% endblock %}
