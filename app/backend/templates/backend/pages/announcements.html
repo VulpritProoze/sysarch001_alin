@@ -45,8 +45,10 @@
     <div class="d-flex align-items-center mb-4">
         <h4 class="m-0">Announcements</h4>
     </div>
-    
     <hr>
+    <div id="loading-spinner" class="custom-spinner mb-2" style="display: none;" role="status">
+        <span class="sr-only">Loading...</span>
+    </div>
 
     {% for announcement in announcements %}
     <div id="announcement-body" class="card mb-4 announcement-card shadow-sm">
@@ -89,8 +91,8 @@
                         oninput="this.style.height = ''; this.style.height = this.scrollHeight + 'px'"
                         required></textarea>
                         <button type="button"
-                            data-id="{{ announcement.id }}"
-                            onclick="PostComment(this.parentElement.parentElement)"
+                            data-announcement_id="{{ announcement.id }}"
+                            onclick="PostComment(this, this.parentElement.parentElement)"
                             class="btn btn-sm btn-primary float-right mt-2">
                             <i class="fas fa-paper-plane"></i> Add Comment
                         </button>
@@ -108,8 +110,8 @@
                                 <img src="{{ comment.user.registration.profilepicture_sm.url }}" alt="Profile Picture"
                                     class="comment-pic">
                                 <div class="comment-user-info">
-                                    <strong>{{ comment.user.registration.firstname }} {{ comment.user.registration.middlename }} {{ comment.user.registration.lastname }}</strong>
-                                    <span class="comment-date">{{ comment.date }}</span>
+                                    <p class="mb-0">{{ comment.user.registration.firstname }} {{ comment.user.registration.middlename }} {{ comment.user.registration.lastname }}</p>
+                                    <span class="comment-date">{{ comment.date|time_ago }}</span>
                                 </div>
                             </div>
                             <div class="comment-body">
@@ -175,4 +177,9 @@
         </nav>
     </div>
 </div>
+
+<script>
+    // Define for SuccessDiv
+    const parent = document.getElementById('announcement-body');
+</script>
 {% endblock %}

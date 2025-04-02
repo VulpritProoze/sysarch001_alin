@@ -74,6 +74,7 @@ async function PostComment(btn, form) {
         
         try {
             spinner.style.display = 'block';
+            window.location.href = "#";
             let response = await fetch(url, request);
             let data = await response.json();
 
@@ -86,9 +87,9 @@ async function PostComment(btn, form) {
             }
         } catch (error) {
             console.error(error);
+            window.location.href = "#";
             RenderErrorDiv(document.getElementById('announcement-body'), {'Error': 'Failed to connect to the server. Please try again.'});
         } finally {
-            window.location.href = "#";
             spinner.style.display = 'none';
         }
     }
@@ -121,6 +122,7 @@ async function EditComment(btn, form) {
 
         try {
             spinner.style.display = 'block';
+            window.location.href = "#";
             let response = await fetch(url, request);
             let data = await response.json();
             if (response.ok) {
@@ -132,9 +134,9 @@ async function EditComment(btn, form) {
             }
         } catch (error) {
             console.error(data);
+            window.location.href = "#";
             RenderErrorDiv(document.getElementById('announcement-body'), {'Error': 'Failed to connect to the server. Please try again.'});
         } finally {
-            window.location.href = "#";
             spinner.style.display = 'none';
         }
     }

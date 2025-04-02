@@ -18,4 +18,4 @@ def time_ago(value):
         hours = int(seconds / 3600)
         return f"{hours} hour{'s' if hours != 1 else ''} ago"
     else:
-        return value.strftime("%b %d, %Y")  # Fallback to date if > 1 day
+        return value.strftime("%b %d, %Y, %H:%M %p ")  # Fallback to date if > 1 day

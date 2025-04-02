@@ -1,5 +1,6 @@
 {% extends 'backend/base.html' %} 
 {% load static %} 
+{% load custom_filters %}
 
 {% block title %}
     Home | CCS Sitin Monitoring System
@@ -133,7 +134,7 @@
                                         <a href="{% url 'user-announcement' announcement.id %}" style="color: black;">{{ announcement.title }}</a>
                                     </h6>
                                     <small class="text-muted">
-                                        <i class="far fa-calendar-alt"></i> {{ announcement.date }}
+                                        <i class="far fa-calendar-alt"></i> {{ announcement.date|time_ago }}
                                     </small>
                                     <p class="mt-2">{{ announcement.content|truncatechars:"300" }}</p>
                                     <a href="{% url 'user-announcement' announcement.id %}" class="btn btn-sm btn-outline-primary">
