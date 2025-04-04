@@ -42,6 +42,27 @@
   .child-container > div {
     text-align: center;
   }
+
+  /* Custom styling for the counter column */
+  .table tbody tr td:first-child {
+    position: relative;
+    font-size: 1.1em;
+  }
+  
+  /* Optional: Add a subtle border to the right of the counter column */
+  .table tbody tr td:first-child::after {
+    content: "";
+    position: absolute;
+    right: 0;
+    top: 10%;
+    height: 80%;
+    width: 1px;
+    background-color: #dee2e6;
+  }
+
+  ul li {
+    list-style-type: none;
+  } 
 </style>
 {% endblock %}
 
@@ -129,6 +150,90 @@
       </div>
     </div>
   </div>
+  <h3>Points Leaderboard</h3>
+  <div class="card">
+    <div class="card-body">
+      <!-- Tab Navigation -->
+      <ul class="nav nav-tabs mb-4" id="leaderboardTabs" role="tablist">
+        <li class="nav-item">
+          <form method="GET">
+            {% csrf_token %}
+            <input type="hidden" name="is_top_performing" value="True">
+            <a class="nav-link {% if active_tab == 'top_performing' %}active{% endif %}" id="top-performing-tab" onclick="this.parentElement.submit();" style="cursor:pointer;">
+              Top Performing
+            </a>
+          </form>
+        </li>
+        <li class="nav-item">
+          <form method="GET">
+            <input type="hidden" name="is_top_performing" value="False">
+            <a class="nav-link {% if active_tab == 'most_active' %}active{% endif %}" id="most-active-tab" onclick="this.parentElement.submit();" style="cursor:pointer;">
+              Most Active
+            </a>
+          </form>
+        </li>
+      </ul>
+      {% comment %} Leaderboard table {% endcomment %}
+      <div class="table-container results table-responsive">  
+        <table class="table">
+          <thead>
+            <tr>
+              <th class="text-center" style="width: 50px;">#</th>
+              <th>Points</th>
+              <th>No. of Sitins</th>
+              <th>Student ID</th>
+              <th>Full Name</th>
+              <th>Course</th>
+              <th>Level</th>
+              <th>Sessions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for user in users %}
+              <tr>
+                <td class="text-center font-weight-bold text-primary" style="background-color: #f8f9fa;">{{ forloop.counter }}</td>
+                <td>{{ user.registration__points }}</td>
+                <td>{{ user.registration__sitins_count }}</td>
+                <td>
+                  <a href="{% url 'admin:auth_user_change' user.id %}" title="Edit in Admin">
+                  {{ user.registration__idno }}
+                  </a>
+                </td>
+                <td>{{ user.registration__firstname }} {{ user.registration__middlename }} {{ user.registration__lastname }}</td>
+                <td>{{ user.registration__course }}</td>
+                <td>{{ user.registration__level }}</td>
+                <td>{{ user.registration__course }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <!-- Pagination Controls -->
+      <ul class="pagination pagination-ul justify-content-center">
+        <!-- First -->
+        <li class="page-item {% if not users.has_previous %}disabled{% endif %}" {% if not users.has_previous %}style="cursor: not-allowed;"{% endif %}>
+            <a class="page-link" href="?page=1">First</a>
+        </li>
+        <!-- Previous -->
+        <li class="page-item {% if not users.has_previous %}disabled{% endif %}" {% if not users.has_previous %}style="cursor: not-allowed;"{% endif %}>
+            <a class="page-link" href="?page={% if users.has_previous %}{{ users.previous_page_number }}{% else %}#{% endif %}">Previous</a>
+        </li>
+        <!-- Current Page -->
+        <li class="page-item disabled">
+            <span class="page-link">Page {{ users.number }} of {{ users.paginator.num_pages }}</span>
+        </li>
+        <!-- Next -->
+        <li class="page-item {% if not users.has_next %}disabled{% endif %}" {% if not users.has_next %}style="cursor: not-allowed;"{% endif %}>
+            <a class="page-link" href="?page={% if users.has_next %}{{ users.next_page_number }}{% else %}#{% endif %}">Next</a>
+        </li>
+        <!-- Last -->
+        <li class="page-item {% if not users.has_next %}disabled{% endif %}" {% if not users.has_next %}style="cursor: not-allowed;"{% endif %}>
+            <a class="page-link" href="?page={{ users.paginator.num_pages }}">Last</a>
+        </li>
+      </ul>
+    </div>
+  </div>
+  
   <h3>Sitin Statistics</h3>
   <div class="container card">
     <div class="container child-container card-body">

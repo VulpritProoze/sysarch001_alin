@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.contrib.admin.helpers import ActionForm
 from django.contrib.auth.models import User
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.admin import AdminSite
@@ -11,6 +12,7 @@ from django.urls.resolvers import URLPattern
 from django.shortcuts import render
 from django.db.models import Count, Q
 from django.core.paginator import Paginator
+from django import forms
 from . import views
 from .models import Registration, Announcement, AnnouncementComment, Sitin, SitinSurvey, SurveyResponse
 from .choices import LAB_ROOM_CHOICES, SITIN_PURPOSE_CHOICES, LEVEL_CHOICES
@@ -72,7 +74,37 @@ class CustomAdminSite(AdminSite):
         })
         context["programming_language_stats"] = programming_language_stats
         context["purpose_stats"] = purpose_stats
-        context["lab_room_stats"] = lab_room_stats
+        context["lab_room_stats"] = lab_room_stats    
+        # Add sitins to the context
+        users = User.objects.prefetch_related(
+            'registration'
+        ).values(
+            'id',
+            'registration__idno',
+            'registration__firstname',
+            'registration__middlename',
+            'registration__lastname',
+            'registration__course',
+            'registration__level',
+            'registration__sessions',
+            'registration__points',
+            'registration__sitins_count',
+        ).order_by('-registration__points') # Ordered by points by default
+        # Fetch filtering for leaderboards
+        is_top_performing = request.GET.get('is_top_performing')
+        active_tab = 'top_performing'
+        if is_top_performing == 'False':
+            users = users.order_by('-registration__sitins_count')
+            active_tab = 'most_active'
+        else:
+            print('some kinda problem in the html?')
+        # Pagination on leaderboard
+        paginator = Paginator(users, 25)
+        page_number = request.GET.get('page')   
+        page_obj = paginator.get_page(page_number)
+        # Pass as context
+        context['users'] = page_obj
+        context['active_tab'] = active_tab
         return render(request, "admin/sitin/sitin_index.html", context)
     
     def export_all_sitins(self, request):
@@ -99,7 +131,7 @@ class CustomAdminSite(AdminSite):
             'user__registration__sessions',
             'sitin_date',
             'logout_date',
-        ).filter(status='finished')
+        ).filter(status='finished').order_by('-logout-date')
         # Filtering based on filters. Convert to their proper data type, return None if 'None'
         lab_room = request.GET.get('lab_room') if request.GET.get('lab_room') !=  'None' else None
         purpose = request.GET.get('purpose') if request.GET.get('purpose') != 'None' else None
@@ -378,7 +410,7 @@ class BaseSitinAdmin(admin.ModelAdmin):
     list_display = ("get_user_idno", "get_fullname", "purpose", "lab_room", "status", "get_user_sessions", "get_formatted_login_date", "get_formatted_logout_date")
     search_fields = ("user__registration__idno", "user__username", "user__registration__firstname", 
                      "user__registration__middlename", "user__registration__lastname")
-    list_filter = ("programming_language", "purpose", "lab_room",)
+    list_filter = ("sitin_date",'logout_date')
     change_list_template = 'admin/custom_change_list.html'
     
     def get_user_idno(self, obj):
@@ -449,18 +481,38 @@ class SearchSitinsInline(admin.StackedInline):
             )
         return super().formfield_for_choice_field(db_field, request, **kwargs)
 
+# Form for assigning points to students
+class AssignPointsForm(ActionForm):
+    points_input = forms.IntegerField(required=True, label="Assign points to be given to this student.")
+
 # Search Sitins (admin can search for student to sitin)
+# Model: User (as proxy)
 class SearchSitinsAdmin(admin.ModelAdmin):
     change_list_template = 'admin/backend/sitin/searchsitins_change_list.html'
     change_form_template = 'admin/backend/sitin/change_form/searchsitins_change_form.html'
     inlines = (SearchSitinsInline,)
-    list_display = ('get_idno', 'get_fullname', 'get_sessions')
+    list_display = ('get_idno', 'get_fullname', 'get_points', 'get_sessions', 'get_sitinscount')
     list_display_links = ('get_idno',)
-    list_filter = ('registration__course', 'registration__level')
+    list_filter = ('sitin__sitin_date', 'sitin__logout_date',)
     search_fields = ('registration__idno',)
     fieldsets = (
         ('Personal info', {'fields': ('registration__idno', 'registration__firstname', 'registration__middlename', 'registration__lastname', 'registration__sessions')}),
     )     
+    action_form = AssignPointsForm
+    actions = ['assign_points',]
+    
+    def assign_points(self, request, queryset):
+        points = request.POST.get('points_input', '')
+        print(points)
+        for user in queryset:
+            if hasattr(user, 'registration'):
+                user.registration.points += int(points)
+                user.registration.save()
+                
+    def get_queryset(self, request):
+        return super().get_queryset(request).prefetch_related(
+            'registration',
+        )
 
     def get_idno(self, obj):
         return obj.registration.idno
@@ -471,6 +523,16 @@ class SearchSitinsAdmin(admin.ModelAdmin):
         return f"{obj.registration.lastname}, {obj.registration.firstname} {obj.registration.middlename}"
     get_fullname.short_description = "Fullname"
     get_fullname.admin_order_field = "registration__lastname"  
+    
+    def get_points(self, obj):
+        return obj.registration.points
+    get_points.short_description = "Points Earned"
+    get_points.admin_order_field = "registration__points"
+    
+    def get_sitinscount(self, obj):
+        return obj.registration.sitins_count
+    get_sitinscount.short_description = "# of Sitins"
+    get_sitinscount.admin_order_field = "registration__sitins_count"
     
     def get_sessions(self, obj):
         return obj.registration.sessions
@@ -531,9 +593,10 @@ class CurrentSitinsAdmin(BaseSitinAdmin):
     def logout_student(self, request, queryset):
         for sitin in queryset:
             if hasattr(sitin, 'logout_date') and hasattr(sitin, 'status') and hasattr(sitin.user, 'registration'):
-                sitin.logout_date = timezone.now()
-                sitin.status = 'finished'
-                sitin.user.registration.sessions -= 1
+                sitin.logout_date = timezone.now()  # Set logout date to current time
+                sitin.status = 'finished'   # Set sitin status to finished
+                sitin.user.registration.sessions -= 1   # Reduce user session by 1 everytime they're logged out
+                sitin.user.registration.sitins_count += 1 # Increment sitins_count by 1 everytime they're logged out
                 sitin.save()
                 sitin.user.registration.save()
         self.message_user(request, f"Student/s has been logged out.")

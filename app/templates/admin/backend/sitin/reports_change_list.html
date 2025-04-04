@@ -131,8 +131,9 @@
                     </select>
                 </div>
                 <button class="btn-primary button" type='submit' style="width: 100px; text-align: left;">
-                    <i class="fas fa-bars"></i> Apply Filters</button>
-                {% comment %} add a button here to clear filters {% endcomment %}
+                    <i class="fas fa-filter"></i> Apply Filters</button>
+                <button class="button" type="button" style="width:112px; text-align: left;" onclick="window.location.href='{% url 'admin:admin-export_all_sitins' %}'">
+                    <i class="fas fa-trash-restore"></i> Clear All Filters</button>
             </div>
         </div>
 
@@ -178,6 +179,9 @@
                 {% endfor %}
             </tbody>
         </table>
+        {% if not sitins %}
+        <p class="text-muted text-center"><i class="fas fa-info-circle"></i> No sit-ins found.</p>
+        {% endif %}
     </div>
 
     <!-- Pagination Controls -->

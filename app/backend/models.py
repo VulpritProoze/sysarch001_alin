@@ -12,6 +12,8 @@ class Registration(models.Model):
     email = models.EmailField(max_length=80, null=True, blank=True)
     address = models.CharField(max_length=255, null=True, blank=True)
     sessions = models.IntegerField(default=30, null=True, blank=True)
+    points = models.IntegerField(default=0, null=True, blank=True)
+    sitins_count = models.IntegerField(default=0, null=True, blank=True)
     profilepicture_og = models.ImageField(upload_to="profiles/", default="profiles/default.jpg", blank=True, null=True)
     profilepicture_lg = models.ImageField(upload_to="profiles/", default="profiles/default_lg.jpg", blank=True, null=True)
     profilepicture_md = models.ImageField(upload_to="profiles/", default="profiles/default_md.jpg", blank=True, null=True)

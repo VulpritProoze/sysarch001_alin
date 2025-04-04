@@ -8,6 +8,7 @@ def create_superuser_registration(sender, instance, created, **kwargs):
     if created and instance.is_superuser:
         Registration.objects.create(username=instance, email=instance.email)
 
+# I have a feeling this slows down program really bad
 # Create an instance of SitinSurvey once user's session reaches 10
 @receiver(post_save, sender=Registration)
 def create_survey_on_session_threshold(sender, instance, created, **kwargs):

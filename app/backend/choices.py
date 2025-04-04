@@ -57,6 +57,8 @@ SITIN_PURPOSE_CHOICES = [
     ("Project Management", "Project Management"),
     ("Python Programming", "Python Programming"),
     ("Mobile Application", "Mobile Application"),
+    ("Web Design", "Web Design"),
+    ("Php Programming", "Php Programming"),
     ("Others", "Others"),
 ]
 
