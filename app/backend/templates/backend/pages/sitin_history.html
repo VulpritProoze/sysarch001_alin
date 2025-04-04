@@ -90,34 +90,28 @@
     {% endif %}
 
     <!-- Pagination Controls -->
-    <div class="pagination mt-3 d-flex flex-column justify-content-center">
-        <nav aria-label="Sitin History pagination">
-            <ul class="pagination justify-content-center">
-                {% if sitin_history.has_previous %}
-                <li class="page-item">
-                    <a class="page-link" href="?page=1">First</a>
-                </li>
-                <li class="page-item">
-                    <a class="page-link"
-                        href="?page={{ sitin_history.previous_page_number }}">Previous</a>
-                </li>
-                {% endif %}
-
-                <li class="page-item disabled">
-                    <span class="page-link">Page {{ sitin_history.number }} of {{ sitin_history.paginator.num_pages }}</span>
-                </li>
-
-                {% if sitin_history.has_next %}
-                <li class="page-item">
-                    <a class="page-link" href="?page={{ sitin_history.next_page_number }}">Next</a>
-                </li>
-                <li class="page-item">
-                    <a class="page-link" href="?page={{ sitin_history.paginator.num_pages }}">Last</a>
-                </li>
-                {% endif %}
-            </ul>
-        </nav>
-    </div>
+        <ul class="pagination pagination-ul justify-content-center">
+            <!-- First -->
+            <li class="page-item {% if not sitin_history.has_previous %}disabled{% endif %}" {% if not sitin_history.has_previous %}style="cursor: not-allowed;"{% endif %}>
+                <a class="page-link" href="?page=1">First</a>
+            </li>
+            <!-- Previous -->
+            <li class="page-item {% if not sitin_history.has_previous %}disabled{% endif %}" {% if not sitin_history.has_previous %}style="cursor: not-allowed;"{% endif %}>
+                <a class="page-link" href="?page={% if sitin_history.has_previous %}{{ sitin_history.previous_page_number }}{% else %}#{% endif %}">Previous</a>
+            </li>
+            <!-- Current Page -->
+            <li class="page-item disabled">
+                <span class="page-link">Page {{ sitin_history.number }} of {{ sitin_history.paginator.num_pages }}</span>
+            </li>
+            <!-- Next -->
+            <li class="page-item {% if not sitin_history.has_next %}disabled{% endif %}" {% if not sitin_history.has_next %}style="cursor: not-allowed;"{% endif %}>
+                <a class="page-link" href="?page={% if sitin_history.has_next %}{{ sitin_history.next_page_number }}{% else %}#{% endif %}">Next</a>
+            </li>
+            <!-- Last -->
+            <li class="page-item {% if not sitin_history.has_next %}disabled{% endif %}" {% if not sitin_history.has_next %}style="cursor: not-allowed;"{% endif %}>
+                <a class="page-link" href="?page={{ sitin_history.paginator.num_pages }}">Last</a>
+            </li>
+        </ul>
 </div>
 
 <!-- Feedback Modal -->

@@ -47,31 +47,27 @@ PROGRAMMING_LANGUAGE_CHOICES = [
 ]
 
 SITIN_PURPOSE_CHOICES = [
-    ("Attending a Class", "Attending a Class"),
-    ("Working on a Project", "Working on a Project"),
-    ("Taking an Exam", "Taking an Exam"),
-    ("Conducting Research", "Conducting Research"),
-    ("Skill Training / Workshop", "Skill Training / Workshop"),
-    ("Software Testing", "Software Testing"),
-    ("Network Configuration", "Network Configuration"),
-    ("Data Analysis", "Data Analysis"),
-    ("Web Development", "Web Development"),
-    ("Game Development", "Game Development"),
-    ("Artificial Intelligence / Machine Learning", "Artificial Intelligence / Machine Learning"),
-    ("Database Management", "Database Management"),
-    ("Cybersecurity Practice", "Cybersecurity Practice"),
-    ("Completing an Assignment", "Completing an Assignment"),
+    ("Java Programming", "Java Programming"),
+    ("C# Programming", "C# Programming"),
+    ("Systems Integration & Architecture", "Systems Integration & Architecture"),
+    ("Embedded Systems & IoT", "Embedded Systems & IoT"),
+    ("Digital Logic & Design", "Digital Logic & Design"),
+    ("Computer Application", "Computer Application"),
+    ("Database", "Database"),
+    ("Project Management", "Project Management"),
+    ("Python Programming", "Python Programming"),
+    ("Mobile Application", "Mobile Application"),
+    ("Others", "Others"),
 ]
 
 LAB_ROOM_CHOICES = [
     ('524', 'Room 524'),
     ('526', 'Room 526'),
-    ('527', 'Room 527'),
     ('528', 'Room 528'),
-    ('529', 'Room 529'),
     ('530', 'Room 530'),
+    ('542', 'Room 542'),
     ('544', 'Room 544'),
-    ('546', 'Room 546'),
+    ('517', 'Room 517'),
 ]
 
 SITIN_STATUS_CHOICES = [

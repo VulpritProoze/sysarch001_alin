@@ -1,3 +1,4 @@
+from datetime import datetime
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.views import LoginView, LogoutView
 from django.contrib import messages
@@ -383,7 +384,7 @@ def export_sitins(request, file_type):
         if level:
             queryset = queryset.filter(user__registration__level=level)
             description += f" of students at year level {level}"
-        description += "."
+        description += ". Generated on " + datetime.now().strftime("%b %d, %Y, %I:%M %p")
         
         if queryset.exists():
             if lab_room in [choice[0] for choice in LAB_ROOM_CHOICES] or file_type in ['xlsx', 'csv', 'pdf']:

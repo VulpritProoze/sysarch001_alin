@@ -10,6 +10,7 @@ from django.urls import path
 from django.urls.resolvers import URLPattern
 from django.shortcuts import render
 from django.db.models import Count, Q
+from django.core.paginator import Paginator
 from . import views
 from .models import Registration, Announcement, AnnouncementComment, Sitin, SitinSurvey, SurveyResponse
 from .choices import LAB_ROOM_CHOICES, SITIN_PURPOSE_CHOICES, LEVEL_CHOICES
@@ -81,7 +82,40 @@ class CustomAdminSite(AdminSite):
         context['purpose_choices'] = SITIN_PURPOSE_CHOICES
         context['level_choices'] = LEVEL_CHOICES
         context['title'] = 'Export Sitins'
-        return render(request, "admin/sitin/sitin/reports_change_list.html", context)
+        context['filters'] = request.GET
+        # Sitins context for table display
+        # Join tables for more efficient query
+        sitins = Sitin.objects.select_related(
+            'user',
+            'user__registration'
+        ).values(
+            'user__registration__idno',
+            'user__registration__firstname',
+            'user__registration__middlename',
+            'user__registration__lastname',
+            'purpose',
+            'lab_room',
+            'status',
+            'user__registration__sessions',
+            'sitin_date',
+            'logout_date',
+        ).filter(status='finished')
+        # Filtering based on filters. Convert to their proper data type, return None if 'None'
+        lab_room = request.GET.get('lab_room') if request.GET.get('lab_room') !=  'None' else None
+        purpose = request.GET.get('purpose') if request.GET.get('purpose') != 'None' else None
+        level = request.GET.get('level') if request.GET.get('level') != 'None' else None
+        if lab_room:
+            sitins = sitins.filter(lab_room=lab_room)
+        if purpose:
+            sitins = sitins.filter(purpose=purpose)
+        if level:
+            level = int(level)
+            sitins = sitins.filter(user__registration__level=level)
+        paginator = Paginator(sitins, 25)
+        page_number = request.GET.get('page')   
+        page_obj = paginator.get_page(page_number)
+        context['sitins'] = page_obj
+        return render(request, "admin/backend/sitin/reports_change_list.html", context)
     
     def get_app_list(self, request):
         original_app_list = super().get_app_list(request)
@@ -164,7 +198,7 @@ class CustomAdminSite(AdminSite):
         # Return the custom index page with the updated context
         return super().index(request, extra_context=extra_context)
     
-# Instantiate your custom admin site
+# Instantiating custom admin site
 admin_site = CustomAdminSite(name='custom_admin')
 
 admin_site.site_header = "CCS Sitin Administration"

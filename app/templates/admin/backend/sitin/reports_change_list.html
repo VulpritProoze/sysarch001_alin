@@ -71,6 +71,9 @@
             transform: rotate(360deg);
         }
     }
+    .pagination-ul li {
+        list-style-type: none;
+    }
 </style>
 {% endblock %}
 
@@ -87,37 +90,49 @@
 {% block content %}
 
 <div id="content-main">
-    <form id="exportForm">
+    <form class="mb-4" id="exportForm" method="GET">
         {% csrf_token %}
         <div class="card mb-2">
             <div class="card-body">
                 <div class="row mb-2">
-                    <label for="lab-room" class="required mr-2">Filter by lab room: </label>
-                    <select name="lab-room" id="lab-room" class="vSelect">
-                        <option selected>None</option>
+                    <label for="lab_room" class="required mr-2">Filter by lab room: </label>
+                    <select name="lab_room" id="lab-room" class="form-control">
+                        <option value="None" {% if not filters.lab_room or filters.lab_room == 'None' %}selected{% endif %}>None</option>
                         {% for choice in lab_room_choices %}
-                        <option value="{{ choice.0 }}">{{ choice.1 }}</option>
+                        <option value="{{ choice.0 }}" 
+                                {% if filters.lab_room == choice.0|stringformat:"s" %}selected{% endif %}>
+                            {{ choice.1 }}
+                        </option>
                         {% endfor %}
                     </select>
                 </div>
                 <div class="row mb-2">
                     <label for="purpose" class="required mr-2">Filter by sitin purpose: </label>
-                    <select name="purpose" id="purpose" class="vSelect">
-                        <option selected>None</option>
+                    <select name="purpose" id="purpose" class="form-control">
+                        <option value="None" {% if not filters.purpose or filters.purpose == 'None' %}selected{% endif %}>None</option>
                         {% for choice in purpose_choices %}
-                        <option value="{{ choice.0 }}">{{ choice.1 }}</option>
+                        <option value="{{ choice.0 }}" 
+                                {% if filters.purpose == choice.0|stringformat:"s" %}selected{% endif %}>
+                            {{ choice.1 }}
+                        </option>
                         {% endfor %}
                     </select>
                 </div>
                 <div class="row mb-2">
                     <label for="level" class="required mr-2">Filter by year level: </label>
-                    <select name="level" id="level" class="vSelect">
-                        <option selected>None</option>
+                    <select name="level" id="level" class="form-control">
+                        <option value="None" {% if not filters.level or filters.level == 'None' %}selected{% endif %}>None</option>
                         {% for choice in level_choices %}
-                        <option value="{{ choice.0 }}">{{ choice.1 }}</option>
+                        <option value="{{ choice.0 }}" 
+                                {% if filters.level == choice.0|stringformat:"s" %}selected{% endif %}>
+                            {{ choice.1 }}
+                        </option>
                         {% endfor %}
                     </select>
                 </div>
+                <button class="btn-primary button" type='submit' style="width: 100px; text-align: left;">
+                    <i class="fas fa-bars"></i> Apply Filters</button>
+                {% comment %} add a button here to clear filters {% endcomment %}
             </div>
         </div>
 
@@ -135,6 +150,59 @@
             <button type="button" class="button btn-print" onclick="exportReport('pdf', true)"><i class="fas fa-print"></i> Print</button>
         </div>
     </form>
+
+    <div class="results table-container table-responsive">
+        <table class="table">
+            <thead>
+                <th>Student ID</th>
+                <th>Full Name</th>
+                <th>Purpose</th>
+                <th>Lab Room</th>
+                <th>Status</th>
+                <th>Sessions</th>
+                <th>Time-in</th>
+                <th>Time-out</th>
+            </thead>
+            <tbody>
+                {% for sitin in sitins %}
+                <tr>
+                    <td>{{ sitin.user__registration__idno }}</td>
+                    <td>{{ sitin.user__registration.firstname }} {{ sitin.user__registration__middlename }} {{ sitin.user__registration__lastname }}</td>
+                    <td>{{ sitin.purpose }}</td>
+                    <td>{{ sitin.lab_room }}</td>
+                    <td>{{ sitin.status }}</td>
+                    <td>{{ sitin.user__registration__sessions }}</td>
+                    <td>{{ sitin.sitin_date }}</td>
+                    <td>{{ sitin.logout_date }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination Controls -->
+    <ul class="pagination pagination-ul justify-content-center">
+        <!-- First -->
+        <li class="page-item {% if not sitins.has_previous %}disabled{% endif %}" {% if not sitins.has_previous %}style="cursor: not-allowed;"{% endif %}>
+            <a class="page-link" href="?page=1">First</a>
+        </li>
+        <!-- Previous -->
+        <li class="page-item {% if not sitins.has_previous %}disabled{% endif %}" {% if not sitins.has_previous %}style="cursor: not-allowed;"{% endif %}>
+            <a class="page-link" href="?page={% if sitins.has_previous %}{{ sitins.previous_page_number }}{% else %}#{% endif %}">Previous</a>
+        </li>
+        <!-- Current Page -->
+        <li class="page-item disabled">
+            <span class="page-link">Page {{ sitins.number }} of {{ sitins.paginator.num_pages }}</span>
+        </li>
+        <!-- Next -->
+        <li class="page-item {% if not sitins.has_next %}disabled{% endif %}" {% if not sitins.has_next %}style="cursor: not-allowed;"{% endif %}>
+            <a class="page-link" href="?page={% if sitins.has_next %}{{ sitins.next_page_number }}{% else %}#{% endif %}">Next</a>
+        </li>
+        <!-- Last -->
+        <li class="page-item {% if not sitins.has_next %}disabled{% endif %}" {% if not sitins.has_next %}style="cursor: not-allowed;"{% endif %}>
+            <a class="page-link" href="?page={{ sitins.paginator.num_pages }}">Last</a>
+        </li>
+    </ul>
 </div>
 
 <script>
