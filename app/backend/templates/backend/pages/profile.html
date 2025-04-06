@@ -51,7 +51,7 @@
                 <div class="card-body">
 
                     <!-- Profile View Mode -->
-                    <div id="profile-view">
+                    <di id="profile-view">
                         <div class="d-flex justify-content-between">
                             <h5 class="card-title">Profile Information</h5>
                         </div>
@@ -72,6 +72,11 @@
                         <p id="profile-email"><i class="fas fa-at"></i> <span>Email:</span> {% if registration.email %}{{ registration.email }}{% else %}N/A{% endif %}</p>
                         <p id="profile-address"><i class="fas fa-address-card"></i> <span>Address:</span> {% if registration.address %}{{ registration.address }}{% else %}N/A{% endif %}</p>
                         <p id="profile-session"><i class="fas fa-clock"></i> <span>Session:</span> {% if registration.sessions %}{{ registration.sessions }}{% else %}N/A{% endif %}</p>
+                        <!-- Convert points to sessions -->
+                        <form method="GET" action="{% url 'user-convert_to_sessions' %}">
+                            <input type="hidden" name="idno" value="{{ registration.idno }}">
+                            <button type="submit" class="btn btn-primary mt-2">Convert Points</button>
+                        </form>
                         <hr>
                         <p>Description:</p>
                         <p id="profile-description">{% if registration.profiledescription %}{{ registration.profiledescription }}{% else %}N/A{% endif %}</p>
@@ -153,7 +158,7 @@
                                     rows="4" style="resize: none;"
                                     placeholder="Tell us something about yourself...">{{ registration.profiledescription }}</textarea>
                             </div>
-
+                            
                             <div class="mt-4 text-end">
                                 <button type="button" class="btn btn-success" onclick="updateProfile()"><i
                                         class="fas fa-save"></i> Save Changes</button>
@@ -171,6 +176,7 @@
 
 <!-- JavaScript Update Picture -->
 <script>
+    // http://localhost:8000/admin/sitin/finishedsitins/export_all_sitins/?csrfmiddlewaretoken=CMA43OOnNIXyhTuxKnZwZWH7AGtNw7m1Ufs5kjs4P1Bz2f4dmD5wx1tqglFQ4CG0&lab_room=None&purpose=Python+Programming&level=None
     function updatePicture() {
         let formData = new FormData();
         let fileInput = document.getElementById('profile-picture-input');

@@ -364,6 +364,21 @@ def sessions(request):
         return render(request, 'backend/pages/sessions.html')
     return redirect('/')
 
+@login_required
+def convert_points_to_sessions(request):
+    if request.user.is_authenticated:
+        if request.method == 'GET':
+            idno = request.GET.get('idno')
+            user = Registration.objects.get(idno=idno)
+            if user.points > 0:
+                added_points = int(user.points / 3)
+                user.sessions += added_points
+                user.save()
+                return JsonResponse({'message': f'{user.points} points converted into {added_points}.'}, status=200)
+            return JsonResponse({'message': f"No points left."}, status=400)
+        return JsonResponse({'error': 'Bad Request'}, status=400)
+    return JsonResponse({'error': 'Bad Request'}, status=400)
+        
 def export_sitins(request, file_type):
     """
     Export all finished sit-ins to an Excel file.

@@ -131,7 +131,7 @@ class CustomAdminSite(AdminSite):
             'user__registration__sessions',
             'sitin_date',
             'logout_date',
-        ).filter(status='finished').order_by('-logout-date')
+        ).filter(status='finished').order_by('-logout_date')
         # Filtering based on filters. Convert to their proper data type, return None if 'None'
         lab_room = request.GET.get('lab_room') if request.GET.get('lab_room') !=  'None' else None
         purpose = request.GET.get('purpose') if request.GET.get('purpose') != 'None' else None

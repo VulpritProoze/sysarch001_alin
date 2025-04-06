@@ -24,4 +24,5 @@ urlpatterns = [
     path('survey/<int:pk>/', views.SitinSurveyUpdateView.as_view(), name='user-survey-update'),
     path('resources/', views.resources, name='user-resources'),
     path('sessions/', views.sessions, name='user-sessions'),
+    path('convert_to_sessions/', views.convert_points_to_sessions, name='user-convert_to_sessions'),
 ] 
