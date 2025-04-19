@@ -14,7 +14,7 @@ from django.db.models import Count, Q
 from django.core.paginator import Paginator
 from django import forms
 from . import views
-from .models import Registration, Announcement, AnnouncementComment, Sitin, SitinSurvey, SurveyResponse
+from .models import Registration, Announcement, AnnouncementComment, Sitin, SitinSurvey, SurveyResponse, LabResource, LabRoom, Computer
 from .choices import LAB_ROOM_CHOICES, SITIN_PURPOSE_CHOICES, LEVEL_CHOICES
 from .custom_changelist import CustomChangeList
 from .swear_words import swear_words
@@ -176,7 +176,7 @@ class CustomAdminSite(AdminSite):
             # }
         }
         auth_models = ["User", "Registration",]
-        general_models = ["Announcement", "AnnouncementComment", "SitinSurvey",]
+        general_models = ["Announcement", "AnnouncementComment", "SitinSurvey", "LabResource", 'LabRoom']
         sitin_models = ["SearchSitins", "SitinRequests", "CurrentSitins", "FinishedSitins", "AllSitins", "FeedbackReport"]
 
         for app in original_app_list:
@@ -405,6 +405,41 @@ class ExtendedAnnouncementAdmin(AnnouncementAdmin):
     inlines = (AnnouncementCommentInline,)    
 
 admin_site.register(Announcement, ExtendedAnnouncementAdmin)
+
+class LabResourceAdmin(admin.ModelAdmin):
+    list_display = ('title', 'url', 'is_enabled', 'created_at')
+    link_display_links = ('title',)
+    search_filter = ('created_at')
+    actions = ['toggle_enable_resource',]
+    
+    # Disable option of making other superuser the author
+    def get_fields(self, request, obj=None):
+        # Exclude 'superuser' in the add form (obj is None)
+        fields = super().get_fields(request, obj)
+        if not obj:  # Add form
+            fields = [f for f in fields if f != 'created_by']
+        return fields
+    
+    # Make the logged-in superuser the author of announcement
+    def save_model(self, request, obj, form, change):
+        if not obj.pk:
+            obj.created_by = request.user 
+        super().save_model(request, obj, form, change)
+        
+    def get_readonly_fields(self, request, obj=None):
+        # Make all fields in the change form read-only
+        if obj:  # obj is not None, so we're editing an existing object
+            return ['created_by',]
+        
+    def toggle_enable_resource(self, request, queryset):
+        if queryset.exists:
+            for user in queryset:
+                user.is_enabled = not user.is_enabled
+                user.save()
+            self.message_user(request, f"Resource/s have been enabled/disabled.")
+    toggle_enable_resource.short_description = "Enable/disable seleced resource"
+    
+admin_site.register(LabResource, LabResourceAdmin)
 
 class BaseSitinAdmin(admin.ModelAdmin):
     list_display = ("get_user_idno", "get_fullname", "purpose", "lab_room", "status", "get_user_sessions", "get_formatted_login_date", "get_formatted_logout_date")
@@ -682,6 +717,18 @@ class FeedbackReportAdmin(BaseSitinAdmin):
     feedback_display.short_description = 'Feedback'  # Column header name
     feedback_display.admin_order_field = 'feedback'  # Allow sorting by the feedback field
 
+class ComputersAdmin(admin.StackedInline):
+    model = Computer
+    fields = ('pc_number', 'operating_system', 'processor', 'ram_amount_in_mb', 'is_available', 'lab_room')
+    extra = 3
+
+class LabRoomsAdmin(admin.ModelAdmin):
+    list_display = ('room_number', 'name', 'capacity', 'is_available', 'administrated_by')
+    list_display_links = ('room_number',)
+    inlines = (ComputersAdmin,)
+
+admin_site.register(LabRoom, LabRoomsAdmin)
+
 # Proxy models
 # User proxy for SearchSitins
 class SearchSitins(User):
@@ -723,6 +770,7 @@ admin_site.register(SearchSitins, SearchSitinsAdmin)
 admin_site.register(CurrentSitins, CurrentSitinsAdmin)
 admin_site.register(FinishedSitins, FinishedSitinsAdmin)
 admin_site.register(FeedbackReport, FeedbackReportAdmin)
+
 
 # admin
 # ganymede14337

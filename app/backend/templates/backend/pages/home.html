@@ -7,6 +7,49 @@
 {% endblock title %}
 
 {% block content %}
+<style>
+    .link-black {
+        color: black;
+    }
+
+    .student-info-card i {
+        /* primary color */
+        color: #007bff;
+    }
+    
+    /* Leaderboard styling */
+    .leaderboard-card {
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .leaderboard-card .card-title {
+        font-weight: 600;
+        color: #2c3e50;
+    }
+    
+    .leaderboard-card table {
+        font-size: 0.9rem;
+    }
+    
+    .leaderboard-card th {
+        font-weight: 600;
+        background-color: #f8f9fa;
+    }
+    
+    .leaderboard-card tr:hover {
+        background-color: #f8f9fa;
+    }
+
+    table {
+        font-size: small !important;
+    }
+
+    ul {
+        font-size: small !important;
+    }
+</style>
+
 <div class="container mt-5" id="home-container">
     <div class="row">
         <!-- Left Column -->
@@ -16,8 +59,7 @@
                 <div class="col-12 mb-4">
                     <div class="card">
                         <div class="card-body student-info-card">
-                            <h5 class="card-title">
-                                Student Information</h5>
+                            <h5 class="card-title">Student Information</h5>
                             <hr />
                             <div class="row">
                                 <div class="col-md-6 col-12 mb-2 d-flex justify-content-center">
@@ -58,6 +100,94 @@
                                     </p>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Leaderboard Card -->
+                <div class="col-12 mb-4">
+                    <div class="card shadow">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <h5 class="card-title">Points Leaderboard</h5>
+                                <div class="dropdown">
+                                    <button class="btn btn-outline-primary rounded dropdown-toggle" type="button" id="leaderboardFilterDropdown" data-toggle="dropdown" aria-expanded="false">
+                                        <i class="fas fa-filter"></i> Filter by
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="leaderboardFilterDropdown">
+                                        {% csrf_token %}
+                                        <li>
+                                            <form method="get">
+                                                <input type="hidden" name="is_top_performing" value="True">
+                                                <a class="dropdown-item" onclick="this.parentElement.submit();" style="cursor: pointer;">Top Performers</a>
+                                            </form>
+                                        </li>
+                                        <li>
+                                            <form method="get">
+                                                <input type="hidden" name="is_top_performing" value="False">
+                                                <a class="dropdown-item" onclick="this.parentElement.submit();" style="cursor: pointer;">Most Active</a>
+                                            </form>
+                                        </li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li><a class="dropdown-item" href="#">Reset Filters</a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <hr />
+                            <div class="table-responsive">  
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th class="text-center" style="width: 50px;">#</th>
+                                            <th>Points</th>
+                                            <th>No. of Sitins</th>
+                                            <th>Student ID</th>
+                                            <th>Full Name</th>
+                                            <th>Course</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for user in students_leaderboard %}
+                                        <tr>
+                                            <td class="text-center font-weight-bold text-primary" style="background-color: #f8f9fa;">{{ forloop.counter }}</td>
+                                            <td>{{ user.points }}</td>
+                                            <td>{{ user.sitins_count }}</td>
+                                            <td>{{ user.idno }}</td>
+                                            <td>{{ user.firstname }} {{ user.middlename }} {{ user.lastname }}</td>
+                                            <td>{{ user.course }}</td>
+                                        </tr>
+                                        {% empty %}
+                                        <tr>
+                                            <td colspan="6" class="text-center text-muted">No leaderboard data available</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- Pagination Controls -->
+                            <ul class="pagination pagination-ul justify-content-center">
+                                <!-- First -->
+                                <li class="page-item {% if not students_leaderboard.has_previous %}disabled{% endif %}" {% if not students_leaderboard.has_previous %}style="cursor: not-allowed;"{% endif %}>
+                                    <a class="page-link" href="?page=1">First</a>
+                                </li>
+                                <!-- Previous -->
+                                <li class="page-item {% if not students_leaderboard.has_previous %}disabled{% endif %}" {% if not students_leaderboard.has_previous %}style="cursor: not-allowed;"{% endif %}>
+                                    <a class="page-link" href="?page={% if students_leaderboard.has_previous %}{{ students_leaderboard.previous_page_number }}{% else %}#{% endif %}">Previous</a>
+                                </li>
+                                <!-- Current Page -->
+                                <li class="page-item disabled">
+                                    <span class="page-link">Page {{ students_leaderboard.number }} of {{ students_leaderboard.paginator.num_pages }}</span>
+                                </li>
+                                <!-- Next -->
+                                <li class="page-item {% if not students_leaderboard.has_next %}disabled{% endif %}" {% if not students_leaderboard.has_next %}style="cursor: not-allowed;"{% endif %}>
+                                    <a class="page-link" href="?page={% if students_leaderboard.has_next %}{{ students_leaderboard.next_page_number }}{% else %}#{% endif %}">Next</a>
+                                </li>
+                                <!-- Last -->
+                                <li class="page-item {% if not students_leaderboard.has_next %}disabled{% endif %}" {% if not students_leaderboard.has_next %}style="cursor: not-allowed;"{% endif %}>
+                                    <a class="page-link" href="?page={{ students_leaderboard.paginator.num_pages }}">Last</a>
+                                </li>
+                            </ul>
                         </div>
                     </div>
                 </div>
@@ -154,35 +284,10 @@
                     </div>
                 </div>
 
-
-                <!-- Additional Content Placeholder -->
-                <div class="col-12">
-                    <div class="card">
-                        <div class="card-body">
-                            <h5>Additional Content</h5>
-                            <hr />
-                            <p>
-                                Placeholder for more announcements, events, or other
-                                student-related updates.
-                            </p>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
     </div>
 </div>
-
-<style>
-    .link-black {
-        color: black;
-    }
-
-    .student-info-card i {
-        /* primary color */
-        color: #007bff;
-    }
-</style>
 
 <script>
     const parent = document.getElementById('home-container');

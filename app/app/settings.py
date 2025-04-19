@@ -48,7 +48,8 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
-    'django.contrib.staticfiles',
+    'django.contrib.staticfiles',   # template tags such as intcom (put ',' to thousand places)
+    'django.contrib.humanize',
     'django_extensions',
     'debug_toolbar',
     'rest_framework',

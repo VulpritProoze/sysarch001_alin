@@ -1,10 +1,17 @@
 {% extends 'backend/base.html' %}
 
 {% block content %}
+<style>
+    table {
+        font-size: small !important;
+    }
+</style>
+
 <div class="container mt-5">
     <h4 class="mb-4">Lab Resources</h4>
     
-    <div class="row">
+    <!-- Resource Cards -->
+    <div class="row mb-4">
         <div class="col-md-4">
             <div class="card">
                 <div class="card-body">
@@ -31,49 +38,78 @@
         </div>
     </div>
     
-    <div class="accordion mt-4" id="labResourcesAccordion">
-        <div class="card">
-            <div class="card-header" id="headingOne">
-                <h5 class="mb-0">
-                    <button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
-                        Lab Schedules
-                    </button>
-                </h5>
-            </div>
-            <div id="collapseOne" class="collapse show" aria-labelledby="headingOne" data-parent="#labResourcesAccordion">
-                <div class="card-body">
-                    Open lab hours: Monday - Friday, 8 AM - 6 PM. Booking required for specialized sessions.
+    <!-- Resource URL Table -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5 class="mb-0">Available Resources</h5>
+                </div>
+                <div class="col-md-6 text-right">
+                    <input type="text" id="resourceSearch" class="form-control mt-2 p-1" placeholder="Filter by title...">
                 </div>
             </div>
         </div>
-        <div class="card">
-            <div class="card-header" id="headingTwo">
-                <h5 class="mb-0">
-                    <button class="btn btn-link collapsed" type="button" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
-                        Rules & Guidelines
-                    </button>
-                </h5>
-            </div>
-            <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo" data-parent="#labResourcesAccordion">
-                <div class="card-body">
-                    All students must sign in before using resources. Food and drinks are prohibited inside the lab.
-                </div>
-            </div>
-        </div>
-        <div class="card">
-            <div class="card-header" id="headingThree">
-                <h5 class="mb-0">
-                    <button class="btn btn-link collapsed" type="button" data-toggle="collapse" data-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
-                        Support & Assistance
-                    </button>
-                </h5>
-            </div>
-            <div id="collapseThree" class="collapse" aria-labelledby="headingThree" data-parent="#labResourcesAccordion">
-                <div class="card-body">
-                    IT support is available during lab hours. Contact the lab supervisor for assistance with hardware or software issues.
-                </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover" id="resourcesTable">
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>URL</th>
+                            <th>Author</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for resource in lab_resources %}
+                        <tr>
+                            <td>{{ resource.title }}</td>
+                            <td>
+                                <a href="{{ resource.url }}" target="_blank" class="text-primary" style="text-decoration: underline;">
+                                    {{ resource.url|truncatechars:30 }}
+                                    <i class="fas fa-external-link-alt ml-1"></i>
+                                </a>
+                            </td>
+                            <td>{{ resource.created_by.get_full_name|default:resource.created_by.username }}</td>
+                            <td>{{ resource.created_at|date:"M d, Y" }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center text-muted small">No resources available</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
+    
 </div>
+
+<!-- JavaScript for filtering -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('resourceSearch');
+    const table = document.getElementById('resourcesTable');
+    const rows = table.getElementsByTagName('tr');
+    
+    searchInput.addEventListener('keyup', function() {
+        const filter = this.value.toLowerCase();
+        
+        for (let i = 1; i < rows.length; i++) { // Start from 1 to skip header row
+            const titleCell = rows[i].getElementsByTagName('td')[0];
+            if (titleCell) {
+                const text = titleCell.textContent || titleCell.innerText;
+                if (text.toLowerCase().indexOf(filter) > -1) {
+                    rows[i].style.display = '';
+                } else {
+                    rows[i].style.display = 'none';
+                }
+            }
+        }
+    });
+});
+</script>
+
 {% endblock %}

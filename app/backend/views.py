@@ -15,7 +15,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 # from rest_framework.exceptions import ValidationError
 from .serializers import RegistrationSerializer, AnnouncementCommentSerializer, SitinSerializer, SitinFeedbackSerializer, SitinSurveySerializer
-from .models import Registration, Announcement, AnnouncementComment, Sitin, SitinSurvey
+from .models import Registration, Announcement, AnnouncementComment, Sitin, SitinSurvey, LabResource, LabRoom, Computer
 from .forms import RegistrationForm
 from .choices import COURSE_CHOICES, LEVEL_CHOICES, PROGRAMMING_LANGUAGE_CHOICES, SITIN_PURPOSE_CHOICES, LAB_ROOM_CHOICES, QUESTION_CHOICES
 # Pillow Image Compression
@@ -72,8 +72,19 @@ def home(request):
     if request.user.is_authenticated:
         reg = Registration.objects.get(username=request.user)
         announcements = Announcement.objects.all().order_by('-date')[:5]
-        print(reg.lastname)
-        return render(request, 'backend/pages/home.html', context={ 'registration': reg, 'announcements': announcements })
+        students_leaderboard = Registration.objects.all().order_by('-points')
+        # client-side filter
+        is_top_performing = request.GET.get('is_top_performing')
+        if is_top_performing == 'False':
+            students_leaderboard = students_leaderboard.order_by('-sitins_count')
+        else:
+            print('some kinda problem in the html?')
+        # Pagination
+        paginator = Paginator(students_leaderboard, 10)
+        page_number = request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+        
+        return render(request, 'backend/pages/home.html', context={ 'registration': reg, 'announcements': announcements, 'students_leaderboard': page_obj })
     return redirect('/')
 
 @login_required
@@ -208,47 +219,10 @@ def schedule(request):
 @login_required
 def reservation(request):
     if request.user.is_authenticated:
-        return render(request, 'backend/pages/reservation.html')
+        labrooms = LabRoom.objects.prefetch_related('computer_set').all()
+        return render(request, 'backend/pages/reservation.html', context={ 'labrooms': labrooms })
     return redirect('/')
-
-# class SitinHybridView(APIView):
-#     permission_classes = [IsAuthenticated]
-#     renderer_classes = [TemplateHTMLRenderer, JSONRenderer]
-#     template_name = 'backend/pages/sitin.html'
-    
-#     def get(self, request, *args, **kwargs):
-#         if request.accepted_renderer.format == 'html':
-#             sitins = Sitin.objects.filter(user=request.user, status="pending").order_by('-date')
-#             context = {
-#                 'purpose_choices': SITIN_PURPOSE_CHOICES,
-#                 'language_choices': PROGRAMMING_LANGUAGE_CHOICES,
-#                 'room_choices': LAB_ROOM_CHOICES, 
-#                 'sitins': sitins
-#             }
-#             return Response(context, template_name=self.template_name)
-#         serializer = SitinSerializer(sitins, many=True)
-#         print(serializer.data)
-#         return Response(serializer.data)
-
-#     def post(self, request, *args, **kwargs):
-#         request.accepted_renderer = JSONRenderer()
-#         request.accepted_media_type = "application/json"    # For some reason, this worked
-#         # Saving logic
-#         serializer = SitinSerializer(data=request.data)
-#         serializer.is_valid(raise_exception=True)
-#         serializer.save(user=request.user, status="pending")
-#         return Response({'Sitin': 'Successfully submitted sit-in request'}, status=status.HTTP_201_CREATED)
-    
-# class SitinDeleteView(generics.DestroyAPIView):
-#     queryset = Sitin.objects.all()
-#     serializer_class = SitinSerializer
-#     permission_classes = [IsAuthenticated]
-    
-#     def destroy(self, request, *args, **kwargs):
-#         instance = self.get_object()
-#         self.perform_destroy(instance)
-#         return Response({'Sitin Request': 'Sitin request deleted successfully.'}, status=status.HTTP_200_OK)
-    
+   
 @login_required
 def sitin_history(request):
     if request.user.is_authenticated:
@@ -355,7 +329,8 @@ class SitinSurveyUpdateView(generics.RetrieveUpdateAPIView):
 @login_required
 def resources(request):
     if request.user.is_authenticated:
-        return render(request, 'backend/pages/resources.html')
+        lab_resources = LabResource.objects.all().filter(is_enabled=True)
+        return render(request, 'backend/pages/resources.html', context={ 'lab_resources': lab_resources})
     return redirect('/')
 
 @login_required
