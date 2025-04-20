@@ -1,4 +1,5 @@
 {% extends 'backend/base.html' %}
+{% load custom_filters %}
 
 {% block title %}
     Sit-in History | CCS Sitin Monitoring System
@@ -51,8 +52,8 @@
                     <td><span class="badge bg-info text-white">{{ sitin.purpose }}</span></td>
                     <td>{{ sitin.programming_language }}</td>
                     <td>Lab {{ sitin.lab_room }}</td>
-                    <td>{{ sitin.sitin_date }}</td>
-                    <td>{{ sitin.logout_date }}</td>
+                    <td>{{ sitin.sitin_date|time_ago }}</td>
+                    <td>{{ sitin.logout_date|time_ago }}</td>
                     {% if sitin.feedback %}
                     <td>
                         <span class="badge badge-pill badge-success badge-hover-outline"

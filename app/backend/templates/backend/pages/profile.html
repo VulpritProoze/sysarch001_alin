@@ -71,12 +71,15 @@
                         <p id="profile-level"><i class="fas fa-sort-numeric-up-alt"></i> <span>Level:</span> {% if registration.level %}{{ registration.level }}{% else %}N/A{% endif %}</p>
                         <p id="profile-email"><i class="fas fa-at"></i> <span>Email:</span> {% if registration.email %}{{ registration.email }}{% else %}N/A{% endif %}</p>
                         <p id="profile-address"><i class="fas fa-address-card"></i> <span>Address:</span> {% if registration.address %}{{ registration.address }}{% else %}N/A{% endif %}</p>
+                        <p id="profile-points"><i class="fas fa-coins"></i> <span>Points: {% if registration.points %}{{ registration.points }}{% else %}0{% endif %}</span></p>
                         <p id="profile-session"><i class="fas fa-clock"></i> <span>Session:</span> {% if registration.sessions %}{{ registration.sessions }}{% else %}N/A{% endif %}</p>
                         <!-- Convert points to sessions -->
-                        <form method="GET" action="{% url 'user-convert_to_sessions' %}">
-                            <input type="hidden" name="idno" value="{{ registration.idno }}">
-                            <button type="submit" class="btn btn-primary mt-2">Convert Points</button>
-                        </form>
+                        <button type="button" 
+                            class="btn btn-primary mt-2" 
+                            data-toggle="modal" 
+                            data-target="#convertPointsModal">
+                            Convert Points
+                            </button>
                         <hr>
                         <p>Description:</p>
                         <p id="profile-description">{% if registration.profiledescription %}{{ registration.profiledescription }}{% else %}N/A{% endif %}</p>
@@ -173,6 +176,51 @@
         </div>
     </div>
 </div>
+
+<!-- Confirmation Modal -->
+<div class="modal fade" id="convertPointsModal" tabindex="-1" role="dialog" aria-labelledby="convertPointsModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="convertPointsModalLabel">Confirm Points Conversion</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to convert your points to sessions?</p>
+                <p class="font-weight-bold">Current Points: {{ registration.points }}</p>
+                <p><span class="font-weight-bold">Will Receive:</span> {% widthratio registration.points 3 1 %} sessions</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <form method="POST" class="d-inline">
+                    {% csrf_token %}
+                    <input type="hidden" name="convert_points" value="true">
+                    <button type="submit" class="btn btn-primary">
+                        Confirm Conversion
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if message and message_type %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const message = "{{ message }}";
+        const type = "{{ message_type }}";
+        const parent = document.getElementById('profile-container');
+
+        if (type == 'success') {
+            RenderSuccessDiv(parent, {"Profile": message});
+        } else {
+            RenderErrorDiv(parent, {"Profile": message});
+        }
+    });
+</script>
+{% endif %}
 
 <!-- JavaScript Update Picture -->
 <script>

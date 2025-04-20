@@ -90,8 +90,25 @@ def home(request):
 @login_required
 def profile(request):
     if request.user.is_authenticated:
+        context = {
+            'course_choices': COURSE_CHOICES, 
+            'level_choices': LEVEL_CHOICES    
+        }
+        if request.method == 'POST':
+            user = Registration.objects.get(idno=request.user.registration.idno)
+            if user.points > 0:
+                added_points = int(user.points / 3)
+                user.sessions += added_points
+                context['message'] = f'{user.points} points converted into {added_points} sessions.'
+                context['message_type'] = 'success'
+                user.points = 0
+                user.save()
+            else:
+                context['message'] = 'You have no points left.'
+                context['message_type'] = 'error'
         reg = Registration.objects.get(username=request.user)
-        return render(request, 'backend/pages/profile.html', context={ 'registration': reg, 'course_choices': COURSE_CHOICES, 'level_choices': LEVEL_CHOICES })
+        context['registration'] = reg
+        return render(request, 'backend/pages/profile.html', context)
     return redirect('/')
 
 class ProfileUpdateView(generics.RetrieveUpdateAPIView):
@@ -338,21 +355,6 @@ def sessions(request):
     if request.user.is_authenticated:
         return render(request, 'backend/pages/sessions.html')
     return redirect('/')
-
-@login_required
-def convert_points_to_sessions(request):
-    if request.user.is_authenticated:
-        if request.method == 'GET':
-            idno = request.GET.get('idno')
-            user = Registration.objects.get(idno=idno)
-            if user.points > 0:
-                added_points = int(user.points / 3)
-                user.sessions += added_points
-                user.save()
-                return JsonResponse({'message': f'{user.points} points converted into {added_points}.'}, status=200)
-            return JsonResponse({'message': f"No points left."}, status=400)
-        return JsonResponse({'error': 'Bad Request'}, status=400)
-    return JsonResponse({'error': 'Bad Request'}, status=400)
         
 def export_sitins(request, file_type):
     """

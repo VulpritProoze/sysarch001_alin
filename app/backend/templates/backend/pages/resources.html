@@ -1,4 +1,5 @@
 {% extends 'backend/base.html' %}
+{% load custom_filters %}
 
 {% block content %}
 <style>
@@ -58,7 +59,7 @@
                             <th>Title</th>
                             <th>URL</th>
                             <th>Author</th>
-                            <th>Date</th>
+                            <th>Date Published</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -72,7 +73,7 @@
                                 </a>
                             </td>
                             <td>{{ resource.created_by.get_full_name|default:resource.created_by.username }}</td>
-                            <td>{{ resource.created_at|date:"M d, Y" }}</td>
+                            <td>{{ resource.created_at|time_ago }}</td>
                         </tr>
                         {% empty %}
                         <tr>

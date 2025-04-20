@@ -1,11 +1,16 @@
 from django import template
-from datetime import datetime, timezone
+from django.utils import timezone
 
 register = template.Library()
 
 @register.filter
 def time_ago(value):
-    now = datetime.now(timezone.utc)
+    if not value:
+        return ""
+    
+    now = timezone.localtime(timezone.now())
+    value = timezone.localtime(value)
+
     diff = now - value
 
     seconds = diff.total_seconds()
