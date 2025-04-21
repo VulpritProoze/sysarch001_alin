@@ -24,18 +24,7 @@
                             aria-labelledby="notificationDropdown"
                             style="left: -330px !important; right: auto !important; font-size: small;">
                         <h6 class="dropdown-header">Notifications</h6>
-                        <a class="dropdown-item" href="#">
-                            <small class="text-muted">Just now</small><br>
-                            Your reservation for Lab 524 has been confirmed
-                        </a>
-                        <a class="dropdown-item" href="#">
-                            <small class="text-muted">2 hours ago</small><br>
-                            New announcement posted: Lab Maintenance Schedule
-                        </a>
-                        <a class="dropdown-item" href="#">
-                            <small class="text-muted">Yesterday</small><br>
-                            You earned 10 points for your recent sit-in
-                        </a>
+                        <!-- Notifications appear here -->
                         <div class="dropdown-divider"></div>
                         <a class="dropdown-item text-center" href="#">
                             View all notifications
@@ -178,4 +167,63 @@
             $('#navbarNav').collapse('hide');
         }
     });
+</script>
+
+<script>
+    // Update notifications on reload
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('catch!');
+        
+        // Update notifications on page load
+        updateNotifications();
+    })
+
+    async function updateNotifications() {
+        try {
+            const response = await fetch('/notifications/get/');
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            console.log(data.results);
+            renderNotifications(data.results);
+            
+        } catch(err) {
+            console.error('Error fetching notifications:', err);
+        }
+    }
+
+    function renderNotifications(notifications) {
+        const dropdownMenu = document.querySelector('.dropdown-menu');
+        
+        if(!notifications) {
+            console.error('Notifications is undefined.');
+            return;
+        }
+        
+        // Add new notifications
+        if (notifications.length === 0) {
+            const emptyItem = document.createElement('a');
+            emptyItem.className = 'dropdown-item notification-item';
+            emptyItem.textContent = 'No new notifications';
+            dropdownMenu.insertBefore(emptyItem, dropdownMenu.querySelector('.dropdown-divider'));
+            return;
+        }
+        
+        notifications.forEach(notification => {
+            const notificationItem = document.createElement('a');
+            notificationItem.className = 'dropdown-item notification-item';
+            notificationItem.href = notification.url || '#';
+            
+            notificationItem.innerHTML = `
+                <small class="text-muted">${notification.timestamp}</small><br>
+                ${notification.message}
+                ${notification.is_read ? '<span class="badge badge-primary float-right">New</span>' : ''}
+            `;
+            
+            dropdownMenu.insertBefore(notificationItem, dropdownMenu.querySelector('.dropdown-divider'));
+        });
+    }
 </script>

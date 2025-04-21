@@ -7,6 +7,8 @@ from django.utils import timezone
 from django.core.paginator import Paginator
 from django.http import JsonResponse, HttpResponseRedirect
 from django.db.models import Prefetch
+from django.views.decorators.cache import cache_page
+from django.utils.decorators import method_decorator
 from rest_framework import generics, status
 from rest_framework.views import APIView
 from rest_framework.renderers import JSONRenderer, TemplateHTMLRenderer
@@ -15,7 +17,9 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 # from rest_framework.exceptions import ValidationError
 from .serializers import RegistrationSerializer, AnnouncementCommentSerializer, SitinSerializer, SitinFeedbackSerializer, SitinSurveySerializer
+from notifications.serializers import NotificationSerializer
 from .models import Registration, Announcement, AnnouncementComment, Sitin, SitinSurvey, LabResource, LabRoom, Computer
+from notifications.models import Notification
 from .forms import RegistrationForm
 from .choices import COURSE_CHOICES, LEVEL_CHOICES, PROGRAMMING_LANGUAGE_CHOICES, SITIN_PURPOSE_CHOICES, LAB_ROOM_CHOICES, QUESTION_CHOICES
 # Pillow Image Compression
@@ -406,5 +410,14 @@ def export_sitins(request, file_type):
         return JsonResponse({"error": "Sit-in not found"}, status=404)
     return JsonResponse({"error": "Bad Request"}, status=400)
 
+class NotificationView(generics.ListAPIView):
+    queryset = Notification.objects.all()
+    permission_classes = [IsAuthenticated]
+    serializer_class = NotificationSerializer
+    
+    @method_decorator(cache_page(30)) # Cache for 30 seconds
+    def dispatch(self, *args, **kwargs):
+        return super().dispatch(*args, **kwargs)
+    
 def error_404_view(request, exception):
     return render(request, 'backend/pages/404.html')

@@ -43,6 +43,7 @@ REST_FRAMEWORK = {
 # Application definition
 
 INSTALLED_APPS = [
+    'daphne',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -54,6 +55,7 @@ INSTALLED_APPS = [
     'debug_toolbar',
     'rest_framework',
     # 'nested_admin',
+    'notifications.apps.NotificationsConfig',
     'backend.apps.BackendConfig',
     'crispy_forms',
     'crispy_bootstrap4',
@@ -94,6 +96,22 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'app.wsgi.application'
+ASGI_APPLICATION = 'app.asgi.application'
+
+# Channel layers (Websockets)
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels.layers.InMemoryChannelLayer",
+    }
+}
+
+# Cache
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': '/var/tmp/django_cache',
+    }
+}
 
 
 # Database
