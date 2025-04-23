@@ -267,7 +267,7 @@
                                         <i class="far fa-calendar-alt"></i> {{ announcement.date|time_ago }}
                                     </small>
                                     <p class="mt-2">{{ announcement.content|truncatechars:"300" }}</p>
-                                    <a href="{% url 'user-announcement' announcement.id %}" class="btn btn-sm btn-outline-primary">
+                                    <a href="{% url 'user-announcement' announcement.id %}" class="btn btn-sm btn-primary">
                                         <i class="fas fa-arrow-right"></i> Read More
                                     </a>
                                 </div>

@@ -24,5 +24,5 @@ urlpatterns = [
     path('survey/<int:pk>/', views.SitinSurveyUpdateView.as_view(), name='user-survey-update'),
     path('resources/', views.resources, name='user-resources'),
     path('sessions/', views.sessions, name='user-sessions'),
-    path('notifications/get/', views.NotificationView.as_view(), name='user-notifications'),
+    # path('notifications/get/', views.NotificationView.as_view(), name='user-notifications'),
 ] 

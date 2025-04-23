@@ -410,14 +410,14 @@ def export_sitins(request, file_type):
         return JsonResponse({"error": "Sit-in not found"}, status=404)
     return JsonResponse({"error": "Bad Request"}, status=400)
 
-class NotificationView(generics.ListAPIView):
-    queryset = Notification.objects.all()
-    permission_classes = [IsAuthenticated]
-    serializer_class = NotificationSerializer
+# class NotificationView(generics.ListAPIView):
+#     queryset = Notification.objects.all()
+#     permission_classes = [IsAuthenticated]
+#     serializer_class = NotificationSerializer
     
-    @method_decorator(cache_page(30)) # Cache for 30 seconds
-    def dispatch(self, *args, **kwargs):
-        return super().dispatch(*args, **kwargs)
+#     @method_decorator(cache_page(30)) # Cache for 30 seconds
+#     def dispatch(self, *args, **kwargs):
+#         return super().dispatch(*args, **kwargs)
     
 def error_404_view(request, exception):
     return render(request, 'backend/pages/404.html')

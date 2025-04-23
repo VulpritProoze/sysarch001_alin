@@ -205,3 +205,18 @@ textarea, select {
   margin: 5rem 0;
   flex-direction: column;
 }
+
+.notification-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background-color: red;
+  color: white;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  font-size: small;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

@@ -5,19 +5,13 @@ from .models import Notification
 
 class NotificationConsumer(AsyncWebsocketConsumer):
     async def connect(self):
-        print("Scope user:", self.scope['user'])  # Debug line
-        print("Auth:", self.scope['user'].is_authenticated)  # Debug line
-        
-        # Reject connection if not authenticated
         if not self.scope['user'].is_authenticated:
-            print("Rejecting connection - user not authenticated")
             await self.close()
             return
 
         self.user = self.scope['user']
         self.group_name = f'user_{self.user.id}'
 
-        # Join user's personal group
         await self.channel_layer.group_add(
             self.group_name,
             self.channel_name
@@ -25,33 +19,58 @@ class NotificationConsumer(AsyncWebsocketConsumer):
         
         await self.accept()
         
-        # Send initial unread notifs
-        await self.send_unread_notifications()
+        # Send initial notifications and unread count
+        await self.send_initial_data()
         
-    async def disconnect(self, close_code):
-        # Leave group if auth
-        if hasattr(self, 'group_name') and self.scope['user'].is_authenticated:
-            await self.channel_layer.group_discard(
-                self.group_name,
-                self.channel_name
-            )
-            
-    async def send_unread_notifications(self):
+    async def send_initial_data(self):
         notifications = await sync_to_async(list)(
-            Notification.objects.filter(user=self.user, is_read=False)
-                .order_by('timestamp')[:10]
-                .values('id', 'message', 'url', 'timestamp')
+            Notification.objects.filter(user=self.user)
+                .order_by('-timestamp')[:10]
+                .values('id', 'message', 'url', 'timestamp', 'is_read')
         )
         
+        # Convert datetime objects to ISO format strings
+        serialized_notifications = []
         for notification in notifications:
-            await self.send(text_date=json.dumps({
-                'notification_type': 'notification',
-                'id': notification['id'],
-                'message': notification['message'],
-                'url': notification['url'],
-                'is_read': False
-            }))
+            notification = dict(notification)  # Convert QuerySet dict to regular dict
+            notification['timestamp'] = notification['timestamp'].isoformat()
+            serialized_notifications.append(notification)
             
+        unread_count = await sync_to_async(Notification.objects.filter(
+            user=self.user, 
+            is_read=False
+        ).count)()
+        
+        await self.send(text_data=json.dumps({
+            'notification_type': 'initial_data',
+            'notifications': serialized_notifications,
+            'unread_count': unread_count
+        }))
+        
     async def notification_message(self, event):
-        # Send notifs to websocket
-        await self.send(text_date=json.dumps(event))
+        await self.send(text_data=json.dumps(event))
+        
+    async def receive(self, text_data):
+        data = json.loads(text_data)
+        if data.get('type') == 'mark_read':
+            await self.mark_notification_read(data['id'])
+            
+    @sync_to_async
+    def mark_notification_read(self, notification_id):
+        Notification.objects.filter(
+            id=notification_id,
+            user=self.user
+        ).update(is_read=True)
+        # Send updated unread count
+        unread_count = Notification.objects.filter(
+            user=self.user, 
+            is_read=False
+        ).count()
+        self.channel_layer.group_send(
+            self.group_name,
+            {
+                'type': 'notification.message',
+                'notification_type': 'unread_count',
+                'unread_count': unread_count
+            }
+        )
