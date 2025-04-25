@@ -14,12 +14,11 @@ from django.db.models import Count, Q
 from django.core.paginator import Paginator
 from django import forms
 from . import views
-from .models import Registration, Announcement, AnnouncementComment, Sitin, SitinSurvey, SurveyResponse, LabResource, LabRoom, Computer
+from .models import Registration, Announcement, AnnouncementComment, Sitin, SitinSurvey, SurveyResponse, LabResource
 from .choices import LAB_ROOM_CHOICES, SITIN_PURPOSE_CHOICES, LEVEL_CHOICES
 from .custom_changelist import CustomChangeList
 from .swear_words import swear_words
 from better_profanity import profanity
-import nested_admin
 
 class CustomAdminSite(AdminSite):
     index_template = 'admin/custom_index.html'
@@ -32,6 +31,8 @@ class CustomAdminSite(AdminSite):
             path('auth/', self.admin_view(self.auth_view), name="admin-auth_index"),
             path('backend/', self.admin_view(self.backend_view), name="admin-backend_index"),
             path('sitin/', self.admin_view(self.sitin_view), name="admin-sitin_index"),
+            path('reservations/', self.admin_view(self.reservations_view), name="admin-reservations_index"),
+            path('notifications/', self.admin_view(self.notifications_view), name="admin-notifications_index"),
             # custom ahh urls for app_list models
             path('sitin/currentsitins/', self.admin_view(CurrentSitinsAdmin(CurrentSitins, self).changelist_view), name='current_sitins_changelist'),
             path('sitin/finishedsitins/', self.admin_view(FinishedSitinsAdmin(FinishedSitins, self).changelist_view), name='finished_sitins_changelist'),
@@ -106,6 +107,26 @@ class CustomAdminSite(AdminSite):
         context['users'] = page_obj
         context['active_tab'] = active_tab
         return render(request, "admin/sitin/sitin_index.html", context)
+
+    def reservations_view(self,request):
+        context = self.each_context(request)
+        reservations_app = [app for app in self.get_app_list(request) if app['app_label'] == 'reservations']
+        context.update({
+            'app_label': 'reservations',
+            'title': ' Reservations Management',
+            'app_list': reservations_app,
+        })
+        return render(request, "admin/reservations/reservation_index.html", context)
+
+    def notifications_view(self, request):
+        context = self.each_context(request)
+        notifications_app = [app for app in self.get_app_list(request) if app['app_label'] == 'notifications']
+        context.update({
+            'app_label': 'notifications',
+            'title': ' Notifications Management',
+            'app_list': notifications_app,
+        })
+        return render(request, "admin/notifications/notification_index.html", context)
     
     def export_all_sitins(self, request):
         context = self.each_context(request)
@@ -170,14 +191,24 @@ class CustomAdminSite(AdminSite):
                 "name": "Sit-in Management",
                 "models" : []
             },
-            # "Other Models": {
-            #     "app_label": "custom_other_models",
-            #     "models": []
-            # }
+            "Reservations Management": {
+                "app_label": "reservations",
+                "app_url": "/admin/reservations/",
+                "name": "Reservations Management",
+                "models": []
+            },
+            "Notifications Management": {
+                "app_label": "notifications",
+                "app_url": "/admin/notifications/",
+                "name": "Notifications Management",
+                "models": []
+            }
         }
         auth_models = ["User", "Registration",]
-        general_models = ["Announcement", "AnnouncementComment", "SitinSurvey", "LabResource", 'LabRoom']
+        general_models = ["Announcement", "AnnouncementComment", "SitinSurvey", "LabResource",]
         sitin_models = ["SearchSitins", "SitinRequests", "CurrentSitins", "FinishedSitins", "AllSitins", "FeedbackReport"]
+        reservation_models = ["LabRoom", "Computer",]
+        notifications_models = ["Notification",]
 
         for app in original_app_list:
             for model in app["models"]:
@@ -199,10 +230,16 @@ class CustomAdminSite(AdminSite):
                     elif model_name == "FeedbackReport":
                         model["admin_url"] = "/admin/sitin/feedbackreport/"
                     custom_apps["Sit-in Management"]["models"].append(model)
-        desired_order = ['SearchSitins', 'CurrentSitins', 'FinishedSitins', "FeedbackReport", "AllSitins",]
-        custom_apps["Sit-in Management"]['models'].sort(key=lambda x: desired_order.index(x['object_name']) if x['object_name'] in desired_order else len(desired_order))
-                # else:
-                #     custom_apps["Other Models"]["models"].append(model)
+                elif model_name in reservation_models:
+                    custom_apps["Reservations Management"]["models"].append(model)
+                elif model_name in notifications_models:
+                    custom_apps["Notifications Management"]["models"].append(model)
+
+        sitins_desired_order = ['SearchSitins', 'CurrentSitins', 'FinishedSitins', "FeedbackReport", "AllSitins",]
+        reservations_desired_order = ['LabRoom', 'Computer',]
+        custom_apps["Sit-in Management"]['models'].sort(key=lambda x: sitins_desired_order.index(x['object_name']) if x['object_name'] in sitins_desired_order else len(sitins_desired_order))
+        custom_apps["Reservations Management"]['models'].sort(key=lambda x: reservations_desired_order.index(x['object_name']) if x['object_name'] in reservations_desired_order else len(reservations_desired_order))
+
         return list(custom_apps.values())
     
     def index(self, request, extra_context=None):
@@ -411,14 +448,7 @@ class LabResourceAdmin(admin.ModelAdmin):
     link_display_links = ('title',)
     search_filter = ('created_at')
     actions = ['toggle_enable_resource',]
-    
-    # Disable option of making other superuser the author
-    def get_fields(self, request, obj=None):
-        # Exclude 'superuser' in the add form (obj is None)
-        fields = super().get_fields(request, obj)
-        if not obj:  # Add form
-            fields = [f for f in fields if f != 'created_by']
-        return fields
+
     
     # Make the logged-in superuser the author of announcement
     def save_model(self, request, obj, form, change):
@@ -430,14 +460,23 @@ class LabResourceAdmin(admin.ModelAdmin):
         # Make all fields in the change form read-only
         if obj:  # obj is not None, so we're editing an existing object
             return ['created_by',]
+        return self.readonly_fields
+    
+    # Disable option of making other superuser the author
+    def get_fields(self, request, obj=None):
+        # Exclude 'superuser' in the add form (obj is None)
+        fields = super().get_fields(request, obj)
+        if not obj:  # Add form
+            fields = [f for f in fields if f != 'created_by']
+        return fields
         
     def toggle_enable_resource(self, request, queryset):
         if queryset.exists:
-            for user in queryset:
-                user.is_enabled = not user.is_enabled
-                user.save()
+            for resource in queryset:
+                resource.is_enabled = not resource.is_enabled
+                resource.save()
             self.message_user(request, f"Resource/s have been enabled/disabled.")
-    toggle_enable_resource.short_description = "Enable/disable seleced resource"
+    toggle_enable_resource.short_description = "Enable/disable selected resource"
     
 admin_site.register(LabResource, LabResourceAdmin)
 
@@ -516,10 +555,6 @@ class SearchSitinsInline(admin.StackedInline):
             )
         return super().formfield_for_choice_field(db_field, request, **kwargs)
 
-# Form for assigning points to students
-class AssignPointsForm(ActionForm):
-    points_input = forms.IntegerField(required=True, label="Assign points to be given to this student.")
-
 # Search Sitins (admin can search for student to sitin)
 # Model: User (as proxy)
 class SearchSitinsAdmin(admin.ModelAdmin):
@@ -533,16 +568,6 @@ class SearchSitinsAdmin(admin.ModelAdmin):
     fieldsets = (
         ('Personal info', {'fields': ('registration__idno', 'registration__firstname', 'registration__middlename', 'registration__lastname', 'registration__sessions')}),
     )     
-    action_form = AssignPointsForm
-    actions = ['assign_points',]
-    
-    def assign_points(self, request, queryset):
-        points = request.POST.get('points_input', '')
-        print(points)
-        for user in queryset:
-            if hasattr(user, 'registration'):
-                user.registration.points += int(points)
-                user.registration.save()
                 
     def get_queryset(self, request):
         return super().get_queryset(request).prefetch_related(
@@ -599,7 +624,7 @@ class CurrentSitinsAdmin(BaseSitinAdmin):
     fieldsets = (
         (None, {'fields': ('purpose', 'programming_language', 'lab_room', 'sitin_details', 'status', 'sitin_date', 'user',)}),
     )
-    actions = ['logout_student',]
+    actions = ['logout_student', 'assign_points',]
     
     def get_changelist(self, request, **kwargs):
         return CustomChangeList
@@ -624,6 +649,12 @@ class CurrentSitinsAdmin(BaseSitinAdmin):
     def has_add_permission(self, request):
         return False
     
+    def assign_points(self, request, queryset):
+        for q in queryset:
+            q.user.registration.points += 1
+            q.user.registration.save()
+            self.message_user(request, f"{q.user.username} has been rewarded 1 point.")
+    assign_points.short_description = "Reward student(s)"
     
     def logout_student(self, request, queryset):
         for sitin in queryset:
@@ -716,18 +747,6 @@ class FeedbackReportAdmin(BaseSitinAdmin):
             return feedback_html
     feedback_display.short_description = 'Feedback'  # Column header name
     feedback_display.admin_order_field = 'feedback'  # Allow sorting by the feedback field
-
-class ComputersAdmin(admin.StackedInline):
-    model = Computer
-    fields = ('pc_number', 'operating_system', 'processor', 'ram_amount_in_mb', 'is_available', 'lab_room')
-    extra = 3
-
-class LabRoomsAdmin(admin.ModelAdmin):
-    list_display = ('room_number', 'name', 'capacity', 'is_available', 'administrated_by')
-    list_display_links = ('room_number',)
-    inlines = (ComputersAdmin,)
-
-admin_site.register(LabRoom, LabRoomsAdmin)
 
 # Proxy models
 # User proxy for SearchSitins

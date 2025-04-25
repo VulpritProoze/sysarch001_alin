@@ -57,6 +57,7 @@ INSTALLED_APPS = [
     # 'nested_admin',
     'notifications.apps.NotificationsConfig',
     'backend.apps.BackendConfig',
+    'reservations.apps.ReservationsConfig',
     'crispy_forms',
     'crispy_bootstrap4',
 ]

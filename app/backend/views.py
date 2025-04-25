@@ -18,7 +18,7 @@ from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 # from rest_framework.exceptions import ValidationError
 from .serializers import RegistrationSerializer, AnnouncementCommentSerializer, SitinSerializer, SitinFeedbackSerializer, SitinSurveySerializer
 from notifications.serializers import NotificationSerializer
-from .models import Registration, Announcement, AnnouncementComment, Sitin, SitinSurvey, LabResource, LabRoom, Computer
+from .models import Registration, Announcement, AnnouncementComment, Sitin, SitinSurvey, LabResource
 from notifications.models import Notification
 from .forms import RegistrationForm
 from .choices import COURSE_CHOICES, LEVEL_CHOICES, PROGRAMMING_LANGUAGE_CHOICES, SITIN_PURPOSE_CHOICES, LAB_ROOM_CHOICES, QUESTION_CHOICES
@@ -76,7 +76,7 @@ def home(request):
     if request.user.is_authenticated:
         reg = Registration.objects.get(username=request.user)
         announcements = Announcement.objects.all().order_by('-date')[:5]
-        students_leaderboard = Registration.objects.all().order_by('-points')
+        students_leaderboard = Registration.objects.all().select_related('username').order_by('-points')
         # client-side filter
         is_top_performing = request.GET.get('is_top_performing')
         if is_top_performing == 'False':
@@ -236,13 +236,6 @@ def schedule(request):
     if request.user.is_authenticated:
         return render(request, 'backend/pages/schedule.html')
     return redirect('/')
-
-@login_required
-def reservation(request):
-    if request.user.is_authenticated:
-        labrooms = LabRoom.objects.prefetch_related('computer_set').all()
-        return render(request, 'backend/pages/reservation.html', context={ 'labrooms': labrooms })
-    return redirect('/')
    
 @login_required
 def sitin_history(request):
@@ -351,8 +344,10 @@ class SitinSurveyUpdateView(generics.RetrieveUpdateAPIView):
 def resources(request):
     if request.user.is_authenticated:
         lab_resources = LabResource.objects.all().filter(is_enabled=True)
-        return render(request, 'backend/pages/resources.html', context={ 'lab_resources': lab_resources})
+        schedule = Registration.objects.values('study_load').get(idno=request.user.registration.idno)
+        return render(request, 'backend/pages/resources.html', context={ 'lab_resources': lab_resources, 'schedule': schedule })
     return redirect('/')
+    # finish later
 
 @login_required
 def sessions(request):

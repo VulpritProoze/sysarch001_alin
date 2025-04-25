@@ -14,7 +14,6 @@ urlpatterns = [
     path('announcements/<int:announcement_id>/', views.announcement, name='user-announcement'),
     path('announcements/<int:announcement_id>/comments/', views.AnnouncementCommentCreateView.as_view(), name='user-announcementcomment-create'),
     path('announcements/<int:announcement_id>/comments/<int:pk>/', views.AnnouncementCommentUpdateDeleteView.as_view(), name="user-announcementcomment-updatedelete"),
-    path('reservation/', views.reservation, name='user-reservation'),
     path('schedule/', views.schedule, name='user-schedules'),
     # path('sitin/', views.SitinHybridView.as_view(), name='user-sitin'),
     # path('sitin/<int:pk>/', views.SitinDeleteView.as_view(), name='user-sitin-delete'),

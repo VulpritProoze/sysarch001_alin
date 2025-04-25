@@ -48,6 +48,33 @@
     ul {
         font-size: small !important;
     }
+
+    /* Leaderboard highlight styles */
+    table.table tr.highlight {
+        background-color: #e3f2fd !important;  /* Light blue background */
+        border-left: 4px solid #2196F3;       /* Blue accent border */
+        transition: all 0.3s ease;            /* Smooth highlight effect */
+    }
+
+    table.table tr.highlight:hover {
+        background-color: #bbdefb !important; /* Slightly darker on hover */
+    }
+
+    table.table tr.highlight td {
+        font-weight: 600;                     /* Slightly bolder text */
+        color: #0d47a1;                       /* Darker text color */
+    }
+
+    /* Optional: Add animation for attention */
+    @keyframes pulse-highlight {
+        0% { background-color: #e3f2fd; }
+        50% { background-color: #bbdefb; }
+        100% { background-color: #e3f2fd; }
+    }
+
+    table.table tr.highlight {
+        animation: pulse-highlight 2s ease-in-out infinite;
+    }
 </style>
 
 <div class="container mt-5" id="home-container">
@@ -148,7 +175,11 @@
                                     </thead>
                                     <tbody>
                                         {% for user in students_leaderboard %}
-                                        <tr>
+                                        <tr 
+                                            {% if request.user.id == user.username.id %}
+                                            class="highlight"
+                                            {% endif %}
+                                            >
                                             <td class="text-center font-weight-bold text-primary" style="background-color: #f8f9fa;">{{ forloop.counter }}</td>
                                             <td>{{ user.points }}</td>
                                             <td>{{ user.sitins_count }}</td>

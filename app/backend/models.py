@@ -18,6 +18,7 @@ class Registration(models.Model):
     profilepicture_lg = models.ImageField(upload_to="profiles/", default="profiles/default_lg.jpg", blank=True, null=True)
     profilepicture_md = models.ImageField(upload_to="profiles/", default="profiles/default_md.jpg", blank=True, null=True)
     profilepicture_sm = models.ImageField(upload_to="profiles/", default="profiles/default_sm.jpg", blank=True, null=True)
+    study_load = models.FileField(upload_to="schedules/", blank=True, null=True)
     profiledescription = models.TextField(blank=True, null=True)
     username = models.OneToOneField(User, on_delete=models.CASCADE)
 
@@ -98,27 +99,3 @@ class LabResource(models.Model):
 
     def __str__(self):
         return f"\"{self.title}\" by {self.created_by}"
-
-# Reservation tables
-class LabRoom(models.Model):
-    room_number = models.IntegerField(null=True, blank=True)
-    name = models.CharField(max_length=50, blank=True, null=True)
-    description = models.CharField(max_length=255, blank=True, null=True)
-    capacity = models.IntegerField(null=True, blank=True)
-    is_available = models.BooleanField(default=False, blank=True, null=True)
-    administrated_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, limit_choices_to={ 'is_superuser': True })
-
-    def __str__(self):
-        return f"Lab #{self.room_number}, administrated by {self.administrated_by or 'N/A'}"
-
-class Computer(models.Model):
-    pc_number = models.IntegerField(null=True, blank=True)
-    operating_system = models.CharField(max_length=50, blank=True, null=True)
-    processor = models.CharField(max_length=50, blank=True, null=True)
-    ram_amount_in_mb = models.IntegerField(null=True, blank=True)
-    is_available = models.BooleanField(default=False, blank=True, null=True)
-    installed_at = models.DateTimeField(blank=True, null=True, auto_now_add=True)
-    lab_room = models.ForeignKey(LabRoom, on_delete=models.CASCADE)
-
-    def __str__(self):
-        return f"PC #{self.pc_number} at Lab #{self.lab_room.room_number}"

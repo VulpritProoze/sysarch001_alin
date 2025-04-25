@@ -61,7 +61,7 @@
                                 <span class="badge 
                                     {% if computer.is_available %}bg-success
                                     {% else %}bg-danger{% endif %} text-white">
-                                    {% if computer.is_available %}Available{% else %}In Use{% endif %}
+                                    {% if computer.is_available %}Available{% else %}Unavailable{% endif %}
                                 </span>
                             </td>
                             <td>
@@ -71,7 +71,7 @@
                             </td>
                             <td>
                                 {% if computer.is_available %}
-                                <button class="btn btn-primary rounded-circle" 
+                                <button class="btn btn-primary rounded-circle feedback-btn" 
                                         data-toggle="modal" 
                                         data-target="#reserveModal" 
                                         data-computer="PC-{{ computer.pc_number }}"
@@ -80,9 +80,10 @@
                                     <i class="fas fa-bookmark"></i>
                                 </button>
                                 {% else %}
-                                <button class="btn btn-sm btn-outline-secondary rounded-circle" 
+                                <button class="btn btn-danger rounded-circle " 
                                         disabled
-                                        title="Computer in use">
+                                        title="Computer in use"
+                                        style="cursor: not-allowed;">
                                     <i class="fas fa-times"></i>
                                 </button>
                                 {% endif %}
