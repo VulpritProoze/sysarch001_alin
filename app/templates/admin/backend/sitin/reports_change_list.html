@@ -81,9 +81,9 @@
 {% block breadcrumbs %}
 <div class="breadcrumbs">
 <a href="{% url 'admin:index' %}">{% translate 'Home' %}</a>
-&rsaquo; <a href="{% url 'admin:admin-sitin_index' %}">Sit-in Management</a>
-&rsaquo; <a href="{% url 'admin:finished_sitins_changelist' %}">View Sit-ins History</a>
-&rsaquo; <a href="{% url 'admin:admin-export_all_sitins' %}">Generate Reports</a>
+&rsaquo; <a href="{% url 'admin:admin-sitin_index' %}">Sitins</a>
+&rsaquo; <a href="{% url 'admin:sitins_finishedsitins_changelist' %}">Sit-ins History</a>
+&rsaquo; Generate Reports
 </div>
 {% endblock %}
 
@@ -224,7 +224,7 @@
         }
     
         // Build URL
-        let url = `/admin/sitin/finishedsitins/export_all_sitins/${type}/`;
+        let url = `/admin/sitins/finishedsitins/export_all_sitins/${type}/`;
         
         // Add query parameters - all are optional
         const params = new URLSearchParams();

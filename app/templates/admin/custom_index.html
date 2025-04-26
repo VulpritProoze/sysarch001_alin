@@ -120,28 +120,25 @@
 <script>
     // Pie Chart for Combined Stats
     var ctx = document.getElementById('combinedStatsChart').getContext('2d');
-    const total_users = parseInt('4', 10);
-    const total_announcements = parseInt('5', 10);
-    const total_comments = parseInt('50', 10);
-    const total_sitins = parseInt('7', 10);
-    const data_list = [total_users, total_announcements, total_comments, total_sitins];
+    const total_users = parseInt('{{ total_users }}', 10);
+    const total_announcements = parseInt('{{ total_announcements }}', 10);
+    const total_sitins = parseInt('{{ total_sitins }}', 10);
+    const data_list = [total_users, total_announcements, total_sitins];
     new Chart(ctx, {
         type: 'pie',
         data: {
-            labels: ['Total Users', 'Total Announcements', 'Total Comments', 'Total Sitins'],
+            labels: ['Users', 'Announcements', 'Sitins'],
             datasets: [{
                 label: 'Dashboard Stats Breakdown',
                 data: data_list,
                 backgroundColor: [
                     '#007bff', // Blue
                     '#28a745', // Green
-                    '#ffc107', // Yellow
                     '#dc3545'  // Red
                 ],
                 borderColor: [
                     '#0056b3', // Dark Blue Border
                     '#218838', // Dark Green Border
-                    '#e0a800', // Dark Yellow Border
                     '#c82333'  // Dark Red Border
                 ],
                 borderWidth: 1

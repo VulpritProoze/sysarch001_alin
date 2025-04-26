@@ -7,6 +7,7 @@ from backend.admin import admin_site
 urlpatterns = [
     path('admin/', admin_site.urls),
     path('', include('backend.urls')),
+    path('sitins/', include('sitins.urls')),
     path('reservations/', include('reservations.urls')),
 ]
 

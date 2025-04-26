@@ -4,7 +4,7 @@
 {% block breadcrumbs %}
 <div class="breadcrumbs">
 <a href="{% url 'admin:index' %}">{% translate 'Home' %}</a>
-&rsaquo; <a href="{% url 'admin:admin-sitin_index' %}">Sit-in Management</a>
+&rsaquo; <a href="{% url 'admin:admin-sitin_index' %}">Sitins</a>
 &rsaquo; {{ cl.opts.verbose_name_plural|capfirst }}
 </div>
 {% endblock %}

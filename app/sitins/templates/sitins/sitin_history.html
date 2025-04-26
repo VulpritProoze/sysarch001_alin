@@ -83,15 +83,8 @@
         {% endif %}
     </div>
 
-    {% if sitin_history.number == sitin_history.paginator.num_pages %}
-    <div class="eol">
-        <span>⊹˚. ♡.𖥔 ݁ ˖ 𐙚 ‧₊˚ ⋅</span>
-        <span><--------------------- You've reached the end of sit-in history! (˶˃ ᵕ ˂˶) .ᐟ.ᐟ ---------------------></span>
-    </div>
-    {% endif %}
-
     <!-- Pagination Controls -->
-        <ul class="pagination pagination-ul justify-content-center">
+        <ul class="pagination pagination-ul justify-content-center mt-5">
             <!-- First -->
             <li class="page-item {% if not sitin_history.has_previous %}disabled{% endif %}" {% if not sitin_history.has_previous %}style="cursor: not-allowed;"{% endif %}>
                 <a class="page-link" href="?page=1">First</a>
