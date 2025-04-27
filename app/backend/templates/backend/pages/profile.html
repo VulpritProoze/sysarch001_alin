@@ -74,12 +74,12 @@
                         <p id="profile-points"><i class="fas fa-coins"></i> <span>Points: {% if registration.points %}{{ registration.points }}{% else %}0{% endif %}</span></p>
                         <p id="profile-session"><i class="fas fa-clock"></i> <span>Session:</span> {% if registration.sessions %}{{ registration.sessions }}{% else %}N/A{% endif %}</p>
                         <!-- Convert points to sessions -->
-                        <button type="button" 
+                        <!-- <button type="button" 
                             class="btn btn-primary mt-2" 
                             data-toggle="modal" 
                             data-target="#convertPointsModal">
                             Convert Points
-                            </button>
+                            </button> -->
                         <hr>
                         <p>Description:</p>
                         <p id="profile-description">{% if registration.profiledescription %}{{ registration.profiledescription }}{% else %}N/A{% endif %}</p>

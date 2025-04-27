@@ -10,7 +10,7 @@ from .models import Sitin
 from django.db.models import Q
         
 class BaseSitinAdmin(admin.ModelAdmin):
-    list_display = ("get_user_idno", "get_fullname", "purpose", "lab_room", "status", "get_user_sessions", "get_formatted_login_date", "get_formatted_logout_date")
+    list_display = ("get_user_idno", "get_fullname", "purpose", "lab_room", "status", "get_user_points", "get_user_sessions", "get_formatted_login_date", "get_formatted_logout_date")
     search_fields = ("user__registration__idno", "user__username", "user__registration__firstname", 
                      "user__registration__middlename", "user__registration__lastname")
     list_filter = ("sitin_date",'logout_date')
@@ -45,6 +45,11 @@ class BaseSitinAdmin(admin.ModelAdmin):
         return obj.user.registration.sessions
     get_user_sessions.short_description = "Sessions"
     get_user_sessions.admin_order_field = 'user__registration__sessions'
+    
+    def get_user_points(self, obj):
+        return obj.user.registration.points 
+    get_user_points.short_description = "Points"
+    get_user_points.admin_order_field = 'user__registration__points'
 
 class SearchSitinsInline(admin.StackedInline):
     model = Sitin
@@ -139,7 +144,7 @@ class SearchSitinsAdmin(admin.ModelAdmin):
 # Current Sitins (admin can view students who has currently sitin)
 class CurrentSitinsAdmin(BaseSitinAdmin):
     change_list_template = 'admin/backend/sitin/logout_change_list.html'
-    list_display = ("get_user_idno", "get_fullname", "purpose", "lab_room", "get_user_sessions", "get_formatted_login_date",)
+    list_display = ("get_user_idno", "get_fullname", "purpose", "lab_room", "get_user_points", "get_user_sessions", "get_formatted_login_date",)
     list_display_links = ('get_user_idno',)
     list_filter = ('sitin_date',)
     fieldsets = (
@@ -184,14 +189,20 @@ class CurrentSitinsAdmin(BaseSitinAdmin):
                 sitin.status = 'finished'   # Set sitin status to finished
                 sitin.user.registration.sessions -= 1   # Reduce user session by 1 everytime they're logged out
                 sitin.user.registration.sitins_count += 1 # Increment sitins_count by 1 everytime they're logged out
+
+                if sitin.user.registration.points % 3 == 0:
+                    sitin.user.registration.sessions += sitin.user.registration.points / 3
+                    sitin.user.registration.points = 0
+
                 sitin.save()
                 sitin.user.registration.save()
+                
         self.message_user(request, f"Student/s has been logged out.")
     logout_student.short_description = "Logout selected students"
     
 # Sit-in History (admin can view students who has been timed-out by admin, and admin can also generate reports into pdf, csv, excel, and print)
 class FinishedSitinsAdmin(BaseSitinAdmin):    
-    list_display = ("get_user_idno", "get_fullname", "purpose", "lab_room", "status", "get_user_sessions", "get_formatted_logout_date",)
+    list_display = ("get_user_idno", "get_fullname", "purpose", "lab_room", "status", "get_user_points", "get_user_sessions", "get_formatted_logout_date",)
     change_list_template = "admin/backend/sitin/timedout_change_list.html"
     fieldsets = (
         (None, {'fields': ('purpose', 'programming_language', 'lab_room', 'sitin_details', 'status', 'sitin_date', 'logout_date', 'user', 'feedback')}),

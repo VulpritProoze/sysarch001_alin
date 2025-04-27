@@ -69,13 +69,11 @@ def home(request):
     if request.user.is_authenticated:
         reg = Registration.objects.get(username=request.user)
         announcements = Announcement.objects.all().order_by('-date')[:5]
-        students_leaderboard = Registration.objects.all().select_related('username').order_by('-points')
+        students_leaderboard = Registration.objects.all().select_related('username').order_by('-points', '-sitins_count')
         # client-side filter
         is_top_performing = request.GET.get('is_top_performing')
         if is_top_performing == 'False':
-            students_leaderboard = students_leaderboard.order_by('-sitins_count')
-        else:
-            print('some kinda problem in the html?')
+            students_leaderboard = students_leaderboard.order_by('-sitins_count', '-points')
         # Pagination
         paginator = Paginator(students_leaderboard, 10)
         page_number = request.GET.get('page')
