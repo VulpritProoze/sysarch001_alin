@@ -18,7 +18,7 @@ class Registration(models.Model):
     profilepicture_lg = models.ImageField(upload_to="profiles/", default="profiles/default_lg.jpg", blank=True, null=True)
     profilepicture_md = models.ImageField(upload_to="profiles/", default="profiles/default_md.jpg", blank=True, null=True)
     profilepicture_sm = models.ImageField(upload_to="profiles/", default="profiles/default_sm.jpg", blank=True, null=True)
-    study_load = models.FileField(upload_to="schedules/", blank=True, null=True)
+    study_load = models.ImageField(upload_to="schedules/", blank=True, null=True)
     profiledescription = models.TextField(blank=True, null=True)
     username = models.OneToOneField(User, on_delete=models.CASCADE)
 

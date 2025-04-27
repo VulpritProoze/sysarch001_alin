@@ -16,41 +16,146 @@
         max-width: 100%;
         margin-top: 10px;
     }
+
+    /* Schedule Display Styles */
+    .schedule-display img {
+        max-height: 300px;
+        object-fit: contain;
+        background-color: #f8f9fa;
+        width: 100%;
+    }
+
+    .empty-schedule {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        border: 2px dashed #dee2e6;
+    }
+
+    .empty-schedule .empty-icon {
+        transition: all 0.3s ease;
+    }
+
+    .empty-schedule:hover .empty-icon {
+        transform: scale(1.05);
+    }
+
+    /* Upload Form Styles */
+    .drop-zone {
+        border: 2px dashed #adb5bd;
+        border-radius: 10px;
+        padding: 2rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        background-color: #f8f9fa;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .drop-zone:hover {
+        border-color: #0d6efd;
+        background-color: rgba(13, 110, 253, 0.05);
+    }
+    
+    .drop-zone.dragover {
+        border-color: #0d6efd;
+        background-color: rgba(13, 110, 253, 0.1);
+    }
+    
+    .drop-zone-input {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        opacity: 0;
+        cursor: pointer;
+    }
+    
+    .drop-zone-content {
+        pointer-events: none; /* Makes content non-interactive */
+    }
+    
+    .upload-form button {
+        transition: all 0.3s ease;
+    }
+    
+    .upload-form button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
 </style>
 
 <div class="container mt-5">
     <h4 class="mb-4">Lab Resources</h4>
-    
-    <!-- Resource Cards -->
-    <div class="row mb-4">
-        <div class="col-md-4">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">Computers</h5>
-                    <p class="card-text">High-performance desktop computers with the latest hardware for software development, networking, and cybersecurity.</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">Networking Equipment</h5>
-                    <p class="card-text">Routers, switches, and firewalls for hands-on network configuration and troubleshooting exercises.</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">Software & Tools</h5>
-                    <p class="card-text">Licensed software such as Visual Studio, PyCharm, VMware, and other essential IT development tools.</p>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <!-- Upload user schedules -->
-    {% comment %} finish later {% endcomment %}
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5>Your schedules</h5>
+        </div>
+        <div class="card-body">
+            <!-- Display existing schedules -->
+            <div class="mb-4">
+                {% if schedule.study_load %}
+                    <div class="schedule-display">
+                        <h6 class="fw-bold mb-3 text-muted">Current Schedule</h6>
+                        <div class="row">
+                            <div class="col-md-6 col-lg-4 mb-3">
+                                <div class="card border-0 shadow-sm">
+                                    <div class="card-body p-0">
+                                        <img src="{{ schedule.study_load.url }}" alt="Your schedule" class="img-fluid rounded-top">
+                                        <div class="p-3 bg-light rounded-bottom">
+                                            <a href="{{ schedule.study_load.url }}" download class="btn btn-sm btn-outline-primary me-2">
+                                                <i class="fas fa-download me-1"></i> Download
+                                            </a>
+                                            <a href="#" class="btn btn-sm btn-outline-danger">
+                                                <i class="fas fa-trash me-1"></i> Delete
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="empty-schedule text-center py-4">
+                        <div class="empty-icon mb-3">
+                            <div class="d-inline-block p-4 rounded-circle bg-light">
+                                <i class="fas fa-calendar-alt fa-3x text-secondary"></i>
+                            </div>
+                        </div>
+                        <h5 class="text-muted mb-2">No schedule uploaded</h5>
+                        <p class="text-muted small">Upload your schedule to get started</p>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Upload form -->
+            <form method="post" enctype="multipart/form-data" class="upload-form">
+                {% csrf_token %}
+                <div class="mb-4">
+                    <label class="form-label fw-bold mb-3">Upload New Schedule</label>
+                    
+                    <!-- Custom drop zone -->
+                    <div class="drop-zone mb-3">
+                        <div class="drop-zone-content">
+                            <i class="fas fa-cloud-upload-alt fa-3x mb-3 text-primary"></i>
+                            <h5 class="mb-2">Drag & drop your schedule here</h5>
+                            <p class="text-muted small mb-3">or click to browse files</p>
+                            <span class="badge bg-light text-dark mb-3">JPEG, PNG (Max 5MB)</span>
+                        </div>
+                        <input class="drop-zone-input" type="file" id="scheduleImage" name="study_load" accept="image/*" required>
+                    </div>
+                    
+                    <div class="form-text text-center">Upload your schedule as an image file (JPEG, PNG, etc.)</div>
+                </div>
+                <button type="submit" class="btn btn-primary w-100 py-2">
+                    <i class="fas fa-upload me-2"></i> Upload Schedule
+                </button>
+            </form>
+        </div>
+    </div>
     
     <!-- Resource URL Table -->
     <div class="card mb-4">
@@ -101,9 +206,9 @@
     
 </div>
 
-<!-- JavaScript for filtering -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // JavaScript for filtering
     const searchInput = document.getElementById('resourceSearch');
     const table = document.getElementById('resourcesTable');
     const rows = table.getElementsByTagName('tr');
@@ -121,6 +226,56 @@ document.addEventListener('DOMContentLoaded', function() {
                     rows[i].style.display = 'none';
                 }
             }
+        }
+    });
+
+    // Add drag and drop functionality
+    const dropZone = document.querySelector('.drop-zone');
+    const fileInput = document.querySelector('.drop-zone-input');
+    
+    // Highlight drop zone when dragging over
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropZone.addEventListener(eventName, (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+    });
+    
+    // Remove highlight when dragging leaves
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+        });
+    });
+    
+    // Handle file drop
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        if (e.dataTransfer.files.length) {
+            fileInput.files = e.dataTransfer.files;
+            
+            // Update UI to show file name
+            const fileName = e.dataTransfer.files[0].name;
+            const content = dropZone.querySelector('.drop-zone-content');
+            content.innerHTML = `
+                <i class="fas fa-file-image fa-3x mb-2 text-success"></i>
+                <p class="mb-1 fw-bold">${fileName}</p>
+                <p class="small text-muted">Click to change file</p>
+            `;
+        }
+    });
+    
+    // Handle file selection via click
+    fileInput.addEventListener('change', (e) => {
+        if (fileInput.files.length) {
+            const fileName = fileInput.files[0].name;
+            const content = dropZone.querySelector('.drop-zone-content');
+            content.innerHTML = `
+                <i class="fas fa-file-image fa-3x mb-2 text-success"></i>
+                <p class="mb-1 fw-bold">${fileName}</p>
+                <p class="small text-muted">Click to change file</p>
+            `;
         }
     });
 });

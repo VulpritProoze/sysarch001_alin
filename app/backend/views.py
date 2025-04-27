@@ -16,12 +16,13 @@ from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 # from rest_framework.exceptions import ValidationError
 from .serializers import RegistrationSerializer, AnnouncementCommentSerializer, SitinSurveySerializer
 from .models import Registration, Announcement, AnnouncementComment, SitinSurvey, LabResource
-from .forms import RegistrationForm
+from .forms import RegistrationForm, StudyLoadUploadForm
 from .choices import COURSE_CHOICES, LEVEL_CHOICES, LAB_ROOM_CHOICES, QUESTION_CHOICES
 # Pillow Image Compression
 from PIL import Image
 from io import BytesIO
 from django.core.files.base import ContentFile
+import os
 class CustomLoginView(LoginView):
     template_name = 'backend/pages/login.html'
 
@@ -126,6 +127,7 @@ class ProfileUpdateView(generics.RetrieveUpdateAPIView):
 
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
+        # Currently no feature to delete old images
 
         if 'profilepicture' in request.FILES:
             uploaded_file = request.FILES.get('profilepicture')
@@ -293,11 +295,36 @@ class SitinSurveyUpdateView(generics.RetrieveUpdateAPIView):
 @login_required
 def resources(request):
     if request.user.is_authenticated:
+        # Using Django's forms to update image
+        if request.method == 'POST':
+            try:
+                registration = request.user.registration 
+            except Registration.DoesNotExist:
+                print('Registration not found')
+                return redirect('/resources')
+            
+            old_image = registration.study_load
+            form = StudyLoadUploadForm(request.POST, request.FILES, instance=registration)
+            if form.is_valid():
+                print('\nold_image', old_image)
+                print(type(old_image))
+                print('path -> ', old_image.path, old_image.name)
+                
+                # delete old image
+                if old_image:
+                    try:
+                        if os.path.exists(old_image.path):
+                            os.remove(old_image.path)
+                    except Exception as e:
+                        print("Couldn't delete old image", str(e))
+                        
+                form.save()
+                return redirect('/resources')
+            
         lab_resources = LabResource.objects.all().filter(is_enabled=True)
-        schedule = Registration.objects.values('study_load').get(idno=request.user.registration.idno)
+        schedule = Registration.objects.only('study_load').get(idno=request.user.registration.idno)
         return render(request, 'backend/pages/resources.html', context={ 'lab_resources': lab_resources, 'schedule': schedule })
     return redirect('/')
-    # finish later
 
 @login_required
 def sessions(request):
