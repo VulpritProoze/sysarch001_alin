@@ -7,13 +7,13 @@ from django.http import HttpResponse, JsonResponse
 from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated
 from .models import Sitin
-from .serializers import SitinFeedbackSerializer
+from .serializers import SitinSerializer
 from .report_styles import create_excel_report, create_csv_report, create_pdf_report
 from backend.choices import LAB_ROOM_CHOICES
 
 class SitinHistoryUpdateView(generics.RetrieveUpdateAPIView):
     queryset = Sitin.objects.all()
-    serializer_class = SitinFeedbackSerializer
+    serializer_class = SitinSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):

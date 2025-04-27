@@ -8,7 +8,8 @@ class Sitin(models.Model):
     lab_room = models.CharField(max_length=50, choices=LAB_ROOM_CHOICES, blank=True, null=True)
     sitin_details = models.TextField(blank=True, null=True)
     status = models.CharField(max_length=50, choices=SITIN_STATUS_CHOICES, default="none") # none, approved, denied
-    sitin_date = models.DateTimeField(auto_now_add=True)
+    request_date = models.DateTimeField(null=True, blank=True)
+    sitin_date = models.DateTimeField(null=True, blank=True)
     logout_date = models.DateTimeField(null=True, blank=True)
     feedback = models.TextField(blank=True, null=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)

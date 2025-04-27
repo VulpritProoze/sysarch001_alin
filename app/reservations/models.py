@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from sitins.models import Sitin
 
 # Reservation tables
 class LabRoom(models.Model):
@@ -24,3 +25,12 @@ class Computer(models.Model):
 
     def __str__(self):
         return f"PC #{self.pc_number} at Lab #{self.lab_room.room_number}"
+    
+class SitinRequest(models.Model):
+    lab_room = models.ForeignKey(LabRoom, on_delete=models.SET_NULL, null=True, blank=True)
+    pc = models.ForeignKey(Computer, on_delete=models.SET_NULL, null=True, blank=True)
+    sitin = models.ForeignKey(Sitin, on_delete=models.CASCADE)
+    request_date = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return f"Sitin request by {self.sitin.user.username} at Lab {self.lab_room.room_number}, PC#{self.pc.pc_number}"

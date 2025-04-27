@@ -5,4 +5,5 @@ from . import views
 
 urlpatterns = [
     path('', views.reservation, name='reservations-index'),
+    path('create/', views.SitinRequestCreateView.as_view(), name='reservations-create'),
 ]

@@ -10,7 +10,7 @@ from .models import Sitin
 from django.db.models import Q
         
 class BaseSitinAdmin(admin.ModelAdmin):
-    list_display = ("get_user_idno", "get_fullname", "purpose", "lab_room", "status", "get_user_points", "get_user_sessions", "get_formatted_login_date", "get_formatted_logout_date")
+    list_display = ("get_user_idno", "get_fullname", "purpose", "lab_room", "status", "get_user_points", "get_user_sessions", "request_date", "get_formatted_login_date", "get_formatted_logout_date")
     search_fields = ("user__registration__idno", "user__username", "user__registration__firstname", 
                      "user__registration__middlename", "user__registration__lastname")
     list_filter = ("sitin_date",'logout_date')
@@ -65,12 +65,6 @@ class SearchSitinsInline(admin.StackedInline):
         self.model._meta.verbose_name_plural = "Add Sitins"
         return qs
     
-    def get_readonly_fields(self, request, obj=None):
-        # Make all fields in the change form read-only
-        if obj:  # obj is not None, so we're editing an existing object
-            return ['sitin_date', 'logout_date', 'feedback',]
-        return self.readonly_fields
-    
     def formfield_for_choice_field(self, db_field, request, **kwargs):
         # Customize the choices for the 'status' field
         if db_field.name == 'status':
@@ -100,6 +94,12 @@ class SearchSitinsAdmin(admin.ModelAdmin):
         return super().get_queryset(request).prefetch_related(
             'registration',
         )
+    
+    # Override default saving behavior on change_form
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+        # Set sitin_date on sitin inline to now
+        obj.sitin_set.all().update(sitin_date=timezone.now())
 
     def get_idno(self, obj):
         return obj.registration.idno

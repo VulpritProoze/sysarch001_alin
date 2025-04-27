@@ -1,5 +1,7 @@
 from django.contrib import admin
 from backend.admin import admin_site
+from sitins.admin import BaseSitinAdmin
+from sitins.models import Sitin
 from .models import LabRoom, Computer
 
 class ComputersAdmin(admin.ModelAdmin):
@@ -17,7 +19,6 @@ class ComputersAdmin(admin.ModelAdmin):
 
 admin_site.register(Computer, ComputersAdmin)
 
-
 class InlineComputersAdmin(admin.StackedInline):
     model = Computer
     fields = ('pc_number', 'operating_system', 'processor', 'ram_amount_in_mb', 'is_available', 'lab_room')
@@ -32,3 +33,15 @@ class LabRoomsAdmin(admin.ModelAdmin):
         return False
 
 admin_site.register(LabRoom, LabRoomsAdmin)
+
+class SitinRequestsAdmin(BaseSitinAdmin):
+    def get_queryset(self, request):
+        return super().get_queryset(request).filter(request_date__isnull=False)
+    
+class SitinRequestsProxy(Sitin):
+    class Meta:
+        proxy = True
+        verbose_name = "Sit-in Request"
+        verbose_name_plural = "Sit-in Requests"
+        
+admin_site.register(SitinRequestsProxy, SitinRequestsAdmin)

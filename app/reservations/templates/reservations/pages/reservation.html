@@ -14,10 +14,27 @@
         width: 20px;
         margin-right: 5px;
     }
+    .cant-btn:hover {
+        transition: all 0.3s ease;
+        background-color: white !important;
+        color: red !important;
+        box-shadow: inset 0 0 0 2px red;
+    }
+    .logout-btn {
+        padding: 3px 8px;
+    }
 </style>
 
-<div class="container mt-5">
-    <h4 class="mb-4">Computer Reservation</h4>
+<div class="container mt-5" id="reservation-container">
+    <pre>problems:
+        -computer must become Unavailable if somebody is usiing it
+        -user cannot reserve if they still have a pending reservation 
+        -notify user minutes ahead of their reservation 
+        -notify user if admin has approved their reservation
+        -allow user to logout in reservation module? wala mn ingon sir!
+        (still tho, wata kibaw unsaon paglog out sa user)
+    </pre>
+    <h4 class="mb-4">Sitin Reservation</h4>
     
     <!-- Lab Room Navigation Tabs -->
     <ul class="nav nav-tabs" id="labTabs" role="tablist">
@@ -71,16 +88,19 @@
                             </td>
                             <td>
                                 {% if computer.is_available %}
-                                <button class="btn btn-primary rounded-circle feedback-btn" 
+                                <button class="btn btn-primary rounded-circle feedback-btn reserve-btn" 
+                                        id="reserve-btn-{{ lab.id }}-{{ computer.id }}"
                                         data-toggle="modal" 
                                         data-target="#reserveModal" 
                                         data-computer="PC-{{ computer.pc_number }}"
                                         data-computer-id="{{ computer.id }}"
+                                        data-room-number="{{ lab.room_number }}"
+                                        data-room-id="{{ lab.id }}"
                                         title="Reserve this computer">
                                     <i class="fas fa-bookmark"></i>
                                 </button>
                                 {% else %}
-                                <button class="btn rounded-circle " 
+                                <button class="btn rounded-circle cant-btn" 
                                         disabled
                                         title="Computer in use"
                                         style="cursor: not-allowed; background-color: red; color: white;">
@@ -100,15 +120,97 @@
         </div>
         {% endfor %}
     </div>
+
+    <!-- Sitin requests and history -->
+    <div class="card mt-5">
+        <div class="card-header p-4">
+            <h5>Sitin Requests and History</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="bg-primary text-light">
+                        <tr>
+                            <th>PC Number</th>
+                            <th>Lab Number</th>
+                            <th>Status</th>
+                            <th>Request Date</th>
+                            <th>Time in</th>
+                            <th>Time out</th>
+                            <!-- <th>Actions</th> -->
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for sr in sitinrequests %}
+                        <tr>
+                            <td>PC-{{ sr.pc.pc_number }}</td>
+                            <td>Lab-{{ sr.lab_room.room_number }}</td>
+                            <td>
+                                <span class="badge text-light
+                                    {% if sr.sitin.status == 'approved' %}bg-success
+                                    {% elif sr.sitin.status == 'rejected' %}bg-danger
+                                    {% elif sr.sitin.status == 'finished' %}bg-info
+                                    {% else %}bg-secondary{% endif %}">
+                                    {{ sr.sitin.get_status_display }}
+                                </span>
+                            </td>
+                            <td>{{ sr.request_date|date:"M d, Y H:i" }}</td>
+                            <td>
+                                {% if sr.sitin.sitin_date %}
+                                    {{ sr.sitin.sitin_date|date:"M d, Y H:i" }}
+                                {% else %}
+                                    <span class="text-muted">Not started</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if sr.sitin.logout_date %}
+                                    {{ sr.sitin.logout_date|date:"M d, Y H:i" }}
+                                {% else %}
+                                    <span class="text-muted">Not logged out</span>
+                                {% endif %}
+                            </td>
+                            <!-- <td>
+                                {% if request.sitin.status == 'approved' and not request.sitin.logout_date %}
+                                <button class="btn btn-sm btn-warning logout-btn" 
+                                        data-request-id="{{ request.id }}"
+                                        title="Logout from this computer">
+                                    <i class="fas fa-sign-out-alt"></i> Logout
+                                </button>
+                                {% endif %}
+                            </td> -->
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center text-muted">No sit-in requests found</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
 </div>
 
 <!-- Reservation Confirmation Modal -->
 <div class="modal fade" id="reserveModal" tabindex="-1" role="dialog" aria-labelledby="reserveModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
-            <form method="post" action="#">
+            <form method="post" action="{% url 'reservations-create' %}">
+                <!-- 
+                Values:
+                    pc
+                    room
+                    sitin_date
+                    purpose
+                    lab_room (number)
+                    sitin_details
+                -->
                 {% csrf_token %}
-                <input type="hidden" name="computer_id" id="computerIdInput">
+                <input type="hidden" name="pc" id="computerIdInput">
+                <input type="hidden" name="room" id="roomIdInput">   <!-- lab.id-->
+                <input type="hidden" name="lab-room" id="roomNumberInput">  <!-- lab.room_number -->
+                <input type="hidden" name="user" value="{{ request.user.id }}">
                 
                 <div class="modal-header">
                     <h5 class="modal-title" id="reserveModalLabel">Confirm Reservation</h5>
@@ -117,24 +219,34 @@
                     </button>
                 </div>
                 <div class="modal-body">
+                    <h6>Lab <span id="roomNumber"></span></h6>
                     <p>You are about to reserve <strong><span id="computerName"></span></strong>.</p>
                     <p>Please confirm your reservation details:</p>
                     <div class="form-group">
-                        <label for="reservationDate">Date:</label>
-                        <input type="date" class="form-control" id="reservationDate" name="reservation_date" required>
+                        <label for="reservationDate">Date/Time:</label>
+                        <input type="datetime-local" class="form-control" id="reservationDate" name="sitin_date" required>
                     </div>
                     <div class="form-group">
-                        <label for="reservationTime">Time Slot:</label>
-                        <select class="form-control" id="reservationTime" name="time_slot" required>
-                            <option value="8:00 AM - 10:00 AM">8:00 AM - 10:00 AM</option>
-                            <option value="10:00 AM - 12:00 PM">10:00 AM - 12:00 PM</option>
-                            <option value="1:00 PM - 3:00 PM">1:00 PM - 3:00 PM</option>
-                            <option value="3:00 PM - 5:00 PM">3:00 PM - 5:00 PM</option>
+                        <label for="language">Language:</label>
+                        <select class="form-control" id="language" name="programming_language" required>
+                            <option value="" disabled selected>Select a language...</option>
+                            {% for value, label in PROGRAMMING_LANGUAGE_CHOICES %}
+                            <option value="{{ value }}">{{ label }}</option>
+                            {% endfor %}
                         </select>
                     </div>
                     <div class="form-group">
                         <label for="purpose">Purpose:</label>
-                        <textarea class="form-control" id="purpose" name="purpose" rows="2" required></textarea>
+                        <select class="form-control" id="purpose" name="purpose" required>
+                            <option value="" disabled selected>Select a purpose...</option>
+                            {% for value, label in SITIN_PURPOSE_CHOICES %}
+                            <option value="{{ value }}">{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="details">Details:</label>
+                        <textarea class="form-control" id="details" name="sitin_details" rows="2" required></textarea>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -148,24 +260,50 @@
     </div>
 </div>
 
-{% endblock %}
-
-{% block scripts %}
 <script>
-    $(document).ready(function() {
-        // Set computer details in modal when reserve button is clicked
-        $('#reserveModal').on('show.bs.modal', function (event) {
-            var button = $(event.relatedTarget);
-            var computerName = button.data('computer');
-            var computerId = button.data('computer-id');
-            
-            var modal = $(this);
-            modal.find('#computerName').text(computerName);
-            modal.find('#computerIdInput').val(computerId);
-            
-            // Set default date to today
-            var today = new Date().toISOString().split('T')[0];
-            modal.find('#reservationDate').val(today);
+    document.addEventListener('DOMContentLoaded', function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const parent = document.querySelector('#reservation-container');  // to render success div
+        if(urlParams.get('success') === 'true') {
+            RenderSuccessDiv(parent, {'Sitin Reservation': 'Successfully submitted! Please wait for the admin to approve your request.'});
+            // Clean url
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+        console.log("Document ready - Enhanced version");
+    
+        // Get all reserve buttons by class instead of ID
+        const reserveButtons = document.querySelectorAll('.reserve-btn');
+        const reserveModal = document.getElementById('reserveModal');
+    
+        // Add click handler to each button
+        reserveButtons.forEach(button => {
+            button.addEventListener('click', function(event) {
+                console.log("Reserve button clicked:", this.id);
+                
+                // Get data attributes from the clicked button
+                const computerName = this.getAttribute('data-computer');
+                const computerId = this.getAttribute('data-computer-id');
+                const roomNumber = this.getAttribute('data-room-number');
+                const roomId = this.getAttribute('data-room-id');
+                
+                console.log("Computer:", computerName, "ID:", computerId);
+                console.log("Room:", roomNumber, "ID:", roomId);
+                
+                // Update modal content
+                if (reserveModal) {
+                    reserveModal.querySelector('#computerName').textContent = computerName;
+                    reserveModal.querySelector('#computerIdInput').value = computerId;
+                    reserveModal.querySelector('#roomNumber').textContent = roomNumber;
+                    reserveModal.querySelector('#roomIdInput').value = roomId;
+                    reserveModal.querySelector('#roomNumberInput').value = roomNumber;
+                    
+                    // Set default datetime (now + 30 minutes)
+                    const now = new Date();
+                    now.setMinutes(now.getMinutes() + 30);
+                    const datetimeString = now.toISOString().slice(0, 16);
+                    reserveModal.querySelector('#reservationDate').value = datetimeString;
+                }
+            });
         });
     });
 </script>
