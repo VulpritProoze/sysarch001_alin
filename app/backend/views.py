@@ -32,7 +32,8 @@ class CustomLoginView(LoginView):
             if registration.sessions > 0:
                 return redirect('user-home')
             else:
-                pass # Logic handle for when user session runs out
+                messages.error('You have ran out of sessions. Please contact the lab admin for more details.')
+                return redirect('login')
         return super().dispatch(request, *args, **kwargs)
 
 class CustomLogoutView(LogoutView):

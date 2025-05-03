@@ -15,8 +15,21 @@ from .serializers import SitinRequestSerializer, SitinSerializer
 def reservation(request):
     if request.user.is_authenticated:
         labrooms = LabRoom.objects.prefetch_related('computer_set').all()
-        sitinrequests = SitinRequest.objects.all().filter(sitin__user=request.user)
-        return render(request, 'reservations/pages/reservation.html', context={ 'labrooms': labrooms, 'sitinrequests': sitinrequests, 'SITIN_PURPOSE_CHOICES': SITIN_PURPOSE_CHOICES, 'PROGRAMMING_LANGUAGE_CHOICES': PROGRAMMING_LANGUAGE_CHOICES })
+        sitinrequests = SitinRequest.objects.select_related(
+            'sitin',
+            'pc',
+            'lab_room'
+        ).filter(sitin__user=request.user)
+        user_has_approved_sitin = request.user.sitin_set.filter(status='approved').exists()
+        return render(
+            request, 
+            'reservations/pages/reservation.html', 
+            context={ 
+                'labrooms': labrooms, 
+                'sitinrequests': sitinrequests, 
+                'user_has_approved_sitin': user_has_approved_sitin,
+                'SITIN_PURPOSE_CHOICES': SITIN_PURPOSE_CHOICES, 
+                'PROGRAMMING_LANGUAGE_CHOICES': PROGRAMMING_LANGUAGE_CHOICES })
     return redirect('/')
 
 class SitinRequestCreateView(generics.CreateAPIView):

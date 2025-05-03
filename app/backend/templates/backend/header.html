@@ -67,6 +67,11 @@
                         </a>
                     </li>
                     <li class="nav-item">
+                        <a href="{% url 'reservations-index' %}" class="nav-link active">
+                            <i class="fas fa-calendar-check"></i> Reservation
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a href="{% url 'sitins-sitin_history' %}" class="nav-link active">
                             <i class="fas fa-history"></i> Sit-in History
                         </a>
@@ -74,11 +79,6 @@
                     <li class="nav-item">
                         <a href="{% url 'user-resources' %}" class="nav-link active">
                             <i class="fas fa-book"></i> Resources
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="{% url 'reservations-index' %}" class="nav-link active">
-                            <i class="fas fa-calendar-check"></i> Reservation
                         </a>
                     </li>
                     <li class="nav-item">
@@ -133,7 +133,7 @@
         cursor: pointer;
     }
     .dropdown-menu {
-        min-width: 300px;
+        width: 300px;
         max-height: 400px;
         overflow-y: auto;
     }
@@ -143,6 +143,49 @@
     /* Remove dropdown toggle arrow */
     .dropdown-toggle::after {
         display: none !important;
+    }
+    .notif-badge:has(.announcement-icon-child) {
+        background-color: #4e73df;
+        color: whitesmoke;
+    }
+    .notif-badge:has(.sitin-icon-child) {
+        background-color: #1cc88a;
+        color: whitesmoke;
+    }
+    .notif-badge:has(.schedule-icon-child) {
+        background-color: #f6c23e;
+    }
+
+    .new-notif-badge {
+        height: 15px;
+        display: inline-block;
+        padding: .25em .4em;
+        font-size: 75%;
+        font-weight: 700;
+        line-height: 1;
+        text-align: center;
+        white-space: nowrap;
+        vertical-align: baseline;
+        border-radius: .25rem;
+    }
+
+    .message-text {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 100%; /* Adjust based on your dropdown width */
+    }
+
+    .notif-badge {
+        display: inline-block;
+        padding: .25em .4em;
+        font-size: 75%;
+        font-weight: 700;
+        line-height: 1;
+        text-align: center;
+        white-space: nowrap;
+        vertical-align: baseline;
+        border-radius: .25rem;
     }
 </style>
 
@@ -169,11 +212,12 @@
 <script>
     // WebSocket connection for real-time notifications
     let notificationSocket;
+    let count = 0;
     const notificationBadge = document.createElement('span'); // For unread count badge
 
     document.addEventListener('DOMContentLoaded', function() {
         connectNotificationSocket();
-        notificationBadge.className = ' notification-badge';
+        notificationBadge.className = 'notification-badge';
         document.querySelector('#notificationDropdown').appendChild(notificationBadge);
         notificationBadge.style.display = 'none';
     });
@@ -189,11 +233,12 @@
 
         notificationSocket.onmessage = function(e) {
             const data = JSON.parse(e.data);
-
+            console.log('notification_type: ', data.notification_type);
             // Add new notification to notifications dropwdown list
             if (data.notification_type == 'notification') {
-                addNotificationToDropdown(data);
-                updateUnreadBadge();
+                addNotificationToDropdown(data, prepend=true);
+                count += 1;
+                updateUnreadBadge(count);
                 
                 // desktop notif
                 if (Notification.permission === 'granted') {
@@ -203,6 +248,7 @@
                 }
             } else if (data.notification_type === 'initial_data') { // initially load notifs
                 renderNotifications(data.notifications);
+                count = data.unread_count;
                 updateUnreadBadge(data.unread_count);
             }
         };
@@ -237,22 +283,50 @@
         }
         
         notifications.forEach(notification => {
-            addNotificationToDropdown(notification);
+            addNotificationToDropdown(notification, prepend=false);
         });
     }
 
-    function addNotificationToDropdown(notification) {
+    function addNotificationToDropdown(notification, prepend=false) {
         const dropdownMenu = document.querySelector('.dropdown-menu');
         const divider = dropdownMenu.querySelector('.dropdown-divider');
+        const header = dropdownMenu.querySelector('.dropdown-header');
 
         const notificationItem = document.createElement('a');
         notificationItem.className = 'dropdown-item notification-item';
         notificationItem.href = notification.url || '#';
+        
+        // Get appropriate icon for each type
+        let icon;
+        switch(notification.badge_type) {
+            case 'announcement':
+                icon = '<i class="announcement-icon-child fas fa-bullhorn mr-2"></i>Announcement';
+                break;
+            case 'sitin':
+                icon = '<i class="sitin-icon-child fas fa-desktop mr-2"></i>Sitin';
+                break;
+            case 'schedule':
+                icon = '<i class="schedule-icon-child fas fa-calendar-alt mr-2"></i>Schedule';
+                break;
+            default:
+                icon = '';
+        }
+
+        // Truncate message if needed
+        const maxLength = 50; // Adjust this value as needed
+        const displayMessage = notification.message.length > maxLength 
+            ? notification.message.substring(0, maxLength) + '...'
+            : notification.message;
 
         notificationItem.innerHTML = `
-            <small class="text-muted">${new Date(notification.timestamp).toLocaleString()}</small><br>
-            ${notification.message}
-            ${notification.is_read ? '' : '<span class="new-notif-badge badge badge-primary float-right">New</span>'}
+            <div class="d-flex justify-content-between">
+                <div>
+                    <span class="notif-badge">${icon}</span>
+                    <small class="text-muted">${timeAgo(notification.timestamp)}</small>
+                </div>
+                ${notification.is_read ? '' : '<span class="new-notif-badge badge-primary float-right">New</span>'}
+            </div>
+            <div class="mt-1 message-text" title="${notification.message}">${displayMessage}</div>
         `;
 
         // Mark as read when clicked
@@ -264,7 +338,11 @@
             }
         });
 
-        dropdownMenu.insertBefore(notificationItem, divider);
+        if (prepend) {
+            header.insertAdjacentElement('afterend', notificationItem);
+        } else {
+            dropdownMenu.insertBefore(notificationItem, divider);
+        }
     }
 
     function markNotificationAsRead(notificationId) {

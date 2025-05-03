@@ -12,6 +12,7 @@ class Sitin(models.Model):
     sitin_date = models.DateTimeField(null=True, blank=True)
     logout_date = models.DateTimeField(null=True, blank=True)
     feedback = models.TextField(blank=True, null=True)
+    is_rewarded = models.BooleanField(blank=True, null=True, default=False)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     
     def __str__(self):

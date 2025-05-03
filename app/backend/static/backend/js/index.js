@@ -165,3 +165,34 @@ async function DeleteComment(announcement_id, comment_id, csrf_token) {
         window.location.href = "#";
     }
 }
+
+function timeAgo(isoDateTime) {
+    if (!isoDateTime) return "";
+    
+    const now = new Date();
+    const date = new Date(isoDateTime);
+    const diff = now - date; // difference in milliseconds
+    
+    const seconds = Math.floor(diff / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+    
+    if (seconds < 60) {
+        return `${seconds} second${seconds !== 1 ? 's' : ''} ago`;
+    } else if (minutes < 60) {
+        return `${minutes} minute${minutes !== 1 ? 's' : ''} ago`;
+    } else if (hours < 24) {
+        return `${hours} hour${hours !== 1 ? 's' : ''} ago`;
+    } else {
+        // Format as "Month Day, Year, Time" for dates older than 1 day
+        return date.toLocaleString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true
+        });
+    }
+}

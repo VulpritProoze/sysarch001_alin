@@ -9,6 +9,7 @@ urlpatterns = [
     path('', include('backend.urls')),
     path('sitins/', include('sitins.urls')),
     path('reservations/', include('reservations.urls')),
+    path('notifications/', include('notifications.urls')),
 ]
 
 handler404 = 'backend.views.error_404_view'

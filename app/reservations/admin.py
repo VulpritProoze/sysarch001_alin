@@ -2,7 +2,12 @@ from django.contrib import admin
 from backend.admin import admin_site
 from sitins.admin import BaseSitinAdmin
 from sitins.models import Sitin
+from notifications.notifications import send_notification
 from .models import LabRoom, Computer
+from django.utils import timezone
+from django.contrib import messages
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync 
 
 class ComputersAdmin(admin.ModelAdmin):
     list_display = ('pc_number', 'operating_system', 'processor', 'ram_amount_in_mb', 'is_available', 'lab_room')
@@ -34,14 +39,76 @@ class LabRoomsAdmin(admin.ModelAdmin):
 
 admin_site.register(LabRoom, LabRoomsAdmin)
 
-class SitinRequestsAdmin(BaseSitinAdmin):
-    def get_queryset(self, request):
-        return super().get_queryset(request).filter(request_date__isnull=False)
+class ReservationRequestsAdmin(BaseSitinAdmin):
+    change_list_template = 'admin/reservations/reservationrequest_changelist.html'
+    actions = ['approve_request', 'reject_request',]
     
-class SitinRequestsProxy(Sitin):
+    def get_queryset(self, request):
+        return super().get_queryset(request).filter(request_date__isnull=False, status='none')
+    
+    def approve_request(self, request, queryset):
+        queryset = queryset.select_related(
+            'user'
+        ).prefetch_related(
+            'sitinrequest_set',
+            'sitinrequest_set__pc',
+            'sitinrequest_set__lab_room'
+        )
+        
+        for sitin in queryset:
+            sitin.sitin_date = timezone.now()
+            sitin.status = 'approved'
+            sitin.save()
+            self.message_user(request, f"{sitin.user.username}'s sitin request has been successfully approved.")
+
+            # Send notification to user that his/her request has been approved
+            user = sitin.user
+            sitinrequest = sitin.sitinrequest_set.first()
+            message = f'Your reservation request (ID/{sitinrequest.id}) for LAB/{sitinrequest.lab_room.room_number}, PC/{sitinrequest.pc.pc_number} has been approved.'
+            url = '/notifications/'
+            send_notification(user, message, url, 'sitin')
+            
+            sitinrequest.pc.is_available = not sitinrequest.pc.is_available
+            sitinrequest.pc.save()
+            
+    def reject_request(self, request, queryset):
+        for sitin in queryset:
+            sitin.status = 'rejected'
+            sitin.save()
+            self.message_user(request, f"{sitin.user.username}'s sitin request has been successfully rejected.", messages.WARNING)
+            
+    def has_add_permission(self, request, obj=None):
+        return False
+    
+    def has_change_permission(self, request, obj=None):
+        return False
+    
+    def has_delete_permission(self, request, obj=None):
+        return False
+    
+class ReservationLogsAdmin(BaseSitinAdmin):
+    def get_queryset(self, request):
+        return super().get_queryset(request).filter(request_date__isnull=False, status='finished')
+    
+    def has_add_permission(self, request, obj=None):
+        return False
+    
+    def has_change_permission(self, request, obj=None):
+        return False
+    
+    def has_delete_permission(self, request, obj=None):
+        return False
+class ReservationRequestProxy(Sitin):
     class Meta:
         proxy = True
-        verbose_name = "Sit-in Request"
-        verbose_name_plural = "Sit-in Requests"
+        verbose_name = "Reservation request"
+        verbose_name_plural = "Reservation requests"
         
-admin_site.register(SitinRequestsProxy, SitinRequestsAdmin)
+class ReservationLogProxy(Sitin):
+    class Meta:
+        proxy = True 
+        verbose_name = "Reservation log"
+        verbose_name_plural = "Reservation logs"
+        
+admin_site.register(ReservationRequestProxy, ReservationRequestsAdmin)
+admin_site.register(ReservationLogProxy, ReservationLogsAdmin)

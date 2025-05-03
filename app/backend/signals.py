@@ -3,9 +3,7 @@ from django.contrib.auth.models import User
 from django.dispatch import receiver
 from django.utils import timezone
 from .models import Registration, SitinSurvey, SurveyResponse, Announcement
-from notifications.models import Notification
-from channels.layers import get_channel_layer
-from asgiref.sync import async_to_sync
+from notifications.notifications import send_notification
 
 @receiver(post_save, sender=User)
 def create_superuser_registration(sender, instance, created, **kwargs):
@@ -15,28 +13,31 @@ def create_superuser_registration(sender, instance, created, **kwargs):
 @receiver(post_save, sender=Announcement)
 def notif_on_announcement_create(sender, instance, created, **kwargs):
     if created:
-        channel_layer = get_channel_layer()
-        
-        # Create notif for all active users
         for user in User.objects.filter(is_active=True):
-            notification = Notification.objects.create(
-                user=user,
-                message = f"Announcement: {instance.title}",
-                url = f"/announcements/{instance.id}/"
-            )
+            send_notification(user, instance.title, f"/announcements/{instance.id}/", 'announcement')
+        
+        # channel_layer = get_channel_layer()
+        
+        # # Create notif for all active users
+        # for user in User.objects.filter(is_active=True):
+        #     notification = Notification.objects.create(
+        #         user=user,
+        #         message = f"Announcement: {instance.title}",
+        #         url = f"/announcements/{instance.id}/"
+        #     )
             
-            async_to_sync(channel_layer.group_send)(
-                f'user_{user.id}',
-                {
-                    'type': 'notification.message',
-                    'notification_type': 'notification',
-                    'id': notification.id,
-                    'message': notification.message,
-                    'url': notification.url,
-                    'timestamp': timezone.now(),
-                    'is_read': False
-                }
-            )
+        #     async_to_sync(channel_layer.group_send)(
+        #         f'user_{user.id}',
+        #         {
+        #             'type': 'notification.message',
+        #             'notification_type': 'notification',
+        #             'id': notification.id,
+        #             'message': notification.message,
+        #             'url': notification.url,
+        #             'timestamp': timezone.now(),
+        #             'is_read': False
+        #         }
+        #     )
 
 # I have a feeling this slows down program really bad
 # Ideal: since survey creation is only called few times. set-up the this change on those endpoints instead of signals

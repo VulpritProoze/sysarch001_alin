@@ -2,14 +2,7 @@
 {% extends "admin/custom_change_list.html" %}
 {% load i18n admin_urls static admin_list %}
 
-{% block breadcrumbs %}
-<div class="breadcrumbs">
-<a href="{% url 'admin:index' %}">{% translate 'Home' %}</a>
-&rsaquo; <a href="{% url 'admin:admin-sitin_index' %}">Sitins</a>
-&rsaquo; {{ cl.opts.verbose_name_plural|capfirst }}
-</div>
-{% endblock %}
 
 {% block content_title %}
-<h1>Add Sit-in for Selected Student</h1>
+<h1>Search student to manually sit-in</h1>
 {% endblock %}

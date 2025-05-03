@@ -55,8 +55,8 @@ INSTALLED_APPS = [
     'debug_toolbar',
     'rest_framework',
     # 'nested_admin',
-    'notifications.apps.NotificationsConfig',
     'backend.apps.BackendConfig',
+    'notifications.apps.NotificationsConfig',
     'sitins.apps.SitinsConfig',
     'reservations.apps.ReservationsConfig',
     'crispy_forms',
@@ -174,6 +174,8 @@ CRISPY_ALLOWED_TEMPLATE_PACKS = 'bootstrap4'
 
 # Authentication and Redirect URLs
 LOGIN_REDIRECT_URL = 'user-home'
+
+LOGIN_URL = '/'
 
 INTERNAL_IPS = [
     '127.0.0.1',

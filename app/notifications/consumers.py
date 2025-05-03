@@ -1,8 +1,15 @@
 import json
+from datetime import datetime
 from asgiref.sync import sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 from .models import Notification
 
+class DateTimeEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, datetime):
+            return obj.isoformat()
+        return super().default(obj)
+    
 class NotificationConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         if not self.scope['user'].is_authenticated:
@@ -22,11 +29,13 @@ class NotificationConsumer(AsyncWebsocketConsumer):
         # Send initial notifications and unread count
         await self.send_initial_data()
         
+    # load initial_data. Client will filter if notification_type = 'initial_data', then it
+    # have a different behavior of displaying the notifications
     async def send_initial_data(self):
         notifications = await sync_to_async(list)(
             Notification.objects.filter(user=self.user)
                 .order_by('-timestamp')[:10]
-                .values('id', 'message', 'url', 'timestamp', 'is_read')
+                .values('id', 'badge_type', 'message', 'url', 'timestamp', 'is_read')
         )
         
         # Convert datetime objects to ISO format strings
@@ -46,10 +55,16 @@ class NotificationConsumer(AsyncWebsocketConsumer):
             'notifications': serialized_notifications,
             'unread_count': unread_count
         }))
-        
+    
+    # Logic that handles sneding notification to client in json format
     async def notification_message(self, event):
-        await self.send(text_data=json.dumps(event))
-        
+        try:
+            await self.send(text_data=json.dumps(event, cls=DateTimeEncoder))
+        except Exception as e:
+            print(f"Error sending notification: {e}")
+    
+    # Logic that handles incoming websocket messages. If type is 'mark_read' then the notification
+    # will be marked as read in database
     async def receive(self, text_data):
         data = json.loads(text_data)
         if data.get('type') == 'mark_read':
