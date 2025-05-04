@@ -215,8 +215,8 @@ class CurrentSitinsAdmin(BaseSitinAdmin):
                 registration.sessions -= 1   # Reduce user session by 1 everytime they're logged out
                 registration.sitins_count += 1 # Increment sitins_count by 1 everytime they're logged out
 
-                if registration.points % 3 == 0: # Every 3 points is converted to 1 session right away
-                    registration.sessions += registration.points / 3
+                if registration.points % 3 == 0: # Only award one point each time
+                    registration.sessions += 1
                 
                 registration.save()
 
