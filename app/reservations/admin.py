@@ -65,7 +65,7 @@ class ReservationRequestsAdmin(BaseSitinAdmin):
             user = sitin.user
             sitinrequest = sitin.sitinrequest_set.first()
             message = f'Your reservation request (ID/{sitinrequest.id}) for LAB/{sitinrequest.lab_room.room_number}, PC/{sitinrequest.pc.pc_number} has been approved.'
-            url = '/notifications/'
+            url = f'/reservations/#sitinrequest-id-{sitinrequest.id}'
             send_notification(user, message, url, 'sitin')
             
             sitinrequest.pc.is_available = not sitinrequest.pc.is_available

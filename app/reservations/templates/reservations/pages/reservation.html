@@ -55,17 +55,35 @@
         height: 150px;
         vertical-align: middle;
     }
+
+    /* Styles that trigger when reservation requests history tr is navigated to */
+    .sitinrequests-table-row {
+        transition: background-color 0.4s ease, box-shadow 0.4s ease, transform 0.3s ease;
+    }
+    
+    @keyframes popHighlight {
+        0% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.03);
+        }
+        100% {
+          transform: scale(1);
+        }
+    }
+      
+    .sitinrequests-table-row:target {
+        background-color: #e8f0fe;
+        box-shadow: 0 4px 12px rgba(0, 123, 255, 0.15);
+        animation: popHighlight 3s ease-out;
+        transform: translateZ(0); 
+    }
+      
+    
 </style>
 
 <div class="container mt-5" id="reservation-container">
-    <pre>problems:
-        -computer must become Unavailable if somebody is usiing it
-        -user cannot reserve if they still have a pending reservation 
-        -notify user minutes ahead of their reservation 
-        -notify user if admin has approved their reservation
-        -allow user to logout in reservation module? wala mn ingon sir!
-        (still tho, wata kibaw unsaon paglog out sa user)
-    </pre>
     <h4 class="mb-4">Sitin Reservation</h4>
     
     <!-- Lab Room Navigation Tabs -->
@@ -185,7 +203,7 @@
                     </thead>
                     <tbody>
                         {% for sr in sitinrequests %}
-                        <tr>
+                        <tr class="sitinrequests-table-row" id="sitinrequest-id-{{ sr.id }}">
                             <td>PC-{{ sr.pc.pc_number }}</td>
                             <td>Lab-{{ sr.lab_room.room_number }}</td>
                             <td>

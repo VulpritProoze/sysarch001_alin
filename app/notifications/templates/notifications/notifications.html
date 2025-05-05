@@ -60,7 +60,7 @@ Notifications | CCS Sitin Monitoring System
                                         {% else %}badge-secondary{% endif %} mr-2">
                                         <i class="fas 
                                             {% if notification.badge_type == 'announcement' %}fa-bullhorn
-                                            {% elif notification.badge_type == 'sitin' %}fa-chair
+                                            {% elif notification.badge_type == 'sitin' %}fa-desktop
                                             {% elif notification.badge_type == 'schedule' %}fa-calendar-alt
                                             {% else %}fa-bell{% endif %} mr-1"></i> 
                                         {{ notification.badge_type|title }}
@@ -165,7 +165,7 @@ Notifications | CCS Sitin Monitoring System
     
     /* Unread indicators */
     .unread-notification {
-        background-color: rgba(78, 115, 223, 0.05);
+        background-color: rgba(28, 45, 94, 0.1);
     }
     .unread-indicator {
         width: 8px;
