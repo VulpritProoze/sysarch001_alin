@@ -5,7 +5,6 @@ autobahn==24.4.2
 Automat==25.4.16
 better-profanity==0.7.0
 billiard==4.2.1
-celery==5.5.2
 certifi==2025.1.31
 cffi==1.17.1
 channels==4.2.2
@@ -22,20 +21,17 @@ cron-descriptor==1.4.5
 cryptography==44.0.2
 daphne==4.1.2
 Django==5.1.6
-django-celery-beat==2.8.0
 django-crispy-forms==2.3
 django-debug-toolbar==5.0.1
 django-extensions==3.2.3
 django-nested-admin==4.1.1
 django-timezone-field==7.1
-django_celery_results==2.6.0
 djangorestframework==3.15.2
 et_xmlfile==2.0.0
 greenlet==3.2.1
 hyperlink==21.0.0
 idna==3.10
 incremental==24.7.2
-kombu==5.5.3
 openpyxl==3.1.5
 pillow==11.1.0
 prompt_toolkit==3.0.51
@@ -51,7 +47,6 @@ requests==2.32.3
 service-identity==24.2.0
 setuptools==79.0.0
 six==1.17.0
-SQLAlchemy==2.0.40
 sqlparse==0.5.3
 Twisted==24.11.0
 txaio==23.1.1
