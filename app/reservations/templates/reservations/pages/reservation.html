@@ -32,7 +32,7 @@
         width: 100%;
         height: 100%;
         background-color: rgba(0, 0, 0, 0.7);
-        z-index: 1000;
+        z-index: 5;
         display: flex;
         justify-content: center;
         align-items: center;
@@ -127,7 +127,7 @@
                         <tr>
                             <th>Computer #</th>
                             <th>Status</th>
-                            <th>Specifications</th>
+                            <th>Specifications (OS, Processor, RAM)</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -143,9 +143,9 @@
                                 </span>
                             </td>
                             <td>
-                                <span class="badge bg-info text-light">{{ computer.operating_system }}</span>
-                                <span class="badge bg-danger text-light">{{ computer.processor }}</span> 
-                                <span class="badge bg-dark text-light">{{ computer.ram_amount_in_mb|intcomma }} MB RAM</span>
+                                <span class="badge bg-info text-light">{% if computer.operating_system %}{{ computer.operating_system }}{% else %}N/A{% endif %}</span>
+                                <span class="badge bg-danger text-light">{% if computer.processor %}{{ computer.processor }}{% else %}N/A{% endif %}</span> 
+                                <span class="badge bg-dark text-light">{%  if computer.ram_amount_in_mb %}{{ computer.ram_amount_in_mb|intcomma }} MB RAM{% else %}N/A{% endif %}</span>
                             </td>
                             <td>
                                 {% if computer.is_available %}
@@ -212,7 +212,10 @@
                                     {% elif sr.sitin.status == 'rejected' %}bg-danger
                                     {% elif sr.sitin.status == 'finished' %}bg-info
                                     {% else %}bg-secondary{% endif %}">
+                                    {% if sr.sitin.status == 'none' %}Pending
+                                    {% else %}
                                     {{ sr.sitin.get_status_display }}
+                                    {% endif %}
                                 </span>
                             </td>
                             <td>{{ sr.request_date|time_ago }}</td>

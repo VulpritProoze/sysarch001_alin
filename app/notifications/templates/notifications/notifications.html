@@ -208,10 +208,11 @@ Notifications | CCS Sitin Monitoring System
         content: "";
     }
 </style>
-{% comment %} 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Filter notifications
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        
+        // 1. Filter notifications
         document.querySelectorAll('[data-filter]').forEach(btn => {
             btn.addEventListener('click', function() {
                 const filter = this.getAttribute('data-filter');
@@ -222,82 +223,148 @@ Notifications | CCS Sitin Monitoring System
                 
                 // Filter cards
                 document.querySelectorAll('.notification-card').forEach(card => {
+                    const cardType = card.getAttribute('data-type');
+                    const isRead = card.getAttribute('data-read') === 'true';
+                    
                     if (filter === 'all') {
                         card.style.display = '';
                     } 
                     else if (filter === 'unread') {
-                        card.style.display = card.getAttribute('data-read') === 'false' ? '' : 'none';
+                        card.style.display = !isRead ? '' : 'none';
                     }
                     else {
-                        card.style.display = card.getAttribute('data-type') === filter ? '' : 'none';
+                        card.style.display = cardType === filter ? '' : 'none';
                     }
                 });
             });
         });
         
-        // Mark as read/unread
+        // 2. Mark single notification as read/unread
         document.querySelectorAll('.mark-read-btn').forEach(btn => {
-            btn.addEventListener('click', function(e) {
+            btn.addEventListener('click', async function(e) {
                 e.preventDefault();
                 e.stopPropagation();
                 const card = this.closest('.notification-card');
                 const isRead = card.getAttribute('data-read') === 'true';
                 const notificationId = card.getAttribute('data-id');
                 
-                // Send AJAX request to update status
-                fetch(`/notifications/mark-read/${notificationId}/`, {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRFToken': '{{ csrf_token }}',
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        is_read: !isRead
-                    })
-                })
-                .then(response => response.json())
-                .then(data => {
+                try {
+                    const response = await fetch(`/notifications/mark-read/${notificationId}/`, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': csrfToken,
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            is_read: !isRead
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    
                     if (data.success) {
                         // Toggle state
                         card.setAttribute('data-read', !isRead);
                         
-                        // Update icon
+                        // Update UI
+                        const icon = this.querySelector('i');
                         if (isRead) {
-                            this.innerHTML = '<i class="far fa-circle"></i>';
-                            this.setAttribute('title', 'Mark as read');
-                            card.style.backgroundColor = 'rgba(0,123,255,0.03)';
+                            icon.className = 'far fa-circle text-primary';
+                            card.classList.add('unread-notification');
                         } else {
-                            this.innerHTML = '<i class="fas fa-check-circle text-success"></i>';
-                            this.setAttribute('title', 'Mark as unread');
-                            card.style.backgroundColor = '';
+                            icon.className = 'fas fa-check-circle text-muted';
+                            card.classList.remove('unread-notification');
+                        }
+                        
+                        // Update unread count in navbar if exists
+                        const unreadCountElem = document.getElementById('unread-count');
+                        if (unreadCountElem) {
+                            const currentCount = parseInt(unreadCountElem.textContent);
+                            unreadCountElem.textContent = isRead ? currentCount + 1 : currentCount - 1;
                         }
                     }
-                });
+                } catch (error) {
+                    console.error('Error:', error);
+                }
             });
         });
         
-        // Mark all as read
-        document.getElementById('mark-all-read').addEventListener('click', function() {
-            fetch('/notifications/mark-all-read/', {
-                method: 'POST',
-                headers: {
-                    'X-CSRFToken': '{{ csrf_token }}',
-                    'Content-Type': 'application/json',
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
+        // 3. Mark all as read
+        document.getElementById('mark-all-read').addEventListener('click', async function() {
+            try {
+                const response = await fetch('/notifications/mark-all-read/', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': csrfToken,
+                        'Content-Type': 'application/json',
+                    }
+                });
+                
+                const data = await response.json();
+                
                 if (data.success) {
+                    // Update all notifications to read
                     document.querySelectorAll('.notification-card[data-read="false"]').forEach(card => {
                         card.setAttribute('data-read', 'true');
-                        const btn = card.querySelector('.mark-read-btn');
-                        btn.innerHTML = '<i class="fas fa-check-circle text-success"></i>';
-                        btn.setAttribute('title', 'Mark as unread');
-                        card.style.backgroundColor = '';
+                        const btn = card.querySelector('.mark-read-btn i');
+                        btn.className = 'fas fa-check-circle text-muted';
+                        card.classList.remove('unread-notification');
                     });
+                    
+                    // Update unread count in navbar if exists
+                    const unreadCountElem = document.getElementById('unread-count');
+                    if (unreadCountElem) {
+                        unreadCountElem.textContent = '0';
+                    }
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        });
+        
+        // Handle notification clicks (for links)
+        document.querySelectorAll('.notification-card').forEach(card => {
+            card.addEventListener('click', async function(e) {
+                // If click was on the mark-read button, don't follow link
+                if (e.target.closest('.mark-read-btn')) {
+                    return;
+                }
+                
+                const notificationId = this.getAttribute('data-id');
+                const isRead = this.getAttribute('data-read') === 'true';
+                
+                // Mark as read if unread
+                if (!isRead) {
+                    try {
+                        await fetch(`/notifications/mark-read/${notificationId}/`, {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRFToken': csrfToken,
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                is_read: true
+                            })
+                        });
+                        
+                        // Update UI immediately
+                        this.setAttribute('data-read', 'true');
+                        const btn = this.querySelector('.mark-read-btn i');
+                        btn.className = 'fas fa-check-circle text-muted';
+                        this.classList.remove('unread-notification');
+                        
+                        // Update unread count in navbar if exists
+                        const unreadCountElem = document.getElementById('unread-count');
+                        if (unreadCountElem) {
+                            const currentCount = parseInt(unreadCountElem.textContent);
+                            unreadCountElem.textContent = Math.max(0, currentCount - 1);
+                        }
+                    } catch (error) {
+                        console.error('Error:', error);
+                    }
                 }
             });
         });
     });
-</script> {% endcomment %}
+</script>
 {% endblock %}

@@ -56,13 +56,15 @@ class SitinRequestCreateView(generics.CreateAPIView):
     
     def perform_create(self, serializer):
         data = self.request.data
-        
+        print('sitin date', data.get('sitin_date'))
+        print('data', data)
         sitin_data = {
             'programming_language': data.get('programming_language'),
             'purpose': data.get('purpose'),
             'lab_room': data.get('lab-room'),
             'sitin_details': data.get('sitin_details'),
             'request_date': timezone.now(),
+            'sitin_date': data.get('sitin_date'),
             'user': self.request.user.id,
         }
         print('labroom', data.get('lab-room'))

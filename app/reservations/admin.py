@@ -6,9 +6,7 @@ from notifications.notifications import send_notification
 from .models import LabRoom, Computer
 from django.utils import timezone
 from django.contrib import messages
-from channels.layers import get_channel_layer
-from asgiref.sync import async_to_sync 
-
+from .tasks import schedule_reservation_reminder
 class ComputersAdmin(admin.ModelAdmin):
     list_display = ('pc_number', 'operating_system', 'processor', 'ram_amount_in_mb', 'is_available', 'lab_room')
     list_display_links = ('pc_number',)
@@ -56,7 +54,7 @@ class ReservationRequestsAdmin(BaseSitinAdmin):
         )
         
         for sitin in queryset:
-            sitin.sitin_date = timezone.now()
+            sitin.approval_date = timezone.now()
             sitin.status = 'approved'
             sitin.save()
             self.message_user(request, f"{sitin.user.username}'s sitin request has been successfully approved.")
@@ -66,10 +64,12 @@ class ReservationRequestsAdmin(BaseSitinAdmin):
             sitinrequest = sitin.sitinrequest_set.first()
             message = f'Your reservation request (ID/{sitinrequest.id}) for LAB/{sitinrequest.lab_room.room_number}, PC/{sitinrequest.pc.pc_number} has been approved.'
             url = f'/reservations/#sitinrequest-id-{sitinrequest.id}'
-            send_notification(user, message, url, 'sitin')
-            
             sitinrequest.pc.is_available = not sitinrequest.pc.is_available
             sitinrequest.pc.save()
+            
+            send_notification(user, message, url, 'sitin')
+            schedule_reservation_reminder(sitinrequest.id)
+            
             
     def reject_request(self, request, queryset):
         for sitin in queryset:

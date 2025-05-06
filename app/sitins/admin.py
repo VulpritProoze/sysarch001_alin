@@ -11,7 +11,7 @@ from .models import Sitin
 from django.db.models import Q
         
 class BaseSitinAdmin(admin.ModelAdmin):
-    list_display = ("get_user_idno", "get_fullname", "purpose", "lab_room", "status", "get_user_points", "is_rewarded", "get_user_sessions", "request_date", "get_formatted_login_date", "get_formatted_logout_date")
+    list_display = ("get_user_idno", "get_fullname", "purpose", "lab_room", "status", "get_user_points", "is_rewarded", "get_user_sessions", "request_date", 'approval_date', "get_formatted_login_date", "get_formatted_logout_date")
     search_fields = ("user__registration__idno", "user__username", "user__registration__firstname", 
                      "user__registration__middlename", "user__registration__lastname")
     list_filter = ("sitin_date",'logout_date')
@@ -287,6 +287,7 @@ class FinishedSitins(Sitin):
         verbose_name = "Sit-in history"
         verbose_name_plural = "Sit-in history"
 
+admin_site.register(Sitin, BaseSitinAdmin)
 admin_site.register(SearchSitins, SearchSitinsAdmin)
 admin_site.register(CurrentSitins, CurrentSitinsAdmin)
 admin_site.register(FinishedSitins, FinishedSitinsAdmin)

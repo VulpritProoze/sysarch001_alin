@@ -14,6 +14,11 @@ def time_ago(value):
     diff = now - value
 
     seconds = diff.total_seconds()
+    
+    # Handle future dates (negative seconds) by returning formatted date
+    if seconds < 0:
+        return value.strftime("%b %d, %Y, %I:%M %p")
+    
     if seconds < 60:
         return f"{int(seconds)} seconds ago"
     elif seconds < 3600:
@@ -23,4 +28,4 @@ def time_ago(value):
         hours = int(seconds / 3600)
         return f"{hours} hour{'s' if hours != 1 else ''} ago"
     else:
-        return value.strftime("%b %d, %Y, %I:%M %p ")  # Fallback to date if > 1 day
+        return value.strftime("%b %d, %Y, %I:%M %p")

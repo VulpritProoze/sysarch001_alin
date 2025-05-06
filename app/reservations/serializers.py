@@ -6,7 +6,7 @@ from rest_framework.exceptions import ValidationError
 class SitinSerializer(serializers.ModelSerializer):
     class Meta:
         model = Sitin
-        fields = ['id', 'purpose', 'programming_language', 'lab_room', 'sitin_details', 'request_date', 'user']
+        fields = ['id', 'purpose', 'programming_language', 'lab_room', 'sitin_details', 'sitin_date', 'request_date', 'user']
 
 class LabRoomSerializer(serializers.ModelSerializer):
     class Meta:

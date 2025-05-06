@@ -10,6 +10,7 @@ class Sitin(models.Model):
     status = models.CharField(max_length=50, choices=SITIN_STATUS_CHOICES, default="none") # none, approved, denied
     request_date = models.DateTimeField(null=True, blank=True)
     sitin_date = models.DateTimeField(null=True, blank=True)
+    approval_date = models.DateTimeField(null=True, blank=True)
     logout_date = models.DateTimeField(null=True, blank=True)
     feedback = models.TextField(blank=True, null=True)
     is_rewarded = models.BooleanField(blank=True, null=True, default=False)

@@ -54,7 +54,6 @@ INSTALLED_APPS = [
     'django_extensions',
     'debug_toolbar',
     'rest_framework',
-    # 'nested_admin',
     'backend.apps.BackendConfig',
     'notifications.apps.NotificationsConfig',
     'sitins.apps.SitinsConfig',
