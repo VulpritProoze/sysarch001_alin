@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.db.models import Q
 from backend.admin import admin_site
 from sitins.admin import BaseSitinAdmin
 from sitins.models import Sitin
@@ -11,14 +12,21 @@ class ComputersAdmin(admin.ModelAdmin):
     list_display = ('pc_number', 'operating_system', 'processor', 'ram_amount_in_mb', 'is_available', 'lab_room')
     list_display_links = ('pc_number',)
     list_filter = ('lab_room',)
-    actions = ['set_available',]
+    actions = ['set_available', 'set_unavailable',]
 
     def set_available(self, request, queryset):
         for pc in queryset:
-            pc.is_available = not pc.is_available
+            pc.is_available = True
             pc.save()
-            self.message_user(request, f"PC {pc.pc_number} is now {"'available'" if pc.is_available else "'not available'"}.")
-    set_available.short_description = "Set available/unavailable"
+            self.message_user(request, f"PC {pc.pc_number} is now available.")
+    set_available.short_description = "Set available"
+    
+    def set_unavailable(self, request, queryset):
+        for pc in queryset:
+            pc.is_available = False
+            pc.save()
+            self.message_user(request, f"PC {pc.pc_number} is now unavailable.")
+    set_unavailable.short_description = "Set unavailable"
 
 admin_site.register(Computer, ComputersAdmin)
 
@@ -88,7 +96,8 @@ class ReservationRequestsAdmin(BaseSitinAdmin):
     
 class ReservationLogsAdmin(BaseSitinAdmin):
     def get_queryset(self, request):
-        return super().get_queryset(request).filter(request_date__isnull=False, status='finished')
+        queryset = super().get_queryset(request).filter(Q(request_date__isnull=False) & Q(status='finished') |  Q(status='rejected'))
+        return queryset
     
     def has_add_permission(self, request, obj=None):
         return False

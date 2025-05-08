@@ -144,7 +144,8 @@
                                     <button class="btn btn-outline-primary rounded dropdown-toggle" type="button" id="leaderboardFilterDropdown" data-toggle="dropdown" aria-expanded="false">
                                         <i class="fas fa-filter"></i> Filter by
                                     </button>
-                                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="leaderboardFilterDropdown">
+                                    <ul class="dropdown-menu dropdown-menu-right" aria-labelledby="leaderboardFilterDropdown"
+                                        style="width: 150px !important;">
                                         {% csrf_token %}
                                         <li>
                                             <form method="get">
