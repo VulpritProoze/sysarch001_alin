@@ -95,8 +95,16 @@ class ReservationRequestsAdmin(BaseSitinAdmin):
         return False
     
 class ReservationLogsAdmin(BaseSitinAdmin):
+    list_display = ("get_user_idno", "get_fullname", "purpose", "lab_room", "get_is_approved", "status", "get_user_points", "is_rewarded", "get_user_sessions", "request_date", 'approval_date', "get_formatted_login_date", "get_formatted_logout_date")
+
+    def get_is_approved(self, obj):
+        return True if obj.status != 'rejected' else False
+    get_is_approved.boolean = True
+    get_is_approved.short_description = 'Is Approved?'
+    get_is_approved.order_field = 'status'
+
     def get_queryset(self, request):
-        queryset = super().get_queryset(request).filter(Q(request_date__isnull=False) & Q(status='finished') |  Q(status='rejected'))
+        queryset = super().get_queryset(request).filter(Q(request_date__isnull=False) & Q(status='finished') | Q(status='approved') |  Q(status='rejected'))
         return queryset
     
     def has_add_permission(self, request, obj=None):
